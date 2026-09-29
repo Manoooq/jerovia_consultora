@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Jerovia Corporate — Executive Light (WCAG 2.1 AAA Compliant) */
+  --bg-base: #f8fafc;
+  --bg-mantle: #ffffff;
+  --bg-crust: #f1f5f9;
+  --bg-surface0: #ffffff;
+  --bg-surface1: #f8fafc;
+  --bg-surface2: #e2e8f0;
+  --border-overlay0: #cbd5e1;
+  --border-overlay1: #94a3b8;
+  --border-overlay2: #64748b;
+  --text-subtext0: #475569;   /* 6.5:1 contrast on white */
+  --text-subtext1: #334155;   /* 9.5:1 contrast on white */
+  --text-main: #0f172a;       /* 16:1 contrast on white */
+
+  --brand-gold: #926c15;       /* WCAG AA compliant on light backgrounds */
+  --brand-gold-light: #b38928;
+  --brand-gold-dark: #71530e;
+}
+
+.dark {
+  /* Jerovia Corporate — Executive Dark (High Contrast) */
+  --bg-base: #09090b;
+  --bg-mantle: #111113;
+  --bg-crust: #050506;
+  --bg-surface0: #131316;
+  --bg-surface1: #1a1a1f;
+  --bg-surface2: #272730;
+  --border-overlay0: #2d2d38;
+  --border-overlay1: #454555;
+  --border-overlay2: #6d6d80;
+  --text-subtext0: #94a3b8;   /* 7:1 contrast on black */
+  --text-subtext1: #cbd5e1;   /* 12:1 contrast on black */
+  --text-main: #f8fafc;       /* 18:1 contrast on black */
+
+  --brand-gold: #C9A84C;
+  --brand-gold-light: #E8C97A;
+  --brand-gold-dark: #9A7A2E;
+}
+
+@theme {
+  --color-base: var(--bg-base);
+  --color-mantle: var(--bg-mantle);
+  --color-crust: var(--bg-crust);
+  --color-surface0: var(--bg-surface0);
+  --color-surface1: var(--bg-surface1);
+  --color-surface2: var(--bg-surface2);
+  --color-overlay0: var(--border-overlay0);
+  --color-overlay1: var(--border-overlay1);
+  --color-overlay2: var(--border-overlay2);
+  --color-subtext0: var(--text-subtext0);
+  --color-subtext1: var(--text-subtext1);
+  --color-text: var(--text-main);
+
+  --color-gold: var(--brand-gold);
+  --color-gold-light: var(--brand-gold-light);
+  --color-gold-dark: var(--brand-gold-dark);
+  --color-white: #FFFFFF;
+
+  --color-mauve: var(--brand-gold);
+  --color-blue: #2563eb;
+  --color-sky: #0284c7;
+  --color-green: #059669;
+  --color-yellow: #d97706;
+  --color-red: #dc2626;
+  --color-pink: #db2777;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--border-overlay0);
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--brand-gold) 30%, transparent);
+  color: var(--text-main);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+}
+
+/* === ACCESIBILIDAD: FOCO VISIBLE DE ALTO CONTRASTE (WCAG 2.4.7) === */
+:focus-visible {
+  outline: 3px solid var(--brand-gold) !important;
+  outline-offset: 2px !important;
+  border-radius: 6px;
+}
+
+/* === ACCESIBILIDAD: REDUCCIÓN DE MOVIMIENTO (WCAG 2.3.3) === */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Gold gradient utility */
+.gradient-gold {
+  background: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-light) 50%, var(--brand-gold) 100%);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-light), var(--brand-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
