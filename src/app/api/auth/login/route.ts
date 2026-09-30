@@ -1,44 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DEFAULT_ADMIN, createAdminSession } from "@/lib/auth";
+import { ADMIN_USER, createAdminSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const { username, email, password, remember } = await req.json();
+    const identifier = (username || email || "").toLowerCase().trim();
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: "Debe ingresar usuario y contraseña" },
+        { error: "Debe ingresar su usuario o correo y su contraseña." },
         { status: 400 }
       );
     }
 
-    const emailMatch =
-      email.toLowerCase().trim() === DEFAULT_ADMIN.email.toLowerCase() ||
-      email.toLowerCase().trim() === "admin";
-    const passwordMatch = password === DEFAULT_ADMIN.password;
+    const identifierMatch =
+      identifier === ADMIN_USER.username.toLowerCase() ||
+      identifier === ADMIN_USER.email.toLowerCase();
+    const passwordMatch = password === ADMIN_USER.password;
 
-    if (!emailMatch || !passwordMatch) {
+    if (!identifierMatch || !passwordMatch) {
       return NextResponse.json(
-        { error: "Credenciales incorrectas. Verifique usuario o contraseña." },
+        { error: "Credenciales de administrador inválidas. Verifique sus datos." },
         { status: 401 }
       );
     }
 
-    // Crear sesión autenticada
-    await createAdminSession(DEFAULT_ADMIN.email);
+    // Crear sesión autenticada con duración configurable
+    await createAdminSession(ADMIN_USER.email, !!remember);
 
     return NextResponse.json({
       success: true,
       user: {
-        email: DEFAULT_ADMIN.email,
-        name: DEFAULT_ADMIN.name,
-        role: DEFAULT_ADMIN.role,
+        username: ADMIN_USER.username,
+        email: ADMIN_USER.email,
+        name: ADMIN_USER.name,
+        role: ADMIN_USER.role,
       },
     });
   } catch (err) {
     console.error("[Login error]:", err);
     return NextResponse.json(
-      { error: "Error en el servidor de autenticación" },
+      { error: "Error interno en el servidor de autenticación." },
       { status: 500 }
     );
   }
