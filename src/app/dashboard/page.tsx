@@ -2,6 +2,7 @@ import { listarEntrevistas } from "@/lib/store";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LogoutButton } from "@/components/LogoutButton";
 import { Plus, Search, FileText, Clock, CheckCircle, AlertCircle, ArrowRight, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/FormFields";
 import { formatDate } from "@/lib/utils";
@@ -38,9 +39,8 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link href="/" className="text-xs font-semibold text-subtext1 hover:text-text transition-colors hidden sm:block">
-              Inicio
-            </Link>
+            <div className="h-4 w-px bg-overlay0/50 hidden sm:block" />
+            <LogoutButton />
             <Link
               href="/dashboard/nueva"
               className="flex items-center gap-1.5 rounded-xl bg-gold px-3.5 py-2 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-md shadow-gold/20"

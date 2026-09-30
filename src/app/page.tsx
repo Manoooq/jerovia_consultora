@@ -91,7 +91,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link
-              href="/dashboard"
+              href="/login"
               className="hidden sm:block text-xs font-semibold text-subtext1 hover:text-text transition-colors px-3 py-2"
             >
               Acceso consultores
