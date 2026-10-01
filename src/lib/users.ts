@@ -1,7 +1,5 @@
-/**
- * Jerovia Consultora — Gestión de Usuarios y Roles (RBAC)
- * Seguridad criptográfica nativa con Web Crypto API (Node.js & Edge compatible)
- */
+import fs from "fs";
+import path from "path";
 
 export type UserRole = "admin" | "evaluador";
 
@@ -19,9 +17,9 @@ export interface User {
 
 export type SafeUser = Omit<User, "passwordHash" | "passwordSalt">;
 
-/**
- * Función de hashing criptográfico con salt utilizando Web Crypto API
- */
+const DATA_DIR = path.join(process.cwd(), "data");
+const USERS_FILE = path.join(DATA_DIR, "usuarios.json");
+
 export async function hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
   const actualSalt = salt || crypto.randomUUID().replace(/-/g, "");
   const enc = new TextEncoder();
@@ -37,39 +35,69 @@ export async function verifyPassword(password: string, hash: string, salt: strin
   return computed.hash === hash;
 }
 
-// Semilla inicial pre-hasheada para arranque instantáneo sin latencia
-// admin: jerovia2026 | salt: salt_adm_2026
-// evaluador: evaluador2026 | salt: salt_eval_2026
-const usersStore = new Map<string, User>([
-  [
-    "usr_admin_01",
-    {
-      id: "usr_admin_01",
-      username: "admin",
-      email: "admin@jerovia.com.py",
-      name: "Lic. Michelle Romero",
-      role: "admin",
-      passwordHash: "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
-      passwordSalt: "salt_adm_2026",
-      activo: true,
-      creadoEn: "2026-09-01T08:00:00.000Z",
-    },
-  ],
-  [
-    "usr_eval_01",
-    {
-      id: "usr_eval_01",
-      username: "evaluador",
-      email: "evaluador@jerovia.com.py",
-      name: "Lic. Carlos Benítez",
-      role: "evaluador",
-      passwordHash: "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
-      passwordSalt: "salt_eval_2026",
-      activo: true,
-      creadoEn: "2026-09-15T09:30:00.000Z",
-    },
-  ],
-]);
+const usersStore = new Map<string, User>();
+
+function seedDefaultUsers() {
+  usersStore.set("usr_admin_01", {
+    id: "usr_admin_01",
+    username: "admin",
+    email: "admin@jerovia.com.py",
+    name: "Lic. Michelle Romero",
+    role: "admin",
+    passwordHash: "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
+    passwordSalt: "salt_adm_2026",
+    activo: true,
+    creadoEn: "2026-09-01T08:00:00.000Z",
+  });
+
+  usersStore.set("usr_eval_01", {
+    id: "usr_eval_01",
+    username: "evaluador",
+    email: "evaluador@jerovia.com.py",
+    name: "Lic. Carlos Benítez",
+    role: "evaluador",
+    passwordHash: "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
+    passwordSalt: "salt_eval_2026",
+    activo: true,
+    creadoEn: "2026-09-15T09:30:00.000Z",
+  });
+}
+
+function initUsers() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (fs.existsSync(USERS_FILE)) {
+      const content = fs.readFileSync(USERS_FILE, "utf-8");
+      if (content.trim()) {
+        const list: User[] = JSON.parse(content);
+        usersStore.clear();
+        list.forEach((u) => usersStore.set(u.id, u));
+        return;
+      }
+    }
+  } catch (err) {
+    console.error("[initUsers error]:", err);
+  }
+
+  seedDefaultUsers();
+  persistUsers();
+}
+
+function persistUsers() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    const list = Array.from(usersStore.values());
+    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+  } catch (err) {
+    console.warn("[persistUsers warn]:", err);
+  }
+}
+
+initUsers();
 
 function toSafeUser(user: User): SafeUser {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -78,20 +106,24 @@ function toSafeUser(user: User): SafeUser {
 }
 
 export function listarUsuarios(): SafeUser[] {
+  if (usersStore.size === 0) initUsers();
   return Array.from(usersStore.values()).map(toSafeUser);
 }
 
 export function listarEvaluadores(): SafeUser[] {
+  if (usersStore.size === 0) initUsers();
   return Array.from(usersStore.values())
     .filter((u) => u.activo && (u.role === "evaluador" || u.role === "admin"))
     .map(toSafeUser);
 }
 
 export function obtenerUsuarioPorId(id: string): User | undefined {
+  if (usersStore.size === 0) initUsers();
   return usersStore.get(id);
 }
 
 export function obtenerUsuarioPorIdentificador(identifier: string): User | undefined {
+  if (usersStore.size === 0) initUsers();
   const clean = identifier.toLowerCase().trim();
   for (const user of usersStore.values()) {
     if (user.username.toLowerCase() === clean || user.email.toLowerCase() === clean) {
@@ -129,15 +161,34 @@ export async function crearUsuario(datos: {
   };
 
   usersStore.set(id, nuevoUsuario);
+  persistUsers();
   return toSafeUser(nuevoUsuario);
 }
 
-export function actualizarUsuario(id: string, patch: Partial<Omit<User, "id" | "passwordHash" | "passwordSalt">>): SafeUser | null {
+export function actualizarUsuario(
+  id: string,
+  patch: Partial<Omit<User, "id" | "passwordHash" | "passwordSalt">>
+): SafeUser | null {
   const user = usersStore.get(id);
   if (!user) return null;
   const updated: User = { ...user, ...patch };
   usersStore.set(id, updated);
+  persistUsers();
   return toSafeUser(updated);
+}
+
+export async function cambiarContrasena(id: string, nuevaContrasena: string): Promise<boolean> {
+  const user = usersStore.get(id);
+  if (!user) return false;
+  if (nuevaContrasena.length < 6) {
+    throw new Error("La contraseña debe tener un mínimo de 6 caracteres.");
+  }
+  const { hash, salt } = await hashPassword(nuevaContrasena);
+  user.passwordHash = hash;
+  user.passwordSalt = salt;
+  usersStore.set(id, user);
+  persistUsers();
+  return true;
 }
 
 export function eliminarUsuario(id: string): boolean {
@@ -146,7 +197,9 @@ export function eliminarUsuario(id: string): boolean {
   if (user.username === "admin") {
     throw new Error("No es posible eliminar la cuenta principal de administración.");
   }
-  return usersStore.delete(id);
+  const deleted = usersStore.delete(id);
+  if (deleted) persistUsers();
+  return deleted;
 }
 
 export async function verificarCredenciales(identifier: string, password: string): Promise<SafeUser | null> {

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "ent_01",
+    "token": "tok_visita_01",
+    "entidadSolicitante": "Entidad Bancaria de Plaza",
+    "candidatoNombre": "Postulante Confidencial #EXP-801",
+    "cedula": "5.551.895",
+    "telefono": "0982 176890",
+    "ciudad": "Luque",
+    "evaluadorAsignado": "Lic. Michelle Romero",
+    "creadoPor": "admin",
+    "estado": "completado",
+    "pasoActual": 9,
+    "datos": {
+      "nombre": "Postulante",
+      "apellido": "Confidencial #EXP-801",
+      "cedula": "5.551.895",
+      "telefono": "0982 176890",
+      "ciudad": "Luque",
+      "consultorNombre": "Lic. Michelle Romero",
+      "observacionesEntrevista": "Dictamen Favorable. Condiciones habitacionales favorables, entorno vecinal consolidado y coherencia económica verificada."
+    },
+    "alertas": [],
+    "creadoEn": "2026-09-28T10:00:00.000Z",
+    "actualizadoEn": "2026-09-30T16:30:00.000Z"
+  },
+  {
+    "id": "ent_02",
+    "token": "tok_visita_02",
+    "entidadSolicitante": "Cooperativa de Ahorro y Crédito Tipo A",
+    "candidatoNombre": "Postulante Confidencial #EXP-802",
+    "cedula": "4.892.110",
+    "telefono": "0971 445210",
+    "ciudad": "San Lorenzo",
+    "evaluadorAsignado": "Lic. Carlos Benítez",
+    "creadoPor": "admin",
+    "estado": "en_progreso",
+    "pasoActual": 5,
+    "datos": {
+      "nombre": "Postulante",
+      "apellido": "Confidencial #EXP-802",
+      "cedula": "4.892.110",
+      "telefono": "0971 445210",
+      "ciudad": "San Lorenzo",
+      "consultorNombre": "Lic. Carlos Benítez"
+    },
+    "alertas": [],
+    "creadoEn": "2026-09-29T14:20:00.000Z",
+    "actualizadoEn": "2026-09-30T18:15:00.000Z"
+  },
+  {
+    "id": "ent_03",
+    "token": "tok_visita_03",
+    "entidadSolicitante": "Institución Financiera AAA",
+    "candidatoNombre": "Postulante Confidencial #EXP-803",
+    "cedula": "3.921.450",
+    "telefono": "0981 992341",
+    "ciudad": "Asunción",
+    "evaluadorAsignado": "Lic. Michelle Romero",
+    "creadoPor": "admin",
+    "estado": "pendiente",
+    "pasoActual": 1,
+    "datos": {
+      "nombre": "Postulante",
+      "apellido": "Confidencial #EXP-803",
+      "cedula": "3.921.450",
+      "telefono": "0981 992341",
+      "ciudad": "Asunción",
+      "consultorNombre": "Lic. Michelle Romero"
+    },
+    "alertas": [],
+    "creadoEn": "2026-09-30T19:00:00.000Z",
+    "actualizadoEn": "2026-09-30T19:00:00.000Z"
+  }
+]

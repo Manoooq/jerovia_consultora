@@ -1,0 +1,24 @@
+[
+  {
+    "id": "usr_admin_01",
+    "username": "admin",
+    "email": "admin@jerovia.com.py",
+    "name": "Lic. Michelle Romero",
+    "role": "admin",
+    "passwordHash": "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
+    "passwordSalt": "salt_adm_2026",
+    "activo": true,
+    "creadoEn": "2026-09-01T08:00:00.000Z"
+  },
+  {
+    "id": "usr_eval_01",
+    "username": "evaluador",
+    "email": "evaluador@jerovia.com.py",
+    "name": "Lic. Carlos Benítez",
+    "role": "evaluador",
+    "passwordHash": "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
+    "passwordSalt": "salt_eval_2026",
+    "activo": true,
+    "creadoEn": "2026-09-15T09:30:00.000Z"
+  }
+]
