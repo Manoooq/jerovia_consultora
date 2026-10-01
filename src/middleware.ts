@@ -23,6 +23,15 @@ export async function middleware(req: NextRequest) {
       res.cookies.delete(AUTH_COOKIE);
       return res;
     }
+
+    // JERARQUÍA DE ROLES (RBAC):
+    // Solo los administradores pueden generar nuevas visitas o administrar usuarios
+    const esAdmin = session.role === "admin";
+    if ((pathname.startsWith("/dashboard/nueva") || pathname.startsWith("/dashboard/usuarios")) && !esAdmin) {
+      const dashboardUrl = new URL("/dashboard", req.url);
+      dashboardUrl.searchParams.set("error", "unauthorized_role");
+      return NextResponse.redirect(dashboardUrl);
+    }
   }
 
   return NextResponse.next();

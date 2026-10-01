@@ -1,17 +1,17 @@
 import { cookies } from "next/headers";
+import type { SafeUser, UserRole } from "@/lib/users";
 
 export const AUTH_COOKIE = "jerovia_session";
 const SECRET = process.env.AUTH_SECRET || "jerovia_secret_key_prod_2026_super_secure";
 
-export const ADMIN_USER = {
-  username: process.env.ADMIN_USERNAME || "admin",
-  email: process.env.ADMIN_EMAIL || "admin@jerovia.com.py",
-  password: process.env.ADMIN_PASSWORD || "jerovia2026",
-  name: process.env.ADMIN_NAME || "Lic. Michelle Romero",
-  role: "Administrador General",
-};
-
-export const DEFAULT_ADMIN = ADMIN_USER;
+export interface SessionPayload {
+  userId: string;
+  username: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  createdAt: number;
+}
 
 /**
  * Codificación Base64URL portable para Node y Edge
@@ -45,7 +45,7 @@ export async function signAuthToken(payload: Record<string, unknown>): Promise<s
   );
   const jsonStr = JSON.stringify(payload);
   const signature = await crypto.subtle.sign("HMAC", key, enc.encode(jsonStr));
-  
+
   let b64Sig: string;
   if (typeof Buffer !== "undefined") {
     b64Sig = Buffer.from(signature).toString("base64url");
@@ -65,7 +65,7 @@ export async function signAuthToken(payload: Record<string, unknown>): Promise<s
 /**
  * Verifica un token firmado usando Web Crypto API
  */
-export async function verifyAuthToken(token: string): Promise<Record<string, unknown> | null> {
+export async function verifyAuthToken(token: string): Promise<SessionPayload | null> {
   try {
     const [b64Payload, b64Sig] = token.split(".");
     if (!b64Payload || !b64Sig) return null;
@@ -80,7 +80,6 @@ export async function verifyAuthToken(token: string): Promise<Record<string, unk
       ["verify"]
     );
 
-    // Decodificar firma de forma compatible con BufferSource
     let sigBytes: Uint8Array;
     if (typeof Buffer !== "undefined") {
       sigBytes = Uint8Array.from(Buffer.from(b64Sig, "base64url"));
@@ -100,24 +99,27 @@ export async function verifyAuthToken(token: string): Promise<Record<string, unk
     );
 
     if (!valid) return null;
-    return JSON.parse(payloadStr);
+    return JSON.parse(payloadStr) as SessionPayload;
   } catch {
     return null;
   }
 }
 
 /**
- * Establece la cookie de sesión del administrador
+ * Establece la cookie de sesión autenticada con rol (admin o evaluador)
  */
-export async function createAdminSession(email: string, remember = false) {
+export async function createSession(user: SafeUser, remember = false) {
   const maxAge = remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 1; // 30 días o 24 horas
-  const token = await signAuthToken({
-    email,
-    username: ADMIN_USER.username,
-    name: ADMIN_USER.name,
-    role: ADMIN_USER.role,
+  const payload: SessionPayload = {
+    userId: user.id,
+    username: user.username,
+    email: user.email,
+    name: user.name,
+    role: user.role,
     createdAt: Date.now(),
-  });
+  };
+
+  const token = await signAuthToken(payload as unknown as Record<string, unknown>);
 
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE, token, {
@@ -130,24 +132,45 @@ export async function createAdminSession(email: string, remember = false) {
 }
 
 /**
+ * Mantenido por retrocompatibilidad
+ */
+export async function createAdminSession(email: string, remember = false) {
+  return createSession(
+    {
+      id: "usr_admin_01",
+      username: "admin",
+      email,
+      name: "Lic. Michelle Romero",
+      role: "admin",
+      activo: true,
+      creadoEn: new Date().toISOString(),
+    },
+    remember
+  );
+}
+
+/**
  * Elimina la cookie de sesión
  */
-export async function removeAdminSession() {
+export async function removeSession() {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE);
 }
 
+export const removeAdminSession = removeSession;
+
 /**
  * Obtiene la sesión actual desde el servidor
  */
-export async function getAdminSession() {
+export async function getSession(): Promise<SessionPayload | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE)?.value;
     if (!token) return null;
-    const verified = await verifyAuthToken(token);
-    return verified;
+    return await verifyAuthToken(token);
   } catch {
     return null;
   }
 }
+
+export const getAdminSession = getSession;

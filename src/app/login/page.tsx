@@ -7,15 +7,16 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormFields";
-import { Lock, ArrowRight, ShieldCheck, Eye, EyeOff, UserCheck } from "lucide-react";
+import { Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
 
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("jerovia2026");
+  // Campos sin credenciales hardcodeadas por seguridad
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Credenciales de administrador inválidas");
+        throw new Error(data.error || "Credenciales de acceso inválidas.");
       }
 
       router.push(redirectPath);
@@ -50,15 +51,15 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-3xl border border-overlay0/60 bg-surface0 p-8 sm:p-10 shadow-xl">
-      {/* Encabezado sin distracciones (Ley de Hick) */}
+    <div className="rounded-3xl border border-overlay0/50 bg-surface0 p-8 sm:p-10 shadow-2xl">
+      {/* Encabezado Institucional Sobrio */}
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="h-12 w-12 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center mb-4">
-          <Lock className="h-6 w-6 text-gold" aria-hidden="true" />
+        <div className="h-12 w-12 rounded-2xl bg-gold/10 border border-gold/25 flex items-center justify-center mb-4 text-gold">
+          <Shield className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h1 className="text-2xl font-black text-text mb-1">Acceso Administrativo</h1>
-        <p className="text-xs text-subtext0 font-medium">
-          Jerovia Consultora · Panel de Control y Auditoría
+        <h1 className="text-2xl font-black text-text tracking-tight mb-1.5">Portal Corporativo</h1>
+        <p className="text-xs text-subtext0 font-medium max-w-xs leading-relaxed">
+          Jerovia Consultora · Evaluaciones Socioambientales y de Confiabilidad
         </p>
       </div>
 
@@ -80,13 +81,13 @@ function LoginForm() {
           required
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="admin o admin@jerovia.com.py"
+          placeholder="Ej: michelle.romero o usuario@jerovia.com.py"
           autoComplete="username"
         />
 
         <div className="relative">
           <Input
-            label="Contraseña de Administrador"
+            label="Contraseña"
             type={showPassword ? "text" : "password"}
             required
             value={password}
@@ -104,7 +105,7 @@ function LoginForm() {
           </button>
         </div>
 
-        {/* Recordar sesión (Ley de Hick: opción simple) */}
+        {/* Recordar sesión */}
         <div className="flex items-center justify-between text-xs pt-1">
           <label className="flex items-center gap-2 cursor-pointer text-subtext1 font-medium select-none">
             <input
@@ -123,26 +124,17 @@ function LoginForm() {
             loading={loading}
             className="w-full bg-gold hover:bg-gold-light text-black font-bold py-3.5 shadow-lg shadow-gold/20 text-sm"
           >
-            <span>Iniciar Sesión como Administrador</span>
+            <span>Ingresar al Sistema</span>
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </form>
 
-      {/* Credenciales oficiales preconfiguradas */}
-      <div className="mt-8 p-3.5 rounded-2xl bg-surface1 border border-overlay0/40 text-[11px] text-subtext0 space-y-1">
-        <p className="font-bold text-text flex items-center gap-1">
-          <ShieldCheck className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-          Credenciales de Administrador:
+      {/* Nota de confidencialidad y seguridad institucional */}
+      <div className="mt-8 pt-6 border-t border-overlay0/30 text-center">
+        <p className="text-[11px] text-subtext0 leading-relaxed">
+          Acceso estrictamente restringido al personal autorizado de Jerovia Consultora y evaluadores homologados.
         </p>
-        <div className="flex justify-between font-mono pt-1 text-subtext1">
-          <span>Usuario:</span>
-          <strong className="text-text">admin</strong>
-        </div>
-        <div className="flex justify-between font-mono text-subtext1">
-          <span>Contraseña:</span>
-          <strong className="text-text">jerovia2026</strong>
-        </div>
       </div>
     </div>
   );
@@ -176,7 +168,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-xs text-subtext0 font-medium">
-        <p>© 2026 Jerovia Consultora · Acceso Restringido a Personal Autorizado</p>
+        <p>© 2026 Jerovia Consultora · Seguridad Criptográfica y Confidencialidad Pericial</p>
       </footer>
     </div>
   );

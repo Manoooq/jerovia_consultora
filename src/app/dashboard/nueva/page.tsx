@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Check, Copy, ExternalLink, Share2, 
-  Building2, User, Phone, MapPin, ShieldCheck, Sparkles 
+  Building2, User, Phone, MapPin, ShieldCheck, ShieldAlert 
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/FormFields";
@@ -43,16 +43,55 @@ export default function NuevaEntrevistaPage() {
   const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
   const [ciudad, setCiudad] = useState("Luque");
-  const [evaluador, setEvaluador] = useState("Michelle Romero");
+  const [evaluador, setEvaluador] = useState("Lic. Michelle Romero");
+  const [evaluadoresList, setEvaluadoresList] = useState<{ value: string; label: string }[]>([
+    { value: "Lic. Michelle Romero", label: "Lic. Michelle Romero (Evaluadora Senior)" },
+    { value: "Lic. Carlos Benítez", label: "Lic. Carlos Benítez (Perito de Campo)" },
+  ]);
 
   const [loading, setLoading] = useState(false);
   const [creada, setCreada] = useState<{
     token: string;
     entidad: string;
     candidato: string;
+    evaluador: string;
     url: string;
   } | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [permisoDenegado, setPermisoDenegado] = useState(false);
+
+  // Verificar rol de admin y cargar lista de evaluadores registrados
+  useEffect(() => {
+    async function checkRoleAndLoadUsers() {
+      try {
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.user?.role !== "admin") {
+            setPermisoDenegado(true);
+            return;
+          }
+        }
+
+        const usersRes = await fetch("/api/usuarios");
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          const mapped = usersData
+            .filter((u: { activo: boolean }) => u.activo)
+            .map((u: { name: string; role: string }) => ({
+              value: u.name,
+              label: `${u.name} (${u.role === "admin" ? "Administrador" : "Evaluador"})`,
+            }));
+          if (mapped.length > 0) {
+            setEvaluadoresList(mapped);
+          }
+        }
+      } catch {
+        // En caso de fallo de red mantener los defaults
+      }
+    }
+    checkRoleAndLoadUsers();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,18 +105,23 @@ export default function NuevaEntrevistaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           entidadSolicitante: entidadFinal,
+          evaluadorAsignado: evaluador,
         }),
       });
 
-      if (!res.ok) throw new Error("Error al crear entrevista");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Error al crear entrevista");
+      }
       const data = await res.json();
 
-      // Actualizar datos preliminares del candidato
+      // Guardar datos preliminares del candidato
       await fetch(`/api/entrevista/${data.token}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           candidatoNombre: nombre,
+          evaluadorAsignado: evaluador,
           datos: {
             nombre: nombre.split(" ")[0] || "",
             apellido: nombre.split(" ").slice(1).join(" ") || "",
@@ -94,10 +138,12 @@ export default function NuevaEntrevistaPage() {
         token: data.token,
         entidad: entidadFinal,
         candidato: nombre,
+        evaluador,
         url: fullUrl,
       });
-    } catch (err) {
-      alert("No se pudo registrar la visita. Intente nuevamente.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "No se pudo registrar la visita.";
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -112,10 +158,32 @@ export default function NuevaEntrevistaPage() {
 
   function generarMensajeWhatsApp(): string {
     if (!creada) return "";
-    const msg = `Estimado/a ${creada.candidato || "postulante"}, le saluda el equipo de Jerovia Consultora.\n\nPara avanzar con su proceso y coordinar el estudio socioambiental solicitado por ${creada.entidad}, le facilitamos el siguiente enlace seguro para completar sus datos preliminares:\n\n🔗 ${creada.url}\n\nQuedamos a su disposición.`;
+    const msg = `Estimado/a ${creada.candidato || "postulante"}, le saluda el equipo de Jerovia Consultora.\n\nPara coordinar el estudio socioambiental solicitado por ${creada.entidad}, le facilitamos el siguiente enlace seguro para registrar sus datos preliminares:\n\n🔗 ${creada.url}\n\nPerito a cargo: ${creada.evaluador}\nQuedamos a su disposición.`;
     const telLimpio = telefono.replace(/\D/g, "");
     const telParaguay = telLimpio.startsWith("595") ? telLimpio : `595${telLimpio.replace(/^0/, "")}`;
     return `https://wa.me/${telParaguay}?text=${encodeURIComponent(msg)}`;
+  }
+
+  if (permisoDenegado) {
+    return (
+      <div className="min-h-screen bg-base flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-3xl border border-red/30 bg-surface0 p-8 text-center space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-red/10 text-red flex items-center justify-center mx-auto">
+            <ShieldAlert className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold text-text">Acceso Restringido</h2>
+          <p className="text-xs text-subtext0 leading-relaxed">
+            Únicamente los usuarios con rol de <strong>Administrador General</strong> pueden generar nuevos enlaces de visitas y asignaciones.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-black"
+          >
+            ← Volver a mis visitas
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -137,7 +205,7 @@ export default function NuevaEntrevistaPage() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <span className="text-xs text-gold uppercase tracking-widest font-semibold hidden sm:inline">
-              Nueva Asignación
+              Emisión de Enlace
             </span>
           </div>
         </div>
@@ -153,7 +221,7 @@ export default function NuevaEntrevistaPage() {
               </div>
               <h1 className="text-3xl font-black text-text">Generar Nueva Visita</h1>
               <p className="text-sm text-subtext1 mt-1">
-                Registra los datos del postulante y la entidad solicitante para generar el acceso seguro de entrevista.
+                Registra los datos del postulante, la institución bancaria y el perito evaluador responsable.
               </p>
             </div>
 
@@ -223,16 +291,16 @@ export default function NuevaEntrevistaPage() {
                 </div>
               </div>
 
-              {/* Evaluador Responsable */}
+              {/* Perito Asignado (Jerarquía de usuarios) */}
               <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
                 <div className="flex items-center gap-2 text-text font-semibold text-sm">
                   <ShieldCheck className="h-4 w-4 text-gold" />
-                  <span>3. Perito / Evaluador Asignado</span>
+                  <span>3. Perito Evaluador Responsable</span>
                 </div>
 
-                <Input
-                  label="Profesional Responsable de Jerovia"
-                  placeholder="Ej: Michelle Romero"
+                <Select
+                  label="Asignar al Perito"
+                  options={evaluadoresList}
                   value={evaluador}
                   onChange={(e) => setEvaluador(e.target.value)}
                   required
@@ -266,9 +334,9 @@ export default function NuevaEntrevistaPage() {
                 <Check className="h-6 w-6 text-gold" />
               </div>
               <div>
-                <h2 className="text-2xl font-black text-text">¡Visita Asignada con Éxito!</h2>
+                <h2 className="text-2xl font-black text-text">¡Enlace de Visita Generado!</h2>
                 <p className="text-xs text-subtext0 mt-0.5">
-                  Se ha generado el token seguro e intransferible para {creada.candidato}.
+                  Token seguro asignado para {creada.candidato} bajo la supervisión de {creada.evaluador}.
                 </p>
               </div>
             </div>
@@ -288,15 +356,15 @@ export default function NuevaEntrevistaPage() {
                 <span className="font-semibold text-text">{ciudad}</span>
               </div>
               <div className="flex justify-between text-xs py-1">
-                <span className="text-subtext0">Evaluador Jerovia:</span>
-                <span className="font-semibold text-gold">{evaluador}</span>
+                <span className="text-subtext0">Perito Asignado:</span>
+                <span className="font-semibold text-gold">{creada.evaluador}</span>
               </div>
             </div>
 
             {/* Link Box */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-subtext0 uppercase tracking-wider">
-                Enlace Directo de la Visita
+                Enlace Directo para el Evaluador / Postulante
               </label>
               <div className="flex items-center gap-2 p-2 rounded-xl bg-base border border-overlay0/60">
                 <input
@@ -343,7 +411,7 @@ export default function NuevaEntrevistaPage() {
                 className="flex items-center justify-center gap-2 rounded-xl bg-gold hover:bg-gold-light text-black font-bold px-6 py-3.5 text-sm transition-all shadow-lg shadow-gold/20"
               >
                 <ExternalLink className="h-4 w-4" />
-                Iniciar Entrevista Ahora
+                Iniciar Evaluación
               </Link>
             </div>
 

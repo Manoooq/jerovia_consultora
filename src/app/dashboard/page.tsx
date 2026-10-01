@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -15,7 +16,7 @@ import { formatDate } from "@/lib/utils";
 import { 
   Plus, Search, FileText, Clock, CheckCircle, 
   AlertCircle, ArrowRight, BarChart3, ShieldCheck, 
-  Sparkles, X 
+  Users, X, ShieldAlert, UserCheck
 } from "lucide-react";
 
 interface EntrevistaItem {
@@ -23,9 +24,18 @@ interface EntrevistaItem {
   token: string;
   entidadSolicitante: string;
   candidatoNombre?: string;
+  evaluadorAsignado?: string;
   estado: "pendiente" | "en_progreso" | "completado";
   pasoActual: number;
   actualizadoEn: string;
+}
+
+interface CurrentUser {
+  userId: string;
+  username: string;
+  email: string;
+  name: string;
+  role: "admin" | "evaluador";
 }
 
 function estadoBadge(estado: string) {
@@ -40,29 +50,42 @@ function estadoIcon(estado: string) {
   return <AlertCircle className="h-4 w-4 text-subtext0" aria-hidden="true" />;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
+
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [entrevistas, setEntrevistas] = useState<EntrevistaItem[]>([]);
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<"todos" | "completado" | "en_progreso" | "pendiente">("todos");
 
   useEffect(() => {
-    // Carga de entrevistas con simulación de skeleton elegante
-    async function loadData() {
+    async function loadInitial() {
       try {
+        // Cargar usuario en sesión
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          setCurrentUser(meData.user);
+        }
+
+        // Cargar entrevistas permitidas para su rol
         const res = await fetch("/api/entrevista");
         if (res.ok) {
           const data = await res.json();
           setEntrevistas(data);
         }
       } catch (err) {
-        console.error("Error al cargar entrevistas:", err);
+        console.error("Error al cargar dashboard:", err);
       } finally {
-        setTimeout(() => setLoading(false), 350);
+        setTimeout(() => setLoading(false), 300);
       }
     }
-    loadData();
+    loadInitial();
   }, []);
+
+  const esAdmin = currentUser?.role === "admin";
 
   // Filtrado según Ley de Hick (reducción de carga cognitiva)
   const filtered = useMemo(() => {
@@ -70,7 +93,8 @@ export default function DashboardPage() {
       const matchSearch =
         !search ||
         (e.candidatoNombre || "").toLowerCase().includes(search.toLowerCase()) ||
-        e.entidadSolicitante.toLowerCase().includes(search.toLowerCase());
+        e.entidadSolicitante.toLowerCase().includes(search.toLowerCase()) ||
+        (e.evaluadorAsignado || "").toLowerCase().includes(search.toLowerCase());
       const matchEstado = filtroEstado === "todos" || e.estado === filtroEstado;
       return matchSearch && matchEstado;
     });
@@ -95,43 +119,90 @@ export default function DashboardPage() {
             </Link>
             <div className="hidden sm:block h-4 w-px bg-overlay0/50" />
             <span className="hidden sm:block text-xs text-subtext0 uppercase tracking-wider font-semibold">
-              Panel de Gestión
+              Panel Pericial
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <div className="h-4 w-px bg-overlay0/50 hidden sm:block" />
+            
+            {/* Si es Admin, enlace a administración de usuarios */}
+            {esAdmin && (
+              <Link
+                href="/dashboard/usuarios"
+                className="hidden sm:flex items-center gap-1.5 rounded-xl border border-overlay0/60 bg-surface1 px-3 py-2 text-xs font-semibold text-text hover:border-gold transition-colors"
+                title="Administrar usuarios y accesos"
+              >
+                <Users className="h-3.5 w-3.5 text-gold" />
+                <span>Usuarios</span>
+              </Link>
+            )}
+
             <LogoutButton />
-            <Link
-              href="/dashboard/nueva"
-              className="flex items-center gap-1.5 rounded-xl bg-gold px-3.5 py-2 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-md shadow-gold/20 focus-visible:ring-2 focus-visible:ring-gold"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              Nueva visita
-            </Link>
+
+            {/* Solo Administradores pueden generar nueva visita */}
+            {esAdmin ? (
+              <Link
+                href="/dashboard/nueva"
+                className="flex items-center gap-1.5 rounded-xl bg-gold px-3.5 py-2 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-md shadow-gold/20 focus-visible:ring-2 focus-visible:ring-gold"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Nueva visita
+              </Link>
+            ) : (
+              <span className="text-[11px] font-semibold text-subtext0 bg-surface1 px-3 py-1.5 rounded-xl border border-overlay0/40 hidden sm:inline-flex items-center gap-1">
+                <UserCheck className="h-3.5 w-3.5 text-blue" />
+                Evaluador de Campo
+              </span>
+            )}
           </div>
         </div>
       </nav>
 
       <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 py-8 outline-none">
-        {/* Banner de Administrador (Ley de Hick: información clara y tranquilizadora) */}
+        {/* Alerta de restricción si un evaluador intentó acceder a rutas protegidas */}
+        {errorParam === "unauthorized_role" && (
+          <div className="mb-6 p-4 rounded-2xl bg-red/10 border border-red/30 text-xs text-red font-semibold flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 shrink-0" />
+              <span>Acceso Restringido: Únicamente los usuarios administradores tienen permisos para emitir nuevos enlaces de evaluación o gestionar personal.</span>
+            </div>
+            <Link href="/dashboard" className="underline font-bold text-red hover:opacity-80">
+              Cerrar aviso
+            </Link>
+          </div>
+        )}
+
+        {/* Banner de Rol e Identidad (Ley de Hick: información clara y tranquilizadora) */}
         <div className="mb-6 rounded-2xl border border-gold/30 bg-gold/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-xl bg-gold/15 flex items-center justify-center text-gold">
-              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              {esAdmin ? (
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <UserCheck className="h-4 w-4" aria-hidden="true" />
+              )}
             </div>
             <div>
               <p className="text-xs font-bold text-text">
-                Sesión de Administrador: <span className="text-gold">Lic. Michelle Romero</span>
+                Sesión Activa:{" "}
+                <span className="text-gold">
+                  {currentUser?.name || "Cargando usuario..."}
+                </span>{" "}
+                <span className="text-subtext0 font-normal">
+                  ({esAdmin ? "Administrador General" : "Perito Evaluador"})
+                </span>
               </p>
               <p className="text-[11px] text-subtext0">
-                Permisos completos de peritaje, auditoría y emisión de informes
+                {esAdmin
+                  ? "Permisos totales: emisión de enlaces, asignación de peritos, auditoría y gestión de cuentas"
+                  : "Permisos de campo: completado de formularios asignados, georreferenciación y subida pericial"}
               </p>
             </div>
           </div>
           <span className="text-[11px] font-semibold bg-surface0 border border-overlay0/50 px-2.5 py-1 rounded-full text-subtext1 self-start sm:self-auto">
-            🟢 Modo Administrador Activo
+            {esAdmin ? "🟢 Modo Directivo" : "🔵 Visitas Asignadas"}
           </span>
         </div>
 
@@ -146,7 +217,9 @@ export default function DashboardPage() {
                 day: "numeric",
               })}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-black text-text">Visitas Socioambientales</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-text">
+              {esAdmin ? "Auditoría de Visitas Socioambientales" : "Mis Visitas Asignadas"}
+            </h1>
           </div>
 
           {/* Búsqueda minimalista */}
@@ -154,8 +227,8 @@ export default function DashboardPage() {
             <Search className="h-3.5 w-3.5 text-subtext0" aria-hidden="true" />
             <input
               type="text"
-              aria-label="Buscar visitas por postulante o institución"
-              placeholder="Buscar postulante o banco..."
+              aria-label="Buscar visitas por postulante, institución o evaluador"
+              placeholder="Buscar postulante o entidad..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent text-xs text-text placeholder:text-subtext0 outline-none w-full font-medium"
@@ -185,7 +258,7 @@ export default function DashboardPage() {
           ) : (
             [
               {
-                label: "Total Asignadas",
+                label: esAdmin ? "Total Asignadas" : "Mis Asignadas",
                 value: stats.total,
                 icon: FileText,
                 color: "text-gold",
@@ -264,14 +337,20 @@ export default function DashboardPage() {
               <FileText className="h-10 w-10 text-subtext0 mb-3" aria-hidden="true" />
               <h3 className="font-bold text-text mb-1 text-sm">Sin visitas encontradas</h3>
               <p className="text-xs text-subtext0 mb-4">
-                {search ? "No hay resultados para la búsqueda actual." : "Crea una nueva visita para comenzar."}
+                {search
+                  ? "No hay resultados para la búsqueda actual."
+                  : esAdmin
+                  ? "Crea una nueva visita para comenzar la asignación."
+                  : "No tienes visitas asignadas en este momento."}
               </p>
-              <Link
-                href="/dashboard/nueva"
-                className="flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-bold text-black"
-              >
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Nueva entrevista
-              </Link>
+              {esAdmin && (
+                <Link
+                  href="/dashboard/nueva"
+                  className="flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-bold text-black"
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Nueva entrevista
+                </Link>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-overlay0/20" role="list">
@@ -279,23 +358,31 @@ export default function DashboardPage() {
                 <div
                   key={e.id}
                   role="listitem"
-                  className="flex items-center gap-4 px-6 py-3.5 hover:bg-surface1 transition-colors group"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 hover:bg-surface1 transition-colors group"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface1">
-                    {estadoIcon(e.estado)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-bold text-text text-sm truncate">
-                        {e.candidatoNombre || "Postulante sin nombre registrado"}
-                      </p>
-                      {estadoBadge(e.estado)}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface1">
+                      {estadoIcon(e.estado)}
                     </div>
-                    <p className="text-xs text-subtext0 font-medium">
-                      {e.entidadSolicitante} · Módulo {e.pasoActual} de 9 · {formatDate(e.actualizadoEn.slice(0, 10))}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-bold text-text text-sm truncate">
+                          {e.candidatoNombre || "Postulante sin nombre registrado"}
+                        </p>
+                        {estadoBadge(e.estado)}
+                      </div>
+                      <p className="text-xs text-subtext0 font-medium">
+                        {e.entidadSolicitante} · Módulo {e.pasoActual} de 9
+                        {e.evaluadorAsignado && (
+                          <span className="ml-1 text-gold">· Perito: {e.evaluadorAsignado}</span>
+                        )}
+                        {" · "}
+                        {formatDate(e.actualizadoEn.slice(0, 10))}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+
+                  <div className="flex items-center gap-4 shrink-0 self-end sm:self-center">
                     <div className="hidden sm:flex flex-col items-end gap-1">
                       <span className="text-[11px] text-gold font-bold">
                         {Math.round(((e.pasoActual - 1) / 8) * 100)}%
@@ -325,7 +412,7 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-overlay0/40 bg-surface0 p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="h-4 w-4 text-gold" aria-hidden="true" />
-            <h3 className="font-bold text-text text-sm">Frecuencia de Actividad</h3>
+            <h3 className="font-bold text-text text-sm">Frecuencia de Actividad Pericial</h3>
             <span className="ml-auto text-[11px] font-semibold text-subtext0">Últimos 30 días</span>
           </div>
           {loading ? (
@@ -352,5 +439,13 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-base p-8 animate-pulse" />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

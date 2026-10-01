@@ -6,6 +6,8 @@ export interface EntrevistaRecord {
   token: string;
   entidadSolicitante: string;
   candidatoNombre?: string;
+  evaluadorAsignado?: string;
+  creadoPor?: string;
   estado: "pendiente" | "en_progreso" | "completado";
   pasoActual: number;
   datos: Partial<FormularioCompleto>;
@@ -17,11 +19,18 @@ export interface EntrevistaRecord {
 // Almacenamiento en memoria para el prototipo (sustituir por DB en producción)
 const store = new Map<string, EntrevistaRecord>();
 
-export function crearEntrevista(entidadSolicitante: string, token: string): EntrevistaRecord {
+export function crearEntrevista(
+  entidadSolicitante: string,
+  token: string,
+  evaluadorAsignado = "Lic. Michelle Romero",
+  creadoPor = "admin"
+): EntrevistaRecord {
   const record: EntrevistaRecord = {
     id: crypto.randomUUID(),
     token,
     entidadSolicitante,
+    evaluadorAsignado,
+    creadoPor,
     estado: "pendiente",
     pasoActual: 1,
     datos: {},
@@ -51,16 +60,36 @@ export function listarEntrevistas(): EntrevistaRecord[] {
   );
 }
 
+export function listarEntrevistasPorEvaluador(evaluadorNombre: string): EntrevistaRecord[] {
+  const clean = evaluadorNombre.toLowerCase().trim();
+  return listarEntrevistas().filter((e) => (e.evaluadorAsignado || "").toLowerCase().trim() === clean);
+}
+
 // Seed con datos de ejemplo para el dashboard
 function seedDemo() {
   const ejemplos = [
-    { nombre: "Tobias Maximiliano Sánchez", entidad: "Banco Continental", estado: "completado" as const },
-    { nombre: "María Fernanda López", entidad: "Banco Continental", estado: "en_progreso" as const },
-    { nombre: "Carlos Rodríguez Vera", entidad: "Cooperativa Universitaria", estado: "pendiente" as const },
+    {
+      nombre: "Tobias Maximiliano Sánchez",
+      entidad: "Banco Continental",
+      estado: "completado" as const,
+      evaluador: "Lic. Michelle Romero",
+    },
+    {
+      nombre: "María Fernanda López",
+      entidad: "Banco Continental",
+      estado: "en_progreso" as const,
+      evaluador: "Lic. Carlos Benítez",
+    },
+    {
+      nombre: "Carlos Rodríguez Vera",
+      entidad: "Cooperativa Universitaria",
+      estado: "pendiente" as const,
+      evaluador: "Lic. Michelle Romero",
+    },
   ];
   ejemplos.forEach((e) => {
     const token = Math.random().toString(36).slice(2, 18);
-    const record = crearEntrevista(e.entidad, token);
+    const record = crearEntrevista(e.entidad, token, e.evaluador, "admin");
     actualizarEntrevista(token, {
       candidatoNombre: e.nombre,
       estado: e.estado,

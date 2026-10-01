@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { removeSession, getSession } from "@/lib/auth";
-
-export async function POST() {
-  await removeSession();
-  return NextResponse.json({ success: true });
-}
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
   const session = await getSession();
+
   if (!session) {
-    return NextResponse.json({ authenticated: false }, { status: 401 });
+    return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
 
   return NextResponse.json({
