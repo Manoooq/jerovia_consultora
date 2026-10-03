@@ -5,74 +5,26 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 import { HeroProductShowcase } from "@/components/HeroProductShowcase";
-import { WorkflowStepper } from "@/components/WorkflowStepper";
 import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
 import {
   ShieldCheck, MapPin, Building2, Scale,
-  FileCheck, FileText, Check, ChevronRight,
-  Lock, EyeOff, Layers, Download, CheckCircle2,
-  PhoneCall, Zap, Compass, Calculator
+  ChevronRight, Lock, EyeOff, Layers, Zap,
+  CheckCircle2
 } from "lucide-react";
-
-const EJES_PERICIALES = [
-  {
-    num: "01",
-    icon: Scale,
-    title: "Constatación Habitacional In Situ",
-    desc: "Inspección ocular presencial en el domicilio. Verificación de mampostería, techo de tejas o losa, pisos, cerramiento perimetral y estado de conservación del inmueble.",
-    tag: "Relevamiento Físico",
-  },
-  {
-    num: "02",
-    icon: Zap,
-    title: "Cotejo de Medidor y NIS de la ANDE",
-    desc: "Lectura y fotografía del medidor eléctrico oficial, verificación de NIS, titularidad del suministro y contraste con facturas de ESSAP o juntas de saneamiento locales.",
-    tag: "Suministros Básicos",
-  },
-  {
-    num: "03",
-    icon: FileCheck,
-    title: "Cruce de Solvencia y Nivel de Vida",
-    desc: "Análisis técnico de coherencia entre los ingresos declarados (formales en IPS o independientes) frente a la carga fija observable: alquiler, vehículos y personas a cargo.",
-    tag: "Capacidad de Pago",
-  },
-  {
-    num: "04",
-    icon: MapPin,
-    title: "Georreferenciación Satelital y Plus Code",
-    desc: "Fijación de coordenadas GPS inalterables en la puerta de acceso y código Plus Code satelital para asegurar la presencia física efectiva del perito en el inmueble.",
-    tag: "Acreditación GPS",
-  },
-  {
-    num: "05",
-    icon: PhoneCall,
-    title: "Referencias Vecinales y de Entorno",
-    desc: "Consulta discreta con vecinos de linderos sobre arraigo, antigüedad de residencia en la cuadra, concepto vecinal y características de seguridad del barrio.",
-    tag: "Arraigo Territorial",
-  },
-  {
-    num: "06",
-    icon: Layers,
-    title: "Dictamen Técnico para Comité de Crédito",
-    desc: "Resolución formal fundamentada (Favorable, Favorable con Observaciones o Desfavorable) con firma y número de registro profesional de la perito evaluadora.",
-    tag: "Resolución Ejecutiva",
-  },
-];
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-base text-text selection:bg-gold/30 selection:text-gold">
       {/* ══ BARRA SUPERIOR INSTITUCIONAL ══ */}
-      <nav aria-label="Navegación institucional" className="fixed top-0 left-0 right-0 z-50 border-b border-overlay0/40 bg-mantle/95 backdrop-blur-md">
+      <nav aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 border-b border-overlay0/40 bg-mantle/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo size="md" />
 
-          <div className="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
+          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
             <a href="#showcase" className="hover:text-text transition-colors">Plataforma</a>
-            <a href="#metodologia" className="hover:text-text transition-colors">6 Dimensiones</a>
-            <a href="#workflow" className="hover:text-text transition-colors">Flujo de Trabajo</a>
-            <a href="#simulador" className="hover:text-text transition-colors">Simulador Aranceles</a>
+            <a href="#claves" className="hover:text-text transition-colors">Metodología</a>
+            <a href="#simulador" className="hover:text-text transition-colors">Aranceles</a>
             <a href="#cobertura" className="hover:text-text transition-colors">Cobertura País</a>
           </div>
 
@@ -89,200 +41,173 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ══ HERO PRINCIPAL: PRODUCT-AS-THE-HERO ESTILO STRIPE / LINEAR ══ */}
+      {/* ══ HERO CONCISO: MÁXIMA ESCANABILIDAD (LEY DE HICK) ══ */}
       <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
-        <div className="max-w-7xl mx-auto space-y-12">
+        <div className="max-w-7xl mx-auto space-y-10">
           
-          {/* Cabecera Editorial con Jerarquía Tipográfica Suiza */}
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-semibold text-gold mb-5">
+          <div className="max-w-3xl space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold">
               <Building2 className="h-3.5 w-3.5" />
-              <span>Peritajes Socioambientales y Verificación Domiciliaria · Asunción, Paraguay</span>
+              <span>Peritajes Socioambientales · Asunción, Paraguay</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-text mb-6">
-              Informes socioambientales y verificación domiciliaria para comités de crédito en Paraguay.
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-text">
+              Verificación domiciliaria y peritajes para comités de crédito.
             </h1>
 
-            <p className="text-base sm:text-lg text-subtext0 leading-relaxed font-normal mb-8">
-              Constatamos in situ la residencia efectiva, solvencia real y entorno familiar de postulantes a préstamos o cargos de confianza. Entregamos un legajo pericial en 5 láminas ejecutivas (.pptx y PDF) estandarizado para carpetas de análisis de riesgo.
+            <p className="text-base sm:text-lg text-subtext0 leading-relaxed font-normal">
+              Constatamos in situ la residencia efectiva, solvencia declarada y referencias vecinales. Emitimos el legajo en 5 láminas ejecutivas (.pptx y PDF) estandarizado para carpetas bancarias.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <Link
                 href="/entrevista/demo"
-                className="group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3.5 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/20"
+                className="group flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-md"
               >
-                <span>Explorar Formulario Pericial</span>
+                <span>Explorar Formulario Demo</span>
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/login"
-                className="flex items-center justify-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-7 py-3.5 text-sm font-semibold text-text hover:bg-surface2 transition-all"
+                className="flex items-center justify-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-6 py-3 text-sm font-semibold text-text hover:bg-surface2 transition-all"
               >
                 <Lock className="h-4 w-4 text-subtext0" />
                 <span>Portal de Evaluadores</span>
               </Link>
             </div>
 
-            {/* Sellos de Estándar Operativo Real */}
-            <div className="mt-10 pt-6 border-t border-overlay0/30 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-medium text-subtext0">
-              <div className="flex items-center gap-2">
+            {/* Sellos de Estándar */}
+            <div className="pt-4 border-t border-overlay0/30 flex flex-wrap items-center gap-6 text-xs text-subtext0 font-medium">
+              <span className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
-                <span>Peritos con Registro Homologado</span>
-              </div>
-              <div className="flex items-center gap-2">
+                <span>Matrícula Pericial N° 4.819</span>
+              </span>
+              <span className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4 text-gold shrink-0" />
-                <span>Georreferenciación Satelital GPS</span>
-              </div>
-              <div className="flex items-center gap-2">
+                <span>Georreferenciación GPS</span>
+              </span>
+              <span className="flex items-center gap-1.5">
                 <EyeOff className="h-4 w-4 text-gold shrink-0" />
                 <span>Reserva Confidencial Ley N° 1682/01</span>
-              </div>
+              </span>
             </div>
           </div>
 
-          {/* ══ PRODUCT AS THE HERO: SIMULADOR OPERATIVO DE 3 LENTES ══ */}
-          <section id="showcase" className="pt-2">
+          {/* ══ PRODUCTO INTERACTIVO: SIMULADOR DE 3 LENTES ══ */}
+          <section id="showcase">
             <HeroProductShowcase />
           </section>
 
         </div>
       </main>
 
-      {/* ══ METODOLOGÍA PERICIAL: LOS 6 EJES DE INSPECCIÓN ══ */}
-      <section id="metodologia" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
-        <div className="max-w-7xl mx-auto space-y-12">
+      {/* ══ LAS 3 CLAVES DEL RELEVAMIENTO (SIN TEXTO DE MÁS) ══ */}
+      <section id="claves" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
+        <div className="max-w-7xl mx-auto space-y-8">
           
-          <div className="max-w-2xl">
-            <span className="text-xs font-mono font-bold text-gold uppercase tracking-wider">
-              Protocolo Técnico In Situ
+          <div className="max-w-xl">
+            <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider">
+              Metodología In Situ
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-text tracking-tight mt-1">
-              Las 6 dimensiones de la auditoría socioambiental
+            <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight mt-0.5">
+              Tres pilares de certeza probatoria
             </h2>
-            <p className="text-sm text-subtext0 mt-2 leading-relaxed">
-              Un relevamiento objetivo que elimina la discrecionalidad y proporciona al analista de crédito una fotografía exacta de la situación patrimonial y del entorno del candidato.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {EJES_PERICIALES.map((eje) => (
-              <div
-                key={eje.num}
-                className="p-6 rounded-3xl border border-overlay0/40 bg-surface0 shadow-sm flex flex-col justify-between hover:border-gold/40 transition-colors"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-black font-mono text-gold opacity-80">{eje.num}</span>
-                    <span className="text-[10px] font-mono text-subtext0 bg-surface1 px-2.5 py-0.5 rounded-full border border-overlay0/30 font-semibold">
-                      {eje.tag}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-text text-base mb-2">{eje.title}</h3>
-                  <p className="text-xs text-subtext0 leading-relaxed">{eje.desc}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Pilar 1 */}
+            <div className="p-6 rounded-3xl border border-overlay0/40 bg-surface0 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="h-9 w-9 rounded-xl bg-gold/10 text-gold flex items-center justify-center">
+                  <Zap className="h-4 w-4" />
                 </div>
-
-                <div className="mt-6 pt-3 border-t border-overlay0/20 flex items-center gap-1.5 text-[11px] text-green font-semibold">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>Verificado en campo por el evaluador</span>
-                </div>
+                <span className="font-mono text-[10px] text-subtext0 font-bold">01 / Inmueble</span>
               </div>
-            ))}
+              <h3 className="font-bold text-base text-text">Vivienda y Medidor ANDE</h3>
+              <p className="text-xs text-subtext0 leading-relaxed">
+                Inspección ocular de mampostería, techo de tejas, linderos y cotejo del número de NIS del medidor eléctrico oficial.
+              </p>
+              <div className="pt-2 flex items-center gap-1.5 text-[11px] text-green font-semibold">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Presencia física garantizada</span>
+              </div>
+            </div>
+
+            {/* Pilar 2 */}
+            <div className="p-6 rounded-3xl border border-overlay0/40 bg-surface0 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="h-9 w-9 rounded-xl bg-blue/10 text-blue flex items-center justify-center">
+                  <Scale className="h-4 w-4" />
+                </div>
+                <span className="font-mono text-[10px] text-subtext0 font-bold">02 / Solvencia</span>
+              </div>
+              <h3 className="font-bold text-base text-text">Consistencia Financiera</h3>
+              <p className="text-xs text-subtext0 leading-relaxed">
+                Cálculo de relación entre ingresos familiares declarados (formales en IPS o independientes) frente a alquiler y pasivos fijos.
+              </p>
+              <div className="pt-2 flex items-center gap-1.5 text-[11px] text-green font-semibold">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Detección de alertas de riesgo</span>
+              </div>
+            </div>
+
+            {/* Pilar 3 */}
+            <div className="p-6 rounded-3xl border border-overlay0/40 bg-surface0 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="h-9 w-9 rounded-xl bg-green/10 text-green flex items-center justify-center">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <span className="font-mono text-[10px] text-subtext0 font-bold">03 / Entrega</span>
+              </div>
+              <h3 className="font-bold text-base text-text">Legajo de 5 Láminas</h3>
+              <p className="text-xs text-subtext0 leading-relaxed">
+                Informe ejecutivo en PowerPoint (.pptx editable) y PDF con dictamen concluyente firmado para resolución de comité.
+              </p>
+              <div className="pt-2 flex items-center gap-1.5 text-[11px] text-green font-semibold">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Listo para carpeta de crédito</span>
+              </div>
+            </div>
           </div>
 
         </div>
       </section>
 
-      {/* ══ FLUJO DE TRABAJO EN 5 FASES ESTILO LINEAR / STRIPE ══ */}
-      <section id="workflow" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
-        <div className="max-w-7xl mx-auto">
-          <WorkflowStepper />
-        </div>
-      </section>
-
-      {/* ══ SIMULADOR DE ARANCELES Y PLAZOS B2B (COPIA DE PRESUPUESTO) ══ */}
-      <section id="simulador" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
+      {/* ══ SIMULADOR DE ARANCELES (COMPACTO) ══ */}
+      <section id="simulador" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
         <div className="max-w-7xl mx-auto">
           <PeritajeCalculator />
         </div>
       </section>
 
-      {/* ══ COBERTURA TERRITORIAL: MAPA VECTORIAL DE PARAGUAY ══ */}
-      <section id="cobertura" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
-        <div className="max-w-7xl mx-auto space-y-8">
-          
-          <div className="max-w-2xl">
-            <span className="text-xs font-mono font-bold text-gold uppercase tracking-wider">
-              Despliegue Operativo
+      {/* ══ COBERTURA TERRITORIAL PARAGUAY ══ */}
+      <section id="cobertura" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-xl">
+            <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider">
+              Despliegue Territorial
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-text tracking-tight mt-1">
-              Cobertura Nacional con Peritos en Territorio
+            <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight mt-0.5">
+              Cobertura en los principales polos del país
             </h2>
-            <p className="text-sm text-subtext0 mt-2 leading-relaxed">
-              Equipos de inspección con movilidad propia en los polos urbanos e industriales clave de la República del Paraguay.
-            </p>
           </div>
 
-          {/* Componente de Mapa Vectorial de Paraguay */}
           <ParaguayOperationalMap />
-
         </div>
       </section>
 
-      {/* ══ ENTREGABLE FINAL Y DESCARGA ══ */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="rounded-3xl border border-overlay0/50 bg-surface0 p-8 sm:p-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="max-w-2xl space-y-3">
-              <span className="text-xs font-mono font-bold text-gold uppercase tracking-wider">
-                Estandarización de Informes
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-text">
-                Legajos listos para la carpeta del Comité de Crédito
-              </h2>
-              <p className="text-xs sm:text-sm text-subtext0 leading-relaxed">
-                Cada expediente genera de forma inmediata la presentación oficial en formato PowerPoint (.pptx editable) con la identidad institucional y la síntesis pericial, además del archivo PDF con cadena de custodia.
-              </p>
-              <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-mono text-subtext1">
-                <span>• 5 Diapositivas 16:9</span>
-                <span>• Exportación en 1 Clic</span>
-                <span>• Sello y Matrícula Pericial</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-              <Link
-                href="/entrevista/demo"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gold text-black font-bold text-xs hover:bg-gold-light transition-all shadow-md text-center"
-              >
-                Abrir Formulario de Muestra
-              </Link>
-              <Link
-                href="/login"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-overlay0/60 bg-surface1 text-text font-bold text-xs hover:bg-surface2 transition-all text-center"
-              >
-                Iniciar Sesión
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ PIE DE PÁGINA INSTITUCIONAL ══ */}
-      <footer className="border-t border-overlay0/30 py-10 bg-mantle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col items-center md:items-start gap-1">
+      {/* ══ PIE DE PÁGINA SOBRIO Y ELEGANTE ══ */}
+      <footer className="border-t border-overlay0/30 py-8 bg-mantle">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext0">
+          <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <p className="text-[11px] text-subtext0 mt-1">
-              Jerovia Consultora · Evaluaciones Socioambientales y de Confiabilidad · Asunción, Paraguay
-            </p>
+            <span>· Peritajes Socioambientales · Asunción, Paraguay</span>
           </div>
 
-          <div className="flex items-center gap-6 text-xs font-semibold text-subtext0">
-            <Link href="/login" className="hover:text-text transition-colors">Portal de Acceso</Link>
+          <div className="flex items-center gap-6 font-semibold">
+            <Link href="/login" className="hover:text-text transition-colors">Portal Pericial</Link>
             <Link href="/entrevista/demo" className="hover:text-text transition-colors">Formulario Demo</Link>
-            <span className="text-subtext0/60">© 2026 Jerovia Consultora</span>
+            <span className="text-subtext0/60 font-mono">© 2026 Jerovia Consultora</span>
           </div>
         </div>
       </footer>
