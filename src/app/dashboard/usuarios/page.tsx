@@ -12,7 +12,7 @@ import {
   ArrowLeft, UserPlus, Users, Shield, UserCheck, 
   Trash2, Power, CheckCircle, X, ShieldAlert,
   Key, Edit3, Search, History, RefreshCw, Copy, Check,
-  Clock, ShieldCheck, Lock
+  Clock, ShieldCheck, Lock, FileText
 } from "lucide-react";
 
 interface SafeUser {
@@ -629,22 +629,53 @@ export default function UsuariosPage() {
         {/* ══ PESTAÑA 2: BITÁCORA DE AUDITORÍA DE SEGURIDAD ══ */}
         {tab === "auditoria" && (
           <div className="rounded-3xl border border-overlay0/40 bg-surface0 overflow-hidden shadow-sm space-y-4 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-overlay0/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0/30">
               <div>
                 <h2 className="font-bold text-base text-text">Trazabilidad de Operaciones de Seguridad</h2>
                 <p className="text-xs text-subtext0 mt-0.5">
                   Registro inalterable de ingresos, modificaciones de personal, emisión de peritajes y cambios de clave.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={loadAudit}
-                disabled={auditLoading}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors"
-              >
-                <RefreshCw className={`h-3 w-3 ${auditLoading ? "animate-spin" : ""}`} />
-                <span>Actualizar</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const headers = ["ID", "Fecha_Hora", "Usuario", "Rol", "Accion", "Detalle", "IP"];
+                    const rows = auditLogs.map((log) => [
+                      log.id,
+                      log.timestamp,
+                      `"${log.userName.replace(/"/g, '""')}"`,
+                      log.userRole,
+                      log.action,
+                      `"${log.detail.replace(/"/g, '""')}"`,
+                      log.ip || "127.0.0.1",
+                    ]);
+                    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+                    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", `auditoria_jerovia_${new Date().toISOString().slice(0, 10)}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
+                >
+                  <FileText className="h-3 w-3" />
+                  <span>Descargar CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadAudit}
+                  disabled={auditLoading}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors"
+                >
+                  <RefreshCw className={`h-3 w-3 ${auditLoading ? "animate-spin" : ""}`} />
+                  <span>Actualizar</span>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">

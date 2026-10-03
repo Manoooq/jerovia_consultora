@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { DossierInteractiveViewer } from "@/components/DossierInteractiveViewer";
+import { CommandPalette } from "@/components/CommandPalette";
+import { HeroProductShowcase } from "@/components/HeroProductShowcase";
+import { WorkflowStepper } from "@/components/WorkflowStepper";
+import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
 import {
   ShieldCheck, MapPin, Building2, Scale,
   FileCheck, FileText, Check, ChevronRight,
   Lock, EyeOff, Layers, Download, CheckCircle2,
-  PhoneCall, Zap, Compass
+  PhoneCall, Zap, Compass, Calculator
 } from "lucide-react";
 
 const EJES_PERICIALES = [
@@ -65,30 +68,33 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo size="md" />
 
-          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
-            <a href="#dossier" className="hover:text-text transition-colors">Legajo de 5 Láminas</a>
-            <a href="#metodologia" className="hover:text-text transition-colors">Metodología Pericial</a>
+          <div className="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
+            <a href="#showcase" className="hover:text-text transition-colors">Plataforma</a>
+            <a href="#metodologia" className="hover:text-text transition-colors">6 Dimensiones</a>
+            <a href="#workflow" className="hover:text-text transition-colors">Flujo de Trabajo</a>
+            <a href="#simulador" className="hover:text-text transition-colors">Simulador Aranceles</a>
             <a href="#cobertura" className="hover:text-text transition-colors">Cobertura País</a>
           </div>
 
           <div className="flex items-center gap-3">
+            <CommandPalette />
             <ThemeToggle />
             <Link
               href="/login"
               className="rounded-xl border border-gold/40 bg-surface1 px-4 py-2 text-xs font-bold text-text hover:border-gold hover:text-gold transition-all shadow-sm"
             >
-              Acceso a Expedientes
+              Portal Pericial
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* ══ HERO PRINCIPAL: RIGOR EDITORIAL Y VISOR REAL DE EXPEDIENTE ══ */}
+      {/* ══ HERO PRINCIPAL: PRODUCT-AS-THE-HERO ESTILO STRIPE / LINEAR ══ */}
       <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-12">
           
-          {/* Cabecera Editorial */}
-          <div className="max-w-3xl mb-12">
+          {/* Cabecera Editorial con Jerarquía Tipográfica Suiza */}
+          <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-semibold text-gold mb-5">
               <Building2 className="h-3.5 w-3.5" />
               <span>Peritajes Socioambientales y Verificación Domiciliaria · Asunción, Paraguay</span>
@@ -136,23 +142,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ══ VISOR DEL LEGAJO OFICIAL DE 5 LÁMINAS (REEMPLAZO DE FOTOS IA) ══ */}
-          <section id="dossier" className="pt-4">
-            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <span className="text-xs font-mono font-bold text-gold uppercase tracking-wider">
-                  Muestra Interactiva de Legajo
-                </span>
-                <h2 className="text-lg font-black text-text">
-                  Estructura Oficial del Informe de 5 Láminas para Directorio
-                </h2>
-              </div>
-              <p className="text-xs text-subtext0">
-                Navega por las 5 láminas para examinar los datos técnicos presentados al comité evaluador.
-              </p>
-            </div>
-
-            <DossierInteractiveViewer />
+          {/* ══ PRODUCT AS THE HERO: SIMULADOR OPERATIVO DE 3 LENTES ══ */}
+          <section id="showcase" className="pt-2">
+            <HeroProductShowcase />
           </section>
 
         </div>
@@ -199,6 +191,20 @@ export default function LandingPage() {
             ))}
           </div>
 
+        </div>
+      </section>
+
+      {/* ══ FLUJO DE TRABAJO EN 5 FASES ESTILO LINEAR / STRIPE ══ */}
+      <section id="workflow" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
+        <div className="max-w-7xl mx-auto">
+          <WorkflowStepper />
+        </div>
+      </section>
+
+      {/* ══ SIMULADOR DE ARANCELES Y PLAZOS B2B (COPIA DE PRESUPUESTO) ══ */}
+      <section id="simulador" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
+        <div className="max-w-7xl mx-auto">
+          <PeritajeCalculator />
         </div>
       </section>
 
