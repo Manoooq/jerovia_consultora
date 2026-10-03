@@ -3,54 +3,56 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
+import { Radar3D } from "@/components/ui/Radar3D";
 import {
   ArrowRight, Shield, MapPin, Building2, Scale,
   FileCheck, FileText, Check, ChevronRight,
   ShieldCheck, Lock, CheckCircle2,
-  Compass, EyeOff, Layers, Download
+  Compass, EyeOff, Layers, Download, Sparkles,
+  Zap, Database, Cpu
 } from "lucide-react";
 
 const SERVICIOS_PERICIALES = [
   {
     icon: Scale,
     title: "Auditoría Socioambiental y Domiciliaria",
-    desc: "Peritaje presencial en 9 dimensiones: composición familiar, condiciones habitacionales, solvencia económica y entorno vecinal en Paraguay.",
+    desc: "Peritaje presencial en 9 dimensiones: composición familiar, solvencia económica, entorno habitacional y referencias vecinales en Paraguay.",
+    tag: "9 Módulos Normados",
   },
   {
     icon: FileCheck,
-    title: "Validación de Consistencia y Dictamen",
+    title: "Validación Algorítmica de Consistencia",
     desc: "Cruce riguroso de ingresos contra egresos, alquiler y tenencia de vivienda para advertir inconsistencias antes de elevar el informe al comité.",
+    tag: "Cero Inconsistencias",
   },
   {
     icon: MapPin,
     title: "Georreferenciación Notarial y Plus Code",
     desc: "Certificación satelital de visita en el domicilio exacto con coordenadas GPS validadas en campo y registro fotográfico de fachadas y accesos.",
+    tag: "GPS Satelital",
   },
   {
     icon: FileText,
     title: "Legajos Ejecutivos en PPTX y PDF",
     desc: "Generación instantánea del informe corporativo con el formato oficial de 5 láminas, listo para la toma de decisiones en comités de crédito y RRHH.",
+    tag: "5 Láminas Oficiales",
   },
   {
     icon: Shield,
     title: "Cadena de Custodia y Secreto Bancario",
     desc: "Acceso protegido por token criptográfico único. Ningún dato sensible queda indexado públicamente cumpliendo normas de confidencialidad.",
+    tag: "Token Criptográfico",
   },
   {
     icon: Layers,
     title: "Dictamen Pericial con Respaldo Técnico",
     desc: "Conclusión categórica firmada por peritos evaluadores homologados: Favorable, Favorable con Observaciones o Desfavorable.",
+    tag: "Firma Pericial",
   },
-];
-
-const COBERTURA_TERRITORIAL = [
-  { zona: "Gran Asunción y Capital", tasa: "Respuesta en < 24hs", status: "Activo" },
-  { zona: "Departamento Central (Luque, San Lorenzo, Lambaré)", tasa: "Respuesta en < 24hs", status: "Activo" },
-  { zona: "Alto Paraná (Ciudad del Este, Hernandarias)", tasa: "Cobertura semanal", status: "Activo" },
-  { zona: "Itapúa (Encarnación, Colonias Unidas)", tasa: "Cobertura coordinada", status: "Activo" },
 ];
 
 const SLIDES_MOCK = [
@@ -90,16 +92,17 @@ export default function LandingPage() {
   const [activeSlide, setActiveSlide] = useState(0);
 
   return (
-    <div className="min-h-screen bg-base overflow-hidden text-text">
+    <div className="min-h-screen bg-base overflow-hidden text-text selection:bg-gold/30 selection:text-gold">
       {/* ══ BARRA SUPERIOR INSTITUCIONAL ══ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-overlay0/40 bg-mantle/90 backdrop-blur-xl">
+      <nav aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 border-b border-overlay0/40 bg-mantle/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo size="md" />
 
           <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
+            <a href="#bento" className="hover:text-text transition-colors">Innovación</a>
             <a href="#servicios" className="hover:text-text transition-colors">Peritajes</a>
-            <a href="#metodologia" className="hover:text-text transition-colors">Estructura del Informe</a>
-            <a href="#cobertura" className="hover:text-text transition-colors">Cobertura País</a>
+            <a href="#metodologia" className="hover:text-text transition-colors">Informe 5 Láminas</a>
+            <a href="#radar" className="hover:text-text transition-colors">Geo-Radar 3D</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -115,9 +118,9 @@ export default function LandingPage() {
       </nav>
 
       {/* ══ HERO PRINCIPAL CON IMAGEN CORPORATIVA Y MOVIMIENTO VIVO ══ */}
-      <main id="main-content" tabIndex={-1} className="relative pt-28 pb-20 px-4 sm:px-6 lg:px-8 outline-none">
-        {/* Fondo sutil con brillo tenue */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gold/5 blur-[140px] pointer-events-none rounded-full" />
+      <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
+        {/* Luces difusas de fondo */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[380px] bg-gold/5 blur-[150px] pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
@@ -134,13 +137,13 @@ export default function LandingPage() {
                 <span>Auditoría Socioambiental y de Confiabilidad · Paraguay</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6">
                 Evaluaciones socioambientales con{" "}
                 <span className="text-gold">rigor pericial</span> y reserva absoluta.
               </h1>
 
               <p className="text-base sm:text-lg text-subtext0 leading-relaxed mb-8 max-w-xl font-normal">
-                Digitalizamos el ciclo integral de verificación domiciliaria y laboral para entidades financieras e industrias. Desde la captura georreferenciada en campo hasta la emisión del dictamen oficial en 5 láminas ejecutivas.
+                Digitalizamos el ciclo integral de verificación domiciliaria y laboral para entidades financieras e industrias. Desde la captura satelital en campo hasta la emisión del dictamen oficial en 5 láminas ejecutivas.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3.5">
@@ -177,22 +180,21 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Columna Derecha: Imagen Corporativa Viva y Tarjeta Discreta */}
+            {/* Columna Derecha: Spotlight Card con Fotografía Arquitectónica Viva */}
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, delay: 0.15 }}
-              className="lg:col-span-5 relative"
+              className="lg:col-span-5"
             >
-              {/* Contenedor con fotografía arquitectónica de alta gama */}
-              <div className="relative rounded-3xl overflow-hidden border border-overlay0/60 shadow-2xl bg-surface0 group">
+              <SpotlightCard className="p-0 overflow-hidden border border-overlay0/60 shadow-2xl bg-surface0">
                 <div className="relative h-64 sm:h-72 w-full">
                   <Image
                     src="/hero-corporate.jpg"
                     alt="Sede corporativa y pericial"
                     fill
                     priority
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="object-cover transition-transform duration-700 hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-surface0 via-surface0/60 to-transparent" />
                   
@@ -246,14 +248,139 @@ export default function LandingPage() {
                     </Link>
                   </div>
                 </div>
-              </div>
+              </SpotlightCard>
             </motion.div>
 
           </div>
         </div>
       </main>
 
-      {/* ══ SECCIÓN INTERACTIVA: LÁMINAS DEL INFORME OFICIAL (CON MOVIMIENTO) ══ */}
+      {/* ══ BENTO GRID DE ALTA INGENIERÍA PERICIAL (ORIGIN UI / BENTO 2026) ══ */}
+      <section id="bento" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30 bg-surface1/20">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gold uppercase tracking-wider mb-2">
+              <Sparkles className="h-3.5 w-3.5" /> Arquitectura Tecnológica
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-text tracking-tight">
+              Ecosistema Integral de Auditoría en Campo
+            </h2>
+            <p className="text-sm text-subtext0 mt-2 leading-relaxed">
+              Combinamos geolocalización satelital en tiempo real, síntesis con IA pericial y protocolos de secreto bancario para elevar la calidad probatoria de cada dictamen.
+            </p>
+          </div>
+
+          {/* Grid Bento */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Bento Card 1: Dictado por Voz y Reducción de Latencia */}
+            <SpotlightCard className="p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-10 w-10 rounded-2xl bg-gold/10 text-gold flex items-center justify-center">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-gold bg-gold/10 px-2.5 py-1 rounded-full border border-gold/20">
+                    0ms LATENCIA
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-text mb-2">Dictado Pericial en Vivo</h3>
+                <p className="text-xs text-subtext0 leading-relaxed">
+                  Integración nativa con Web Speech API y modelos de procesamiento en streaming. El evaluador dicta durante la inspección en campo y los 9 bloques del legajo se completan al instante.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-overlay0/30 flex items-center justify-between text-xs text-subtext0">
+                <span>Precisión lingüística guaraní/español</span>
+                <span className="text-green font-bold">100% Nativo</span>
+              </div>
+            </SpotlightCard>
+
+            {/* Bento Card 2: Visión Artificial y Verificación de Vivienda */}
+            <SpotlightCard className="p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-10 w-10 rounded-2xl bg-blue/10 text-blue flex items-center justify-center">
+                    <Cpu className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-blue bg-blue/10 px-2.5 py-1 rounded-full border border-blue/20">
+                    VISIÓN IA
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-text mb-2">Reconocimiento Constructivo</h3>
+                <p className="text-xs text-subtext0 leading-relaxed">
+                  Clasificación automática de materiales de vivienda (paredes, techos, pisos) y digitalización de comprobantes de servicios (ANDE, ESSAP) en menos de 1 segundo mediante compresión inteligente.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-overlay0/30 flex items-center justify-between text-xs text-subtext0">
+                <span>Payload optimizado a 640px</span>
+                <span className="text-blue font-bold">&lt; 30 KB</span>
+              </div>
+            </SpotlightCard>
+
+            {/* Bento Card 3: Seguridad Bancaria y Cadena de Custodia */}
+            <SpotlightCard className="p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-10 w-10 rounded-2xl bg-green/10 text-green flex items-center justify-center">
+                    <Database className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-green bg-green/10 px-2.5 py-1 rounded-full border border-green/20">
+                    CRIPTO TOKEN
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-text mb-2">Secreto Bancario y Hash SHA-256</h3>
+                <p className="text-xs text-subtext0 leading-relaxed">
+                  Tokens determinísticos de acceso único por visita, rate limiting deslizante contra ataques de fuerza bruta y contraseñas hasheadas criptográficamente con salt único.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-overlay0/30 flex items-center justify-between text-xs text-subtext0">
+                <span>Encabezados de seguridad HSTS</span>
+                <span className="text-green font-bold">Activo</span>
+              </div>
+            </SpotlightCard>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SECCIÓN DEL GEO-RADAR 3D INTERACTIVO ══ */}
+      <section id="radar" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            <div className="lg:col-span-5 space-y-5">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gold uppercase tracking-wider">
+                <Compass className="h-3.5 w-3.5" /> Monitorización Satelital
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-text tracking-tight">
+                Geo-Radar 3D y Red Nacional de Despliegue
+              </h2>
+              <p className="text-sm text-subtext0 leading-relaxed">
+                Supervisión interactiva tridimensional de los centros neurálgicos de peritaje en Asunción, Gran Asunción, Alto Paraná e Itapúa. Cada inspección incorpora coordenadas GPS inalterables y Plus Code satelital para asegurar la presencia física in situ del perito.
+              </p>
+              
+              <div className="p-4 rounded-2xl bg-surface0 border border-overlay0/40 space-y-2">
+                <div className="flex items-center justify-between text-xs font-semibold text-text">
+                  <span>Tiempo promedio de desplazamiento:</span>
+                  <span className="text-gold font-mono">&lt; 24 Horas</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-text">
+                  <span>Verificación satelital por Plus Code:</span>
+                  <span className="text-green font-mono">100% Precisión</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Visualizador 3D Interactivo de Radar */}
+            <div className="lg:col-span-7">
+              <Radar3D />
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══ SECCIÓN INTERACTIVA: LÁMINAS DEL INFORME OFICIAL ══ */}
       <section id="metodologia" className="py-20 px-4 sm:px-6 lg:px-8 border-y border-overlay0/30 bg-surface1/30">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-2xl mb-12">
@@ -303,7 +430,7 @@ export default function LandingPage() {
 
             {/* Visualizador en vivo con imagen pericial de campo */}
             <div className="lg:col-span-6">
-              <div className="rounded-3xl border border-overlay0/60 bg-surface0 overflow-hidden shadow-2xl p-6 relative">
+              <SpotlightCard className="p-6 relative">
                 <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden mb-5">
                   <Image
                     src="/audit-tablet.jpg"
@@ -324,7 +451,7 @@ export default function LandingPage() {
                   <span>Formato: PowerPoint (.pptx) & PDF A4</span>
                   <span className="text-gold font-bold">100% Listo para Comité</span>
                 </div>
-              </div>
+              </SpotlightCard>
             </div>
           </div>
         </div>
@@ -347,67 +474,19 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {SERVICIOS_PERICIALES.map((s) => (
-              <div
-                key={s.title}
-                className="rounded-2xl border border-overlay0/40 bg-surface0 p-6 hover:border-gold/40 transition-colors shadow-sm"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold mb-4">
-                  <s.icon className="h-5 w-5" />
+              <SpotlightCard key={s.title} className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold">
+                    <s.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-mono font-semibold text-subtext0 bg-surface1 px-2.5 py-0.5 rounded-full border border-overlay0/30">
+                    {s.tag}
+                  </span>
                 </div>
                 <h3 className="font-bold text-text text-sm mb-2">{s.title}</h3>
                 <p className="text-xs text-subtext0 leading-relaxed">{s.desc}</p>
-              </div>
+              </SpotlightCard>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ COBERTURA TERRITORIAL VIVA ══ */}
-      <section id="cobertura" className="py-20 px-4 sm:px-6 lg:px-8 bg-surface1/40 border-t border-overlay0/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            
-            <div className="lg:col-span-5">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gold uppercase tracking-wider mb-2">
-                <Compass className="h-3.5 w-3.5" /> Capacidad Operativa
-              </div>
-              <h2 className="text-3xl font-black text-text tracking-tight mb-4">
-                Cobertura Nacional con Peritos en Campo
-              </h2>
-              <p className="text-sm text-subtext0 leading-relaxed mb-6">
-                Despliegue ágil en los principales polos económicos y urbanos de la República del Paraguay, con capacidad de respuesta inmediata para requerimientos urgentes de contratación y crédito.
-              </p>
-              <div className="p-4 rounded-2xl bg-surface0 border border-gold/30 flex items-center gap-3">
-                <Check className="h-5 w-5 text-gold shrink-0" />
-                <p className="text-xs text-subtext0">
-                  <strong className="text-text block">Geolocalización en Tiempo Real:</strong> Cada visita registra coordenadas GPS exactas para garantizar la presencia física del evaluador en el domicilio.
-                </p>
-              </div>
-            </div>
-
-            <div className="lg:col-span-7">
-              <div className="rounded-3xl border border-overlay0/50 bg-surface0 p-6 shadow-xl space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-subtext0 mb-2">
-                  Regiones de Atención Inmediata
-                </h3>
-                {COBERTURA_TERRITORIAL.map((c) => (
-                  <div
-                    key={c.zona}
-                    className="p-4 rounded-xl bg-surface1/60 border border-overlay0/30 flex items-center justify-between gap-4"
-                  >
-                    <div>
-                      <h4 className="font-bold text-sm text-text">{c.zona}</h4>
-                      <p className="text-xs text-subtext0 mt-0.5">{c.tasa}</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-green bg-green/10 px-2.5 py-1 rounded-full border border-green/20">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green animate-pulse" />
-                      {c.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         </div>
       </section>

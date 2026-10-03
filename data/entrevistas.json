@@ -71,5 +71,19 @@
     "alertas": [],
     "creadoEn": "2026-09-30T19:00:00.000Z",
     "actualizadoEn": "2026-09-30T19:00:00.000Z"
+  },
+  {
+    "id": "ent_d70a8680",
+    "token": "tok_prueba_random",
+    "entidadSolicitante": "Evaluación Pericial Confidencial",
+    "evaluadorAsignado": "Lic. Michelle Romero",
+    "creadoPor": "admin",
+    "estado": "pendiente",
+    "pasoActual": 1,
+    "datos": {},
+    "alertas": [],
+    "creadoEn": "2026-10-01T03:39:58.211Z",
+    "actualizadoEn": "2026-10-01T03:39:58.211Z",
+    "candidatoNombre": "Postulante en Evaluación"
   }
 ]

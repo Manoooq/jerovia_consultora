@@ -12,9 +12,9 @@ interface FotoUploaderProps {
 }
 
 /**
- * Comprime imágenes en el cliente a máx 1000px y 75% calidad para respuesta en < 1 segundo
+ * Comprime imágenes en el cliente a máx 640px y 65% calidad para respuesta en < 1 segundo
  */
-function comprimirImagen(file: File, maxDim = 1000, quality = 0.75): Promise<string> {
+function comprimirImagen(file: File, maxDim = 640, quality = 0.65): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {

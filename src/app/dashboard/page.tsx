@@ -13,6 +13,7 @@ import {
   InterviewRowSkeleton, 
   Skeleton 
 } from "@/components/ui/Skeleton";
+import { MetricsCharts } from "@/components/ui/MetricsCharts";
 import { formatDate } from "@/lib/utils";
 import { 
   Plus, Search, FileText, Clock, CheckCircle, 
@@ -489,6 +490,13 @@ function DashboardContent() {
               ))
             )}
           </div>
+
+          {/* Gráficos Periciales de Confiabilidad y Ciclo de Resolución */}
+          {!loading && (
+            <div className="pt-2">
+              <MetricsCharts totalExpedientes={stats.total} completadas={stats.completadas} />
+            </div>
+          )}
         </div>
 
         {/* ══ TABLA DE VISITAS CON FILTROS, ORDENAMIENTO Y ACCIONES ══ */}
