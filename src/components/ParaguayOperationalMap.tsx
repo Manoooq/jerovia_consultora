@@ -97,22 +97,22 @@ export function ParaguayOperationalMap() {
               <path
                 d="M 120 40 L 210 50 L 230 140 L 195 240 L 120 220 L 70 160 Z"
                 fill="currentColor"
-                className="text-surface2/50"
-                stroke="rgba(255, 255, 255, 0.1)"
+                className="text-surface2/40 hover:text-surface2/60 transition-colors"
+                stroke="rgba(255, 255, 255, 0.12)"
                 strokeWidth="1.5"
               />
-              <text x="110" y="140" fill="currentColor" className="text-[9px] text-subtext0/50 font-mono font-bold tracking-widest">
+              <text x="110" y="140" fill="currentColor" className="text-[10px] text-subtext0/70 font-mono font-bold tracking-widest select-none">
                 CHACO
               </text>
 
-              {/* Río Paraguay divisor con brillo */}
+              {/* Río Paraguay divisor */}
               <path
                 d="M 210 50 Q 225 150 195 240 T 175 320 T 190 380"
                 fill="none"
-                stroke="#60a5fa"
+                stroke="#38bdf8"
                 strokeWidth="2.5"
                 strokeDasharray="4 2"
-                opacity="0.8"
+                opacity="0.85"
               />
 
               {/* Contorno Región Oriental */}
@@ -120,11 +120,11 @@ export function ParaguayOperationalMap() {
                 d="M 210 50 L 290 80 L 330 160 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 240 Q 225 150 210 50 Z"
                 fill="currentColor"
                 className="text-surface2/80 hover:text-surface2 transition-colors"
-                stroke="rgba(201, 168, 76, 0.35)"
+                stroke="rgba(229, 192, 123, 0.4)"
                 strokeWidth="2"
               />
-              <text x="250" y="160" fill="currentColor" className="text-[9px] text-gold/40 font-mono font-bold tracking-widest">
-                REGIÓN ORIENTAL
+              <text x="245" y="160" fill="currentColor" className="text-[10px] text-gold/60 font-mono font-bold tracking-widest select-none">
+                ORIENTAL
               </text>
 
               {/* Nodos Interactivos */}
@@ -142,7 +142,7 @@ export function ParaguayOperationalMap() {
                         cy={zone.coords.y}
                         r="18"
                         fill="none"
-                        stroke="#c9a84c"
+                        stroke="#E5C07B"
                         strokeWidth="1.5"
                         className="animate-ping opacity-40 origin-center"
                       />
@@ -151,8 +151,8 @@ export function ParaguayOperationalMap() {
                       cx={zone.coords.x}
                       cy={zone.coords.y}
                       r={isSelected ? "11" : "7"}
-                      fill={isSelected ? "rgba(201, 168, 76, 0.3)" : "rgba(166, 227, 161, 0.25)"}
-                      stroke={isSelected ? "#c9a84c" : "#a6e3a1"}
+                      fill={isSelected ? "rgba(229, 192, 123, 0.35)" : "rgba(16, 185, 129, 0.25)"}
+                      stroke={isSelected ? "#E5C07B" : "#10b981"}
                       strokeWidth="2"
                       className="transition-all duration-200"
                     />
@@ -160,12 +160,12 @@ export function ParaguayOperationalMap() {
                       cx={zone.coords.x}
                       cy={zone.coords.y}
                       r="4"
-                      fill={isSelected ? "#c9a84c" : "#a6e3a1"}
+                      fill={isSelected ? "#E5C07B" : "#10b981"}
                     />
                     <text
                       x={zone.coords.x + 14}
                       y={zone.coords.y + 4}
-                      fill={isSelected ? "#c9a84c" : "#cbd5e1"}
+                      fill={isSelected ? "#E5C07B" : "#cbd5e1"}
                       className={`text-[11px] font-mono font-bold select-none ${isSelected ? "text-gold font-black" : ""}`}
                     >
                       {zone.name.split(" ")[0]}

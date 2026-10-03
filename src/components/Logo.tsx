@@ -33,7 +33,7 @@ export function Logo({ className, size = "md" }: LogoProps) {
         src="/logo-white.png"
         alt="Jerovia Consultora"
         className={cn(
-          "w-auto object-contain hidden dark:block brightness-110 contrast-125 transition-all drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]",
+          "w-auto object-contain hidden dark:block brightness-105 contrast-125 transition-all",
           sizes[size]
         )}
         loading="eager"

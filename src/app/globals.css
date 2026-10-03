@@ -9,9 +9,9 @@
   --bg-surface0: #ffffff;
   --bg-surface1: #f8fafc;
   --bg-surface2: #e2e8f0;
-  --border-overlay0: #cbd5e1;
-  --border-overlay1: #94a3b8;
-  --border-overlay2: #64748b;
+  --border-overlay0: rgba(15, 23, 42, 0.1);
+  --border-overlay1: rgba(15, 23, 42, 0.18);
+  --border-overlay2: rgba(15, 23, 42, 0.32);
   --text-subtext0: #475569;   /* 6.5:1 contrast on white */
   --text-subtext1: #334155;   /* 9.5:1 contrast on white */
   --text-main: #0f172a;       /* 16:1 contrast on white */
@@ -19,26 +19,43 @@
   --brand-gold: #926c15;       /* WCAG AA compliant on light backgrounds */
   --brand-gold-light: #b38928;
   --brand-gold-dark: #71530e;
+
+  /* Semantics en Modo Claro */
+  --sem-green: #059669;
+  --sem-blue: #2563eb;
+  --sem-sky: #0284c7;
+  --sem-yellow: #d97706;
+  --sem-red: #dc2626;
+  --sem-pink: #db2777;
 }
 
 .dark {
-  /* Jerovia Corporate — Executive Dark (High Contrast) */
-  --bg-base: #09090b;
-  --bg-mantle: #111113;
-  --bg-crust: #050506;
-  --bg-surface0: #131316;
-  --bg-surface1: #1a1a1f;
-  --bg-surface2: #272730;
-  --border-overlay0: #2d2d38;
-  --border-overlay1: #454555;
-  --border-overlay2: #6d6d80;
-  --text-subtext0: #94a3b8;   /* 7:1 contrast on black */
-  --text-subtext1: #cbd5e1;   /* 12:1 contrast on black */
-  --text-main: #f8fafc;       /* 18:1 contrast on black */
+  /* Jerovia Platinum & Deep Obsidian (Linear / Stripe Reference Tier) */
+  --bg-base: #090a0f;
+  --bg-mantle: #0f1118;
+  --bg-crust: #06070a;
+  --bg-surface0: #131620;
+  --bg-surface1: #1a1e2b;
+  --bg-surface2: #24293a;
+  --border-overlay0: rgba(255, 255, 255, 0.08);
+  --border-overlay1: rgba(255, 255, 255, 0.14);
+  --border-overlay2: rgba(255, 255, 255, 0.24);
+  --text-subtext0: #94a3b8;   /* Neutral slate */
+  --text-subtext1: #cbd5e1;   /* High contrast slate */
+  --text-main: #f8fafc;       /* Crisp white */
 
-  --brand-gold: #C9A84C;
-  --brand-gold-light: #E8C97A;
-  --brand-gold-dark: #9A7A2E;
+  /* Champagne Gold Luminous (No dirty yellow) */
+  --brand-gold: #E5C07B;
+  --brand-gold-light: #F3E5AB;
+  --brand-gold-dark: #B89342;
+
+  /* Semantics en Modo Oscuro (Luminosos, Nítidos y con Alto Contraste) */
+  --sem-green: #10b981;
+  --sem-blue: #38bdf8;
+  --sem-sky: #0ea5e9;
+  --sem-yellow: #fbbf24;
+  --sem-red: #f87171;
+  --sem-pink: #f472b6;
 }
 
 @theme {
@@ -61,44 +78,41 @@
   --color-white: #FFFFFF;
 
   --color-mauve: var(--brand-gold);
-  --color-blue: #2563eb;
-  --color-sky: #0284c7;
-  --color-green: #059669;
-  --color-yellow: #d97706;
-  --color-red: #dc2626;
-  --color-pink: #db2777;
+  --color-blue: var(--sem-blue);
+  --color-sky: var(--sem-sky);
+  --color-green: var(--sem-green);
+  --color-yellow: var(--sem-yellow);
+  --color-red: var(--sem-red);
+  --color-pink: var(--sem-pink);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-* {
+*, ::before, ::after {
   border-color: var(--border-overlay0);
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--brand-gold) 30%, transparent);
-  color: var(--text-main);
+  background-color: color-mix(in srgb, var(--brand-gold) 35%, transparent);
+  color: #FFFFFF;
 }
 
 body {
   background-color: var(--bg-base);
   color: var(--text-main);
-  background-image: radial-gradient(rgba(201, 168, 76, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark body {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* === UTILIDADES VISUALES DE PRODUCCIÓN (LINEAR / STRIPE TIER) === */
 .hairline-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.dark .hairline-border {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-:not(.dark) .hairline-border {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--border-overlay0);
 }
 
 .glass-panel {
@@ -107,20 +121,22 @@ body {
 }
 
 .dark .glass-panel {
-  background: rgba(18, 18, 22, 0.75);
+  background: rgba(16, 18, 26, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
 :not(.dark) .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 /* === ACCESIBILIDAD: FOCO VISIBLE DE ALTO CONTRASTE (WCAG 2.4.7) === */
 :focus-visible {
-  outline: 3px solid var(--brand-gold) !important;
+  outline: 2px solid var(--brand-gold) !important;
   outline-offset: 2px !important;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* === ACCESIBILIDAD: REDUCCIÓN DE MOVIMIENTO (WCAG 2.3.3) === */
