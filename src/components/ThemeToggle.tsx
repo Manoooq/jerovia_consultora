@@ -34,17 +34,22 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   function applyTheme(mode: ThemeMode) {
     const root = document.documentElement;
+    const body = document.body;
+    let isDark = false;
     if (mode === "dark") {
-      root.classList.add("dark");
+      isDark = true;
     } else if (mode === "light") {
-      root.classList.remove("dark");
+      isDark = false;
     } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
+      isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    if (isDark) {
+      root.classList.add("dark");
+      if (body) body.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+      if (body) body.classList.remove("dark");
     }
   }
 

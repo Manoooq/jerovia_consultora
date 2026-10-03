@@ -27,9 +27,15 @@
   --sem-yellow: #d97706;
   --sem-red: #dc2626;
   --sem-pink: #db2777;
+
+  /* Glass Panels Light */
+  --glass-bg: rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
-.dark {
+.dark,
+html.dark {
   /* Jerovia Platinum & Deep Obsidian (Linear / Stripe Reference Tier) */
   --bg-base: #090a0f;
   --bg-mantle: #0f1118;
@@ -56,6 +62,11 @@
   --sem-yellow: #fbbf24;
   --sem-red: #f87171;
   --sem-pink: #f472b6;
+
+  /* Glass Panels Dark (Deep Obsidian Frosted) */
+  --glass-bg: rgba(16, 18, 26, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 @theme {
@@ -105,6 +116,7 @@ body {
   background-size: 24px 24px;
 }
 
+html.dark body,
 .dark body {
   background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 24px 24px;
@@ -118,17 +130,22 @@ body {
 .glass-panel {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
+/* Reglas explícitas e inmunes a especificidad */
+html.dark .glass-panel,
 .dark .glass-panel {
-  background: rgba(16, 18, 26, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  background-color: rgba(16, 18, 26, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-:not(.dark) .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+html:not(.dark) .glass-panel {
+  background-color: rgba(255, 255, 255, 0.90);
+  border-color: rgba(15, 23, 42, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
