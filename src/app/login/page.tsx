@@ -7,14 +7,13 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormFields";
-import { Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
+import { Lock, ArrowRight, Eye, EyeOff, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
 
-  // Campos sin credenciales hardcodeadas por seguridad
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -51,89 +50,90 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-3xl border border-overlay0/50 bg-surface0 p-8 sm:p-10 shadow-2xl">
+    <div className="rounded-3xl glass-panel p-8 sm:p-10 shadow-2xl">
       {/* Encabezado Institucional Sobrio */}
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="h-12 w-12 rounded-2xl bg-gold/10 border border-gold/25 flex items-center justify-center mb-4 text-gold">
-          <Shield className="h-6 w-6" aria-hidden="true" />
+        <div className="h-12 w-12 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center mb-4 text-gold shadow-sm">
+          <ShieldCheck className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h1 className="text-2xl font-black text-text tracking-tight mb-1.5">Portal Corporativo</h1>
-        <p className="text-xs text-subtext0 font-medium max-w-xs leading-relaxed">
-          Jerovia Consultora · Evaluaciones Socioambientales y de Confiabilidad
+        <h1 className="text-2xl font-black text-text tracking-tight mb-1.5">Portal de Evaluadores</h1>
+        <p className="text-xs text-subtext0 max-w-xs">
+          Acceso reservado para peritos acreditados y directivos de Jerovia Consultora.
         </p>
       </div>
 
       {error && (
         <div
           role="alert"
-          aria-live="assertive"
-          className="mb-6 p-3.5 rounded-xl bg-red/10 border border-red/30 text-xs text-red font-semibold flex items-center gap-2"
+          className="mb-6 rounded-2xl bg-red/10 border border-red/30 p-4 text-xs font-semibold text-red"
         >
-          <span aria-hidden="true">⚠️</span>
-          <span>{error}</span>
+          {error}
         </div>
       )}
 
-      <form onSubmit={handleLogin} className="space-y-4" aria-busy={loading}>
-        <Input
-          label="Usuario o Correo Institucional"
-          type="text"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Ej: michelle.romero o usuario@jerovia.com.py"
-          autoComplete="username"
-        />
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div>
+          <Input
+            id="username-input"
+            label="Usuario o Correo Institucional"
+            type="text"
+            required
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="usuario@jerovia.com.py"
+          />
+        </div>
 
         <div className="relative">
           <Input
-            label="Contraseña"
+            id="password-input"
+            label="Contraseña Criptográfica"
             type={showPassword ? "text" : "password"}
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••••••"
-            autoComplete="current-password"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-8 text-subtext0 hover:text-text p-1 transition-colors focus-visible:ring-2"
+            className="absolute right-3.5 top-[38px] text-subtext0 hover:text-text transition-colors p-1"
             aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
           >
-            {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
 
-        {/* Recordar sesión */}
         <div className="flex items-center justify-between text-xs pt-1">
-          <label className="flex items-center gap-2 cursor-pointer text-subtext1 font-medium select-none">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-subtext0">
             <input
               type="checkbox"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-              className="h-4 w-4 rounded border-overlay0 text-gold focus:ring-gold/30 accent-gold cursor-pointer"
+              className="rounded border-overlay0 bg-surface1 text-gold focus:ring-gold"
             />
-            <span>Mantener sesión iniciada</span>
+            <span>Recordar sesión</span>
           </label>
         </div>
 
-        <div className="pt-2">
-          <Button
-            type="submit"
-            loading={loading}
-            className="w-full bg-gold hover:bg-gold-light text-black font-bold py-3.5 shadow-lg shadow-gold/20 text-sm"
-          >
-            <span>Ingresar al Sistema</span>
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          loading={loading}
+          size="lg"
+          className="w-full mt-2 bg-gold text-black font-bold shadow-lg shadow-gold/20"
+        >
+          <span>Ingresar al Sistema</span>
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </form>
 
-      {/* Nota de confidencialidad y seguridad institucional */}
-      <div className="mt-8 pt-6 border-t border-overlay0/30 text-center">
-        <p className="text-[11px] text-subtext0 leading-relaxed">
-          Acceso estrictamente restringido al personal autorizado de Jerovia Consultora y evaluadores homologados.
+      {/* Pie con garantías de seguridad */}
+      <div className="mt-8 pt-6 border-t border-white/[0.08] text-center space-y-2">
+        <p className="text-[11px] text-subtext0 flex items-center justify-center gap-1.5 font-mono">
+          <Lock className="h-3 w-3 text-gold" />
+          <span>Conexión protegida con TLS 1.3 & HSTS</span>
         </p>
       </div>
     </div>
@@ -142,33 +142,33 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-base flex flex-col justify-between p-4 sm:p-6">
-      {/* Header bar */}
-      <header className="flex items-center justify-between max-w-5xl mx-auto w-full py-2">
-        <Link href="/" className="hover:opacity-90 transition-opacity" aria-label="Ir a página de inicio">
-          <Logo size="sm" />
+    <div className="min-h-screen bg-base flex flex-col justify-between p-4 sm:p-6 text-text">
+      {/* Navbar Superior */}
+      <header className="max-w-7xl mx-auto w-full flex items-center justify-between py-2">
+        <Link href="/" aria-label="Volver a la portada de Jerovia">
+          <Logo size="md" />
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Link
             href="/"
-            className="text-xs font-semibold text-subtext0 hover:text-text transition-colors"
+            className="text-xs font-semibold text-subtext0 hover:text-text px-3 py-1.5 rounded-xl border border-white/[0.08] transition-colors"
           >
-            ← Volver a inicio
+            Volver a inicio
           </Link>
         </div>
       </header>
 
-      {/* Main Login Card con Suspense para Next.js App Router */}
-      <main id="main-content" tabIndex={-1} className="max-w-md w-full mx-auto my-auto py-8 outline-none">
-        <Suspense fallback={<div className="h-96 rounded-3xl bg-surface0 animate-pulse" />}>
+      {/* Contenedor Central */}
+      <main className="w-full max-w-md mx-auto my-auto py-8">
+        <Suspense fallback={<div className="h-96 rounded-3xl glass-panel animate-pulse" />}>
           <LoginForm />
         </Suspense>
       </main>
 
-      {/* Footer */}
-      <footer className="text-center py-4 text-xs text-subtext0 font-medium">
-        <p>© 2026 Jerovia Consultora · Seguridad Criptográfica y Confidencialidad Pericial</p>
+      {/* Footer Mínimo */}
+      <footer className="max-w-7xl mx-auto w-full text-center py-4 text-[11px] text-subtext0 border-t border-white/[0.08] font-mono">
+        Jerovia Consultora · Evaluaciones Socioambientales y de Confiabilidad · Asunción, Paraguay
       </footer>
     </div>
   );

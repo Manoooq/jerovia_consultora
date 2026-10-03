@@ -84,6 +84,36 @@
 body {
   background-color: var(--bg-base);
   color: var(--text-main);
+  background-image: radial-gradient(rgba(201, 168, 76, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* === UTILIDADES VISUALES DE PRODUCCIÓN (LINEAR / STRIPE TIER) === */
+.hairline-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .hairline-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:not(.dark) .hairline-border {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.glass-panel {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dark .glass-panel {
+  background: rgba(18, 18, 22, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 /* === ACCESIBILIDAD: FOCO VISIBLE DE ALTO CONTRASTE (WCAG 2.4.7) === */
