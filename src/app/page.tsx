@@ -5,12 +5,12 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 import { HeroProductShowcase } from "@/components/HeroProductShowcase";
-import { TelemetryGrid } from "@/components/TelemetryGrid";
+import { BentoFeatures } from "@/components/BentoFeatures";
 import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
+import { FaqSection } from "@/components/FaqSection";
 import {
-  ShieldCheck, MapPin, Building2,
-  ChevronRight, Lock, EyeOff
+  ShieldCheck, MapPin, ChevronRight, Lock, EyeOff
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -23,9 +23,10 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
             <a href="#showcase" className="hover:text-text transition-colors">Plataforma</a>
-            <a href="#telemetria" className="hover:text-text transition-colors">Telemetría</a>
+            <a href="#tecnologia" className="hover:text-text transition-colors">Tecnología</a>
             <a href="#simulador" className="hover:text-text transition-colors">Aranceles</a>
-            <a href="#cobertura" className="hover:text-text transition-colors">Cobertura País</a>
+            <a href="#cobertura" className="hover:text-text transition-colors">Cobertura</a>
+            <a href="#faqs" className="hover:text-text transition-colors">Normativa</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -41,7 +42,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ══ HERO PRINCIPAL: PUNCHY & EDITORIAL (SIN MURO DE TEXTO) ══ */}
+      {/* ══ HERO PRINCIPAL: PRODUCT-AS-THE-HERO (CONSOLA PERICIAL UNIFICADA) ══ */}
       <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
         <div className="max-w-7xl mx-auto space-y-12">
           
@@ -93,7 +94,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ══ PRODUCTO INTERACTIVO: SIMULADOR DE 3 LENTES ══ */}
+          {/* ══ PRODUCTO INTERACTIVO: CONSOLA PERICIAL UNIFICADA ══ */}
           <section id="showcase">
             <HeroProductShowcase />
           </section>
@@ -101,22 +102,24 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* ══ TELEMETRÍA EN VIVO: ARTEFACTOS INTERACTIVOS (SHOW, DON'T TELL) ══ */}
-      <section id="telemetria" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+      {/* ══ BENTO GRID DE CAPACIDADES TECNOLÓGICAS (SHOW, DON'T TELL) ══ */}
+      <section id="tecnologia" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider">
-                Telemetría de Inspección
+                Infraestructura Probatoria
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight mt-0.5">
-                Controles probatorios en tiempo real
+                Rigor Técnico y Metodología Inviolable
               </h2>
             </div>
-            <span className="text-xs text-subtext0 font-mono">Interactúa con los controles</span>
+            <span className="text-xs text-subtext0 font-mono">
+              Auditoría en fachada y algoritmos predictivos
+            </span>
           </div>
 
-          <TelemetryGrid />
+          <BentoFeatures />
         </div>
       </section>
 
@@ -131,6 +134,13 @@ export default function LandingPage() {
       <section id="cobertura" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
         <div className="max-w-7xl mx-auto space-y-6">
           <ParaguayOperationalMap />
+        </div>
+      </section>
+
+      {/* ══ PREGUNTAS FRECUENTES DE COMITÉS DE RIESGO ══ */}
+      <section id="faqs" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+        <div className="max-w-7xl mx-auto">
+          <FaqSection />
         </div>
       </section>
 
