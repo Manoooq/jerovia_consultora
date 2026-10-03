@@ -1,0 +1,32 @@
+[
+  {
+    "id": "aud_01",
+    "timestamp": "2026-10-01T08:30:00.000Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión seguro verificado desde terminal central.",
+    "ip": "190.52.148.12"
+  },
+  {
+    "id": "aud_02",
+    "timestamp": "2026-10-01T09:15:00.000Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "CREATE_VISITA",
+    "detail": "Asignación de peritaje EXP-2026-001 para evaluación bancaria.",
+    "ip": "190.52.148.12"
+  },
+  {
+    "id": "aud_03",
+    "timestamp": "2026-10-01T11:45:00.000Z",
+    "userId": "usr_eval_01",
+    "userName": "Lic. Carlos Benítez",
+    "userRole": "evaluador",
+    "action": "UPDATE_VISITA",
+    "detail": "Carga de relevamiento habitacional y coordenadas GPS en Luque.",
+    "ip": "181.124.62.90"
+  }
+]

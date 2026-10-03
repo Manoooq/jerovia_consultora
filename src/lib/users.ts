@@ -13,9 +13,24 @@ export interface User {
   passwordSalt: string;
   activo: boolean;
   creadoEn: string;
+  ultimoAcceso?: string;
+  cargo?: string;
+  telefono?: string;
 }
 
 export type SafeUser = Omit<User, "passwordHash" | "passwordSalt">;
+
+/**
+ * Genera contraseñas aleatorias de alta seguridad para asignación a evaluadores
+ */
+export function generarContrasenaSegura(): string {
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%*";
+  let pwd = "Jv-";
+  for (let i = 0; i < 9; i++) {
+    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pwd;
+}
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "usuarios.json");
@@ -208,6 +223,9 @@ export async function verificarCredenciales(identifier: string, password: string
 
   const valid = await verifyPassword(password, user.passwordHash, user.passwordSalt);
   if (!valid) return null;
+
+  user.ultimoAcceso = new Date().toISOString();
+  persistUsers();
 
   return toSafeUser(user);
 }
