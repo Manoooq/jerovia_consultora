@@ -51,6 +51,24 @@ export async function verifyPassword(password: string, hash: string, salt: strin
 }
 
 const usersStore = new Map<string, User>();
+const identifierIndex = new Map<string, string>();
+
+function setIndex(user: User) {
+  identifierIndex.set(user.username.toLowerCase(), user.id);
+  identifierIndex.set(user.email.toLowerCase(), user.id);
+}
+
+function removeIndex(user: User) {
+  identifierIndex.delete(user.username.toLowerCase());
+  identifierIndex.delete(user.email.toLowerCase());
+}
+
+function rebuildIndexes() {
+  identifierIndex.clear();
+  for (const user of usersStore.values()) {
+    setIndex(user);
+  }
+}
 
 function seedDefaultUsers() {
   usersStore.set("usr_admin_01", {
@@ -89,6 +107,7 @@ function initUsers() {
         const list: User[] = JSON.parse(content);
         usersStore.clear();
         list.forEach((u) => usersStore.set(u.id, u));
+        rebuildIndexes();
         return;
       }
     }
@@ -97,6 +116,7 @@ function initUsers() {
   }
 
   seedDefaultUsers();
+  rebuildIndexes();
   persistUsers();
 }
 
@@ -140,10 +160,9 @@ export function obtenerUsuarioPorId(id: string): User | undefined {
 export function obtenerUsuarioPorIdentificador(identifier: string): User | undefined {
   if (usersStore.size === 0) initUsers();
   const clean = identifier.toLowerCase().trim();
-  for (const user of usersStore.values()) {
-    if (user.username.toLowerCase() === clean || user.email.toLowerCase() === clean) {
-      return user;
-    }
+  const userId = identifierIndex.get(clean);
+  if (userId) {
+    return usersStore.get(userId);
   }
   return undefined;
 }
@@ -176,6 +195,7 @@ export async function crearUsuario(datos: {
   };
 
   usersStore.set(id, nuevoUsuario);
+  setIndex(nuevoUsuario);
   persistUsers();
   return toSafeUser(nuevoUsuario);
 }
@@ -186,8 +206,10 @@ export function actualizarUsuario(
 ): SafeUser | null {
   const user = usersStore.get(id);
   if (!user) return null;
+  removeIndex(user);
   const updated: User = { ...user, ...patch };
   usersStore.set(id, updated);
+  setIndex(updated);
   persistUsers();
   return toSafeUser(updated);
 }
@@ -213,7 +235,10 @@ export function eliminarUsuario(id: string): boolean {
     throw new Error("No es posible eliminar la cuenta principal de administración.");
   }
   const deleted = usersStore.delete(id);
-  if (deleted) persistUsers();
+  if (deleted) {
+    removeIndex(user);
+    persistUsers();
+  }
   return deleted;
 }
 
