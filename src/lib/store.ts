@@ -50,17 +50,36 @@ function initStore() {
   seedInitial();
 }
 
-function persistStore() {
+let isWritingStore = false;
+let pendingWriteStore = false;
+
+async function executeWriteStore() {
+  if (isWritingStore) {
+    pendingWriteStore = true;
+    return;
+  }
+  isWritingStore = true;
+  pendingWriteStore = false;
+
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     const records = Array.from(store.values());
-    fs.writeFileSync(DATA_FILE, JSON.stringify(records, null, 2), "utf-8");
+    await fs.promises.writeFile(DATA_FILE, JSON.stringify(records, null, 2), "utf-8");
   } catch (err) {
     // Si el entorno es read-only (ej. edge), mantener en memoria
     console.warn("[persistStore warn]:", err);
+  } finally {
+    isWritingStore = false;
+    if (pendingWriteStore) {
+      executeWriteStore().catch(err => console.error("[persistStore pending error]:", err));
+    }
   }
+}
+
+function persistStore() {
+  executeWriteStore().catch(err => console.error("[persistStore error]:", err));
 }
 
 function seedInitial() {
