@@ -115,8 +115,7 @@ function persistUsers() {
 initUsers();
 
 function toSafeUser(user: User): SafeUser {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, passwordSalt, ...safe } = user;
+  const { passwordHash: _passwordHash, passwordSalt: _passwordSalt, ...safe } = user;
   return safe;
 }
 
