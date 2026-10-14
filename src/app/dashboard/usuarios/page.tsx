@@ -8,11 +8,27 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/FormFields";
 import { formatDate } from "@/lib/utils";
-import { 
-  ArrowLeft, UserPlus, Users, Shield, UserCheck, 
-  Trash2, Power, CheckCircle, X, ShieldAlert,
-  Key, Edit3, Search, History, RefreshCw, Copy, Check,
-  Clock, ShieldCheck, Lock, FileText
+import {
+  ArrowLeft,
+  UserPlus,
+  Users,
+  Shield,
+  UserCheck,
+  Trash2,
+  Power,
+  CheckCircle,
+  X,
+  ShieldAlert,
+  Key,
+  Edit3,
+  Search,
+  History,
+  RefreshCw,
+  Copy,
+  Check,
+  Clock,
+  ShieldCheck,
+  FileText,
 } from "lucide-react";
 
 interface SafeUser {
@@ -39,6 +55,25 @@ interface AuditEntry {
   ip?: string;
 }
 
+function sanitizeCsvCell(val: string | undefined): string {
+  const str = String(val ?? "").replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `"'${str}"`;
+  }
+  return `"${str}"`;
+}
+
+function generateSecurePassword(): string {
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%*";
+  const randomValues = new Uint32Array(12);
+  window.crypto.getRandomValues(randomValues);
+  let pwd = "Jv-";
+  for (let i = 0; i < randomValues.length; i++) {
+    pwd += chars.charAt(randomValues[i] % chars.length);
+  }
+  return pwd;
+}
+
 export default function UsuariosPage() {
   const [tab, setTab] = useState<"usuarios" | "auditoria">("usuarios");
   const [usuarios, setUsuarios] = useState<SafeUser[]>([]);
@@ -48,17 +83,16 @@ export default function UsuariosPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<"todos" | "admin" | "evaluador">("todos");
   const [filterStatus, setFilterStatus] = useState<"todos" | "activos" | "inactivos">("todos");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Modales
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModal, setEditModal] = useState<SafeUser | null>(null);
   const [passwordModal, setPasswordModal] = useState<SafeUser | null>(null);
   const [deleteModal, setDeleteModal] = useState<SafeUser | null>(null);
 
-  // Formulario nuevo usuario
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -67,24 +101,17 @@ export default function UsuariosPage() {
   const [role, setRole] = useState<"evaluador" | "admin">("evaluador");
   const [password, setPassword] = useState("");
 
-  // Formulario editar usuario
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editCargo, setEditCargo] = useState("");
   const [editTelefono, setEditTelefono] = useState("");
   const [editRole, setEditRole] = useState<"evaluador" | "admin">("evaluador");
 
-  // Formulario cambiar contraseña
   const [newPassword, setNewPassword] = useState("");
   const [copiedKey, setCopiedKey] = useState(false);
 
-  // Helper de generador de contraseña
   function handleGeneratePassword() {
-    const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%*";
-    let pwd = "Jv-";
-    for (let i = 0; i < 9; i++) {
-      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    const pwd = generateSecurePassword();
     setPassword(pwd);
     setNewPassword(pwd);
   }
@@ -129,25 +156,23 @@ export default function UsuariosPage() {
   }, []);
 
   const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return usuarios.filter((u) => {
       const matchSearch =
-        !search ||
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.username.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase()) ||
-        (u.cargo || "").toLowerCase().includes(search.toLowerCase());
-
+        !q ||
+        u.name.toLowerCase().includes(q) ||
+        u.username.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.cargo || "").toLowerCase().includes(q);
       const matchRole = filterRole === "todos" || u.role === filterRole;
       const matchStatus =
         filterStatus === "todos" ||
         (filterStatus === "activos" && u.activo) ||
         (filterStatus === "inactivos" && !u.activo);
-
       return matchSearch && matchRole && matchStatus;
     });
   }, [usuarios, search, filterRole, filterStatus]);
 
-  // Crear usuario
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -160,7 +185,6 @@ export default function UsuariosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, username, email, cargo, telefono, role, password }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al crear usuario.");
 
@@ -182,7 +206,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // Abrir modal editar usuario
   function handleOpenEdit(u: SafeUser) {
     setEditModal(u);
     setEditName(u.name);
@@ -192,7 +215,6 @@ export default function UsuariosPage() {
     setEditRole(u.role);
   }
 
-  // Guardar edición usuario
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editModal) return;
@@ -203,15 +225,14 @@ export default function UsuariosPage() {
       const res = await fetch(`/api/usuarios/${editModal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name: editName, 
-          email: editEmail, 
-          cargo: editCargo, 
-          telefono: editTelefono, 
-          role: editRole 
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail,
+          cargo: editCargo,
+          telefono: editTelefono,
+          role: editRole,
         }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al actualizar usuario.");
 
@@ -226,7 +247,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // Cambiar contraseña de un usuario
   async function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
     if (!passwordModal) return;
@@ -239,7 +259,6 @@ export default function UsuariosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: newPassword }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al restablecer contraseña.");
 
@@ -254,7 +273,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // Activar o desactivar usuario
   async function handleToggleStatus(u: SafeUser) {
     setError(null);
     try {
@@ -275,15 +293,13 @@ export default function UsuariosPage() {
     }
   }
 
-  // Eliminar usuario
   async function handleConfirmDelete() {
     if (!deleteModal) return;
     setSubmitting(true);
     setError(null);
+
     try {
-      const res = await fetch(`/api/usuarios/${deleteModal.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/usuarios/${deleteModal.id}`, { method: "DELETE" });
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error || "No se pudo eliminar el usuario.");
@@ -299,7 +315,6 @@ export default function UsuariosPage() {
     }
   }
 
-  // Estadísticas de gestión
   const stats = useMemo(() => {
     const total = usuarios.length;
     const activos = usuarios.filter((u) => u.activo).length;
@@ -310,21 +325,16 @@ export default function UsuariosPage() {
 
   return (
     <div className="min-h-screen bg-base text-text selection:bg-gold/30 selection:text-gold">
-      {/* Top Navbar */}
       <nav aria-label="Navegación de superusuario" className="border-b border-overlay0/40 bg-mantle sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 text-xs text-subtext1 hover:text-text transition-colors"
-            >
+            <Link href="/dashboard" className="flex items-center gap-1.5 text-xs text-subtext1 hover:text-text transition-colors">
               <ArrowLeft className="h-4 w-4" />
               <span>Volver al panel</span>
             </Link>
             <div className="h-4 w-px bg-overlay0/50" />
             <Logo size="sm" />
           </div>
-
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <div className="h-4 w-px bg-overlay0/50 hidden sm:block" />
@@ -334,12 +344,11 @@ export default function UsuariosPage() {
       </nav>
 
       <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 py-8 outline-none space-y-6">
-        {/* Cabecera Ejecutiva */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0/30">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold mb-2">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Módulo de Superusuario · Control de Accesos y Seguridad</span>
+              <span>Módulo de Superusuario • Control de Accesos y Seguridad</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-text">Gestión de Personal y Auditoría</h1>
             <p className="text-xs sm:text-sm text-subtext0 mt-0.5">
@@ -347,42 +356,39 @@ export default function UsuariosPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Button
-              type="button"
-              onClick={() => {
-                handleGeneratePassword();
-                setCreateModalOpen(true);
-              }}
-              className="bg-gold text-black hover:bg-gold-light font-bold shadow-md shadow-gold/20 flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>Nuevo Personal</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            onClick={() => {
+              handleGeneratePassword();
+              setCreateModalOpen(true);
+            }}
+            className="bg-gold text-black hover:bg-gold-light font-bold shadow-md shadow-gold/20 flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Nuevo Personal</span>
+          </Button>
         </div>
 
-        {/* Notificaciones */}
         {error && (
-          <div className="p-4 rounded-2xl bg-red/10 border border-red/30 text-xs text-red font-semibold flex items-center justify-between gap-2.5">
+          <div role="alert" className="p-4 rounded-2xl bg-red/10 border border-red/30 text-xs text-red font-semibold flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
               <ShieldAlert className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
-            <button onClick={() => setError(null)}><X className="h-4 w-4" /></button>
+            <button onClick={() => setError(null)} aria-label="Cerrar alerta"><X className="h-4 w-4" /></button>
           </div>
         )}
+
         {success && (
-          <div className="p-4 rounded-2xl bg-green/10 border border-green/30 text-xs text-green font-semibold flex items-center justify-between gap-2.5">
+          <div role="status" className="p-4 rounded-2xl bg-green/10 border border-green/30 text-xs text-green font-semibold flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 shrink-0" />
               <span>{success}</span>
             </div>
-            <button onClick={() => setSuccess(null)}><X className="h-4 w-4" /></button>
+            <button onClick={() => setSuccess(null)} aria-label="Cerrar aviso"><X className="h-4 w-4" /></button>
           </div>
         )}
 
-        {/* Tarjetas de Métricas de Personal */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-5 rounded-2xl border border-overlay0/40 bg-surface0 shadow-sm">
             <div className="flex items-center justify-between mb-1">
@@ -392,7 +398,6 @@ export default function UsuariosPage() {
             <div className="text-2xl font-black text-text font-mono">{stats.total}</div>
             <p className="text-[11px] text-subtext0 mt-0.5">{stats.activos} cuentas activas</p>
           </div>
-
           <div className="p-5 rounded-2xl border border-overlay0/40 bg-surface0 shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-subtext0 uppercase tracking-wider">Peritos de Campo</span>
@@ -401,7 +406,6 @@ export default function UsuariosPage() {
             <div className="text-2xl font-black text-blue font-mono">{stats.evaluadores}</div>
             <p className="text-[11px] text-subtext0 mt-0.5">Operando en territorio</p>
           </div>
-
           <div className="p-5 rounded-2xl border border-overlay0/40 bg-surface0 shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-subtext0 uppercase tracking-wider">Directores / Admin</span>
@@ -410,7 +414,6 @@ export default function UsuariosPage() {
             <div className="text-2xl font-black text-gold font-mono">{stats.admins}</div>
             <p className="text-[11px] text-subtext0 mt-0.5">Control y emisión total</p>
           </div>
-
           <div className="p-5 rounded-2xl border border-overlay0/40 bg-surface0 shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-subtext0 uppercase tracking-wider">Auditoría de Acciones</span>
@@ -421,7 +424,6 @@ export default function UsuariosPage() {
           </div>
         </div>
 
-        {/* Pestañas de Vista: Directorio vs Bitácora de Auditoría */}
         <div className="flex border-b border-overlay0/30 gap-6 text-sm font-bold">
           <button
             type="button"
@@ -432,9 +434,7 @@ export default function UsuariosPage() {
           >
             <Users className="h-4 w-4" />
             <span>Directorio de Personal ({filteredUsers.length})</span>
-            {tab === "usuarios" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full" />
-            )}
+            {tab === "usuarios" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full" />}
           </button>
 
           <button
@@ -449,17 +449,13 @@ export default function UsuariosPage() {
           >
             <History className="h-4 w-4" />
             <span>Bitácora de Auditoría y Trazabilidad</span>
-            {tab === "auditoria" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full" />
-            )}
+            {tab === "auditoria" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full" />}
           </button>
         </div>
 
-        {/* ══ PESTAÑA 1: DIRECTORIO DE PERSONAL ══ */}
         {tab === "usuarios" && (
           <div className="rounded-3xl border border-overlay0/40 bg-surface0 overflow-hidden shadow-sm space-y-4 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0/30">
-              {/* Búsqueda */}
               <div className="flex items-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-3 py-1.5 w-full sm:w-64 focus-within:border-gold">
                 <Search className="h-3.5 w-3.5 text-subtext0" />
                 <input
@@ -476,7 +472,6 @@ export default function UsuariosPage() {
                 )}
               </div>
 
-              {/* Filtros de Rol y Estado */}
               <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={filterRole}
@@ -567,7 +562,6 @@ export default function UsuariosPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* Restablecer Contraseña */}
                             <button
                               type="button"
                               onClick={() => {
@@ -575,12 +569,10 @@ export default function UsuariosPage() {
                                 handleGeneratePassword();
                               }}
                               className="p-1.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold text-subtext0 hover:text-text transition-colors"
-                              title="Restablecer contraseña de acceso"
+                              title="Restablecer contraseña"
                             >
                               <Key className="h-3.5 w-3.5 text-gold" />
                             </button>
-
-                            {/* Editar datos */}
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(u)}
@@ -589,22 +581,20 @@ export default function UsuariosPage() {
                             >
                               <Edit3 className="h-3.5 w-3.5" />
                             </button>
-
-                            {/* Bloquear / Desbloquear */}
-                            <button
-                              type="button"
-                              onClick={() => handleToggleStatus(u)}
-                              className={`p-1.5 rounded-xl border transition-colors ${
-                                u.activo
-                                  ? "border-overlay0/60 hover:bg-red/10 hover:text-red hover:border-red/30 text-subtext0"
-                                  : "border-green/30 bg-green/10 text-green hover:bg-green/20"
-                              }`}
-                              title={u.activo ? "Bloquear acceso temporalmente" : "Desbloquear cuenta"}
-                            >
-                              <Power className="h-3.5 w-3.5" />
-                            </button>
-
-                            {/* Eliminar (excepto admin principal) */}
+                            {u.username !== "admin" && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(u)}
+                                className={`p-1.5 rounded-xl border transition-colors ${
+                                  u.activo
+                                    ? "border-overlay0/60 hover:bg-red/10 hover:text-red hover:border-red/30 text-subtext0"
+                                    : "border-green/30 bg-green/10 text-green hover:bg-green/20"
+                                }`}
+                                title={u.activo ? "Bloquear acceso" : "Desbloquear cuenta"}
+                              >
+                                <Power className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                             {u.username !== "admin" && (
                               <button
                                 type="button"
@@ -626,7 +616,6 @@ export default function UsuariosPage() {
           </div>
         )}
 
-        {/* ══ PESTAÑA 2: BITÁCORA DE AUDITORÍA DE SEGURIDAD ══ */}
         {tab === "auditoria" && (
           <div className="rounded-3xl border border-overlay0/40 bg-surface0 overflow-hidden shadow-sm space-y-4 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0/30">
@@ -642,16 +631,16 @@ export default function UsuariosPage() {
                   onClick={() => {
                     const headers = ["ID", "Fecha_Hora", "Usuario", "Rol", "Accion", "Detalle", "IP"];
                     const rows = auditLogs.map((log) => [
-                      log.id,
-                      log.timestamp,
-                      `"${log.userName.replace(/"/g, '""')}"`,
-                      log.userRole,
-                      log.action,
-                      `"${log.detail.replace(/"/g, '""')}"`,
-                      log.ip || "127.0.0.1",
+                      sanitizeCsvCell(log.id),
+                      sanitizeCsvCell(log.timestamp),
+                      sanitizeCsvCell(log.userName),
+                      sanitizeCsvCell(log.userRole),
+                      sanitizeCsvCell(log.action),
+                      sanitizeCsvCell(log.detail),
+                      sanitizeCsvCell(log.ip || "127.0.0.1"),
                     ]);
                     const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-                    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement("a");
                     link.href = url;
@@ -659,13 +648,13 @@ export default function UsuariosPage() {
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
                   }}
                   className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
                 >
                   <FileText className="h-3 w-3" />
-                  <span>Descargar CSV</span>
+                  <span>Descargar CSV Seguro</span>
                 </button>
-
                 <button
                   type="button"
                   onClick={loadAudit}
@@ -716,9 +705,8 @@ export default function UsuariosPage() {
           </div>
         )}
 
-        {/* ══ MODAL DE CREACIÓN DE USUARIO CON GENERADOR DE CLAVE ══ */}
         {createModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-3xl border border-overlay0/60 bg-surface0 p-6 sm:p-8 shadow-2xl space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-overlay0/30">
                 <div className="flex items-center gap-2.5">
@@ -736,47 +724,15 @@ export default function UsuariosPage() {
               </div>
 
               <form onSubmit={handleCreateUser} className="space-y-4">
-                <Input
-                  label="Nombre Completo"
-                  placeholder="Ej: Lic. Andrea Gómez"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-
+                <Input label="Nombre Completo" placeholder="Ej: Lic. Andrea Gómez" value={name} onChange={(e) => setName(e.target.value)} required />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Nombre de Usuario"
-                    placeholder="Ej: agomez"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Correo Institucional"
-                    type="email"
-                    placeholder="Ej: andrea@jerovia.com.py"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <Input label="Nombre de Usuario" placeholder="Ej: agomez" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                  <Input label="Correo Institucional" type="email" placeholder="Ej: andrea@jerovia.com.py" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Cargo / Título"
-                    placeholder="Ej: Perito Social"
-                    value={cargo}
-                    onChange={(e) => setCargo(e.target.value)}
-                  />
-                  <Input
-                    label="Teléfono / Celular"
-                    placeholder="Ej: 0981 123456"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                  />
+                  <Input label="Cargo / Título" placeholder="Ej: Perito Social" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+                  <Input label="Teléfono / Celular" placeholder="Ej: 0981 123456" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
                 </div>
-
                 <Select
                   label="Rol y Nivel de Acceso"
                   value={role}
@@ -787,93 +743,49 @@ export default function UsuariosPage() {
                   ]}
                   required
                 />
-
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-text">Contraseña Segura</label>
-                    <button
-                      type="button"
-                      onClick={handleGeneratePassword}
-                      className="text-[11px] font-semibold text-gold hover:underline flex items-center gap-1"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Generar otra
+                    <label className="text-xs font-semibold text-text">Contraseña Segura (CSPRNG)</label>
+                    <button type="button" onClick={handleGeneratePassword} className="text-[11px] font-semibold text-gold hover:underline flex items-center gap-1">
+                      <RefreshCw className="h-3 w-3" /> Generar otra
                     </button>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="font-mono"
-                    />
+                    <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} required className="font-mono" />
                     <button
                       type="button"
                       onClick={() => handleCopyPassword(password)}
                       className="p-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold text-subtext0 hover:text-text transition-colors"
-                      title="Copiar contraseña generada"
                     >
                       {copiedKey ? <Check className="h-4 w-4 text-green" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-[11px] text-subtext0 mt-1">
-                    Puedes copiar esta contraseña y enviarla al evaluador de forma segura.
-                  </p>
                 </div>
-
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-overlay0/30">
-                  <Button type="button" variant="secondary" onClick={() => setCreateModalOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">
-                    Guardar Personal
-                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setCreateModalOpen(false)}>Cancelar</Button>
+                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">Guardar Personal</Button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* ══ MODAL DE EDICIÓN DE USUARIO ══ */}
         {editModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-3xl border border-overlay0/60 bg-surface0 p-6 sm:p-8 shadow-2xl space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-overlay0/30">
                 <div className="flex items-center gap-2">
                   <Edit3 className="h-5 w-5 text-gold" />
                   <h3 className="font-bold text-base text-text">Editar Personal</h3>
                 </div>
-                <button onClick={() => setEditModal(null)} className="text-subtext0 hover:text-text">
-                  <X className="h-5 w-5" />
-                </button>
+                <button onClick={() => setEditModal(null)} className="text-subtext0 hover:text-text"><X className="h-5 w-5" /></button>
               </div>
-
               <form onSubmit={handleSaveEdit} className="space-y-4">
-                <Input
-                  label="Nombre Completo"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Correo Electrónico"
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  required
-                />
+                <Input label="Nombre Completo" value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                <Input label="Correo Electrónico" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Cargo"
-                    value={editCargo}
-                    onChange={(e) => setEditCargo(e.target.value)}
-                  />
-                  <Input
-                    label="Teléfono"
-                    value={editTelefono}
-                    onChange={(e) => setEditTelefono(e.target.value)}
-                  />
+                  <Input label="Cargo" value={editCargo} onChange={(e) => setEditCargo(e.target.value)} />
+                  <Input label="Teléfono" value={editTelefono} onChange={(e) => setEditTelefono(e.target.value)} />
                 </div>
                 <Select
                   label="Rol Institucional"
@@ -885,104 +797,54 @@ export default function UsuariosPage() {
                   ]}
                   required
                 />
-
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-overlay0/30">
-                  <Button type="button" variant="secondary" onClick={() => setEditModal(null)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">
-                    Guardar Cambios
-                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setEditModal(null)}>Cancelar</Button>
+                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">Guardar Cambios</Button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* ══ MODAL DE RESTABLECIMIENTO DE CONTRASEÑA ══ */}
         {passwordModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-3xl border border-overlay0/60 bg-surface0 p-6 sm:p-8 shadow-2xl space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-overlay0/30">
                 <div className="flex items-center gap-2">
                   <Key className="h-5 w-5 text-gold" />
                   <h3 className="font-bold text-base text-text">Restablecer Contraseña</h3>
                 </div>
-                <button onClick={() => setPasswordModal(null)} className="text-subtext0 hover:text-text">
-                  <X className="h-5 w-5" />
-                </button>
+                <button onClick={() => setPasswordModal(null)} className="text-subtext0 hover:text-text"><X className="h-5 w-5" /></button>
               </div>
-
-              <p className="text-xs text-subtext0">
-                Asigna una nueva clave para <strong>{passwordModal.name}</strong> (@{passwordModal.username}).
-              </p>
-
               <form onSubmit={handleSavePassword} className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-text">Nueva Clave Criptográfica</label>
-                    <button
-                      type="button"
-                      onClick={handleGeneratePassword}
-                      className="text-[11px] font-semibold text-gold hover:underline flex items-center gap-1"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Regenerar
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      className="font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleCopyPassword(newPassword)}
-                      className="p-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold text-subtext0 hover:text-text transition-colors"
-                      title="Copiar contraseña generada"
-                    >
-                      {copiedKey ? <Check className="h-4 w-4 text-green" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="font-mono" />
+                  <button type="button" onClick={() => handleCopyPassword(newPassword)} className="p-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold">
+                    {copiedKey ? <Check className="h-4 w-4 text-green" /> : <Copy className="h-4 w-4" />}
+                  </button>
                 </div>
-
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-overlay0/30">
-                  <Button type="button" variant="secondary" onClick={() => setPasswordModal(null)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">
-                    Guardar Nueva Clave
-                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setPasswordModal(null)}>Cancelar</Button>
+                  <Button type="submit" loading={submitting} className="bg-gold text-black font-bold">Guardar Nueva Clave</Button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* ══ MODAL DE ELIMINACIÓN DE USUARIO ══ */}
         {deleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-3xl border border-red/40 bg-surface0 p-6 sm:p-8 shadow-2xl text-center space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-red/10 text-red flex items-center justify-center mx-auto">
                 <Trash2 className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-text">¿Eliminar Usuario?</h3>
               <p className="text-xs text-subtext0 leading-relaxed">
-                Se dará de baja permanentemente la cuenta de <strong>{deleteModal.name}</strong> (@{deleteModal.username}). Esta acción quedará asentada en la bitácora de auditoría.
+                Se dará de baja permanentemente la cuenta de <strong>{deleteModal.name}</strong> (@{deleteModal.username}).
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setDeleteModal(null)}>
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  loading={submitting}
-                  onClick={handleConfirmDelete}
-                  className="bg-red hover:bg-red/90 text-white font-bold"
-                >
+                <Button type="button" variant="secondary" onClick={() => setDeleteModal(null)}>Cancelar</Button>
+                <Button type="button" loading={submitting} onClick={handleConfirmDelete} className="bg-red hover:bg-red/90 text-white font-bold">
                   Sí, Eliminar
                 </Button>
               </div>

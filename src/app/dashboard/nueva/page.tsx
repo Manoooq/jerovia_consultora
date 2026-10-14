@@ -4,10 +4,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
-import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, Check, Copy, ExternalLink, Share2, 
-  Building2, User, Phone, MapPin, ShieldCheck, ShieldAlert 
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  ExternalLink,
+  Share2,
+  Building2,
+  User,
+  ShieldCheck,
+  ShieldAlert,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/FormFields";
@@ -36,7 +43,6 @@ const CIUDADES_PARAGUAY = [
 ];
 
 export default function NuevaEntrevistaPage() {
-  const router = useRouter();
   const [entidad, setEntidad] = useState("Banco Continental");
   const [entidadCustom, setEntidadCustom] = useState("");
   const [nombre, setNombre] = useState("");
@@ -50,6 +56,7 @@ export default function NuevaEntrevistaPage() {
   ]);
 
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [creada, setCreada] = useState<{
     token: string;
     entidad: string;
@@ -60,7 +67,6 @@ export default function NuevaEntrevistaPage() {
   const [copiado, setCopiado] = useState(false);
   const [permisoDenegado, setPermisoDenegado] = useState(false);
 
-  // Verificar rol de admin y cargar lista de evaluadores registrados
   useEffect(() => {
     async function checkRoleAndLoadUsers() {
       try {
@@ -72,7 +78,6 @@ export default function NuevaEntrevistaPage() {
             return;
           }
         }
-
         const usersRes = await fetch("/api/usuarios");
         if (usersRes.ok) {
           const usersData = await usersRes.json();
@@ -87,7 +92,7 @@ export default function NuevaEntrevistaPage() {
           }
         }
       } catch {
-        // En caso de fallo de red mantener los defaults
+        // Conserva valores por defecto ante error de red
       }
     }
     checkRoleAndLoadUsers();
@@ -96,8 +101,9 @@ export default function NuevaEntrevistaPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(null);
 
-    const entidadFinal = entidad === "Otra Entidad" ? entidadCustom : entidad;
+    const entidadFinal = (entidad === "Otra Entidad" ? entidadCustom : entidad).trim();
 
     try {
       const res = await fetch("/api/entrevista", {
@@ -106,44 +112,28 @@ export default function NuevaEntrevistaPage() {
         body: JSON.stringify({
           entidadSolicitante: entidadFinal,
           evaluadorAsignado: evaluador,
+          candidatoNombre: nombre.trim(),
+          cedula: cedula.trim(),
+          telefono: telefono.trim(),
+          ciudad,
         }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Error al crear entrevista");
-      }
       const data = await res.json();
-
-      // Guardar datos preliminares del candidato
-      await fetch(`/api/entrevista/${data.token}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidatoNombre: nombre,
-          evaluadorAsignado: evaluador,
-          datos: {
-            nombre: nombre.split(" ")[0] || "",
-            apellido: nombre.split(" ").slice(1).join(" ") || "",
-            cedula,
-            telefono,
-            ciudad,
-            consultorNombre: evaluador,
-          },
-        }),
-      });
+      if (!res.ok) {
+        throw new Error(data.error || "Error al crear entrevista.");
+      }
 
       const fullUrl = `${window.location.origin}/entrevista/${data.token}`;
       setCreada({
         token: data.token,
         entidad: entidadFinal,
-        candidato: nombre,
+        candidato: nombre.trim(),
         evaluador,
         url: fullUrl,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "No se pudo registrar la visita.";
-      alert(msg);
+      setErrorMsg(err instanceof Error ? err.message : "No se pudo registrar la visita.");
     } finally {
       setLoading(false);
     }
@@ -158,9 +148,11 @@ export default function NuevaEntrevistaPage() {
 
   function generarMensajeWhatsApp(): string {
     if (!creada) return "";
-    const msg = `Estimado/a ${creada.candidato || "postulante"}, le saluda el equipo de Jerovia Consultora.\n\nPara coordinar el estudio socioambiental solicitado por ${creada.entidad}, le facilitamos el siguiente enlace seguro para registrar sus datos preliminares:\n\n🔗 ${creada.url}\n\nPerito a cargo: ${creada.evaluador}\nQuedamos a su disposición.`;
+    const msg = `Estimado/a ${creada.candidato || "postulante"}, le saluda el equipo de Jerovia Consultora.\n\nPara coordinar el estudio socioambiental solicitado por ${creada.entidad}, le facilitamos el siguiente enlace seguro para registrar sus datos preliminares:\n\n${creada.url}\n\nPerito a cargo: ${creada.evaluador}\nQuedamos a su disposición.`;
     const telLimpio = telefono.replace(/\D/g, "");
-    const telParaguay = telLimpio.startsWith("595") ? telLimpio : `595${telLimpio.replace(/^0/, "")}`;
+    const telParaguay = telLimpio.startsWith("595")
+      ? telLimpio
+      : `595${telLimpio.replace(/^0/, "")}`;
     return `https://wa.me/${telParaguay}?text=${encodeURIComponent(msg)}`;
   }
 
@@ -169,7 +161,7 @@ export default function NuevaEntrevistaPage() {
       <div className="min-h-screen bg-base flex items-center justify-center p-4">
         <div className="max-w-md w-full rounded-3xl border border-red/30 bg-surface0 p-8 text-center space-y-4">
           <div className="h-12 w-12 rounded-2xl bg-red/10 text-red flex items-center justify-center mx-auto">
-            <ShieldAlert className="h-6 w-6" />
+            <ShieldAlert className="h-6 w-6" aria-hidden="true" />
           </div>
           <h2 className="text-xl font-bold text-text">Acceso Restringido</h2>
           <p className="text-xs text-subtext0 leading-relaxed">
@@ -179,7 +171,7 @@ export default function NuevaEntrevistaPage() {
             href="/dashboard"
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-black"
           >
-            ← Volver a mis visitas
+            Volver a mis visitas
           </Link>
         </div>
       </div>
@@ -188,7 +180,6 @@ export default function NuevaEntrevistaPage() {
 
   return (
     <div className="min-h-screen bg-base">
-      {/* Top Navbar */}
       <nav className="border-b border-overlay0/30 bg-mantle sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -196,7 +187,7 @@ export default function NuevaEntrevistaPage() {
               href="/dashboard"
               className="flex items-center gap-1.5 text-xs text-subtext1 hover:text-text transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Volver al panel
             </Link>
             <div className="h-4 w-px bg-overlay0/50" />
@@ -216,23 +207,32 @@ export default function NuevaEntrevistaPage() {
           <div className="rounded-3xl border border-overlay0/40 bg-surface0 p-8 sm:p-10 shadow-2xl">
             <div className="mb-8">
               <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold mb-3">
-                <Building2 className="h-3.5 w-3.5" />
+                <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
                 Estudio Socioambiental Confidencial
               </div>
               <h1 className="text-3xl font-black text-text">Generar Nueva Visita</h1>
               <p className="text-sm text-subtext1 mt-1">
-                Registra los datos del postulante, la institución bancaria y el perito evaluador responsable.
+                Registra los datos del postulante, la institución solicitante y el perito evaluador responsable.
               </p>
             </div>
 
+            {errorMsg && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="mb-6 rounded-2xl bg-red/10 border border-red/30 p-4 text-xs font-semibold text-red flex items-center gap-2"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Entidad Solicitante */}
               <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
                 <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <Building2 className="h-4 w-4 text-gold" />
+                  <Building2 className="h-4 w-4 text-gold" aria-hidden="true" />
                   <span>1. Entidad Solicitante</span>
                 </div>
-
                 <Select
                   label="Empresa / Institución Bancaria"
                   options={ENTIDADES_FRECUENTES}
@@ -240,7 +240,6 @@ export default function NuevaEntrevistaPage() {
                   onChange={(e) => setEntidad(e.target.value)}
                   required
                 />
-
                 {entidad === "Otra Entidad" && (
                   <Input
                     label="Nombre de la Institución"
@@ -252,17 +251,15 @@ export default function NuevaEntrevistaPage() {
                 )}
               </div>
 
-              {/* Datos del Candidato */}
               <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
                 <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <User className="h-4 w-4 text-gold" />
+                  <User className="h-4 w-4 text-gold" aria-hidden="true" />
                   <span>2. Datos del Postulante / Entrevistado</span>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Nombre Completo"
-                    placeholder="Ej: Tobias Maximiliano Sánchez"
+                    placeholder="Ej: Tobías Maximiliano Sánchez"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     required
@@ -291,13 +288,11 @@ export default function NuevaEntrevistaPage() {
                 </div>
               </div>
 
-              {/* Perito Asignado (Jerarquía de usuarios) */}
               <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
                 <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <ShieldCheck className="h-4 w-4 text-gold" />
+                  <ShieldCheck className="h-4 w-4 text-gold" aria-hidden="true" />
                   <span>3. Perito Evaluador Responsable</span>
                 </div>
-
                 <Select
                   label="Asignar al Perito"
                   options={evaluadoresList}
@@ -307,7 +302,6 @@ export default function NuevaEntrevistaPage() {
                 />
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-overlay0/40">
                 <Link
                   href="/dashboard"
@@ -327,11 +321,10 @@ export default function NuevaEntrevistaPage() {
             </form>
           </div>
         ) : (
-          /* Confirmation & Sharing Screen */
           <div className="rounded-3xl border border-gold/30 bg-surface0 p-8 sm:p-10 shadow-2xl space-y-8 animate-in fade-in zoom-in-95 duration-300">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center">
-                <Check className="h-6 w-6 text-gold" />
+                <Check className="h-6 w-6 text-gold" aria-hidden="true" />
               </div>
               <div>
                 <h2 className="text-2xl font-black text-text">¡Enlace de Visita Generado!</h2>
@@ -341,7 +334,6 @@ export default function NuevaEntrevistaPage() {
               </div>
             </div>
 
-            {/* Resumen */}
             <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-3">
               <div className="flex justify-between text-xs py-1 border-b border-overlay0/30">
                 <span className="text-subtext0">Entidad Solicitante:</span>
@@ -361,7 +353,6 @@ export default function NuevaEntrevistaPage() {
               </div>
             </div>
 
-            {/* Link Box */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-subtext0 uppercase tracking-wider">
                 Enlace Directo para el Evaluador / Postulante
@@ -373,12 +364,7 @@ export default function NuevaEntrevistaPage() {
                   value={creada.url}
                   className="bg-transparent text-sm text-text font-mono flex-1 outline-none px-2"
                 />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleCopiar}
-                  className="shrink-0"
-                >
+                <Button size="sm" variant="secondary" onClick={handleCopiar} className="shrink-0">
                   {copiado ? (
                     <>
                       <Check className="h-3.5 w-3.5 text-green" />
@@ -394,7 +380,6 @@ export default function NuevaEntrevistaPage() {
               </div>
             </div>
 
-            {/* WhatsApp Integration Button */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href={generarMensajeWhatsApp()}
@@ -402,25 +387,21 @@ export default function NuevaEntrevistaPage() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-green/90 hover:bg-green text-black font-bold px-6 py-3.5 text-sm transition-all shadow-lg shadow-green/20"
               >
-                <Share2 className="h-4 w-4" />
+                <Share2 className="h-4 w-4" aria-hidden="true" />
                 Enviar por WhatsApp
               </a>
-
               <Link
                 href={`/entrevista/${creada.token}`}
                 className="flex items-center justify-center gap-2 rounded-xl bg-gold hover:bg-gold-light text-black font-bold px-6 py-3.5 text-sm transition-all shadow-lg shadow-gold/20"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 Iniciar Evaluación
               </Link>
             </div>
 
             <div className="pt-4 border-t border-overlay0/30 text-center">
-              <Link
-                href="/dashboard"
-                className="text-xs text-subtext0 hover:text-text transition-colors"
-              >
-                ← Volver al listado de entrevistas
+              <Link href="/dashboard" className="text-xs text-subtext0 hover:text-text transition-colors">
+                Volver al listado de entrevistas
               </Link>
             </div>
           </div>

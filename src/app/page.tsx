@@ -9,14 +9,11 @@ import { BentoFeatures } from "@/components/BentoFeatures";
 import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
 import { FaqSection } from "@/components/FaqSection";
-import {
-  ShieldCheck, MapPin, ChevronRight, Lock, EyeOff
-} from "lucide-react";
+import { ShieldCheck, MapPin, ChevronRight, Lock, EyeOff, Clock } from "lucide-react";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-base text-text selection:bg-gold/30 selection:text-gold">
-      {/* ══ BARRA SUPERIOR INSTITUCIONAL ══ */}
       <nav aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 glass-panel">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo size="md" />
@@ -42,14 +39,12 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ══ HERO PRINCIPAL: PRODUCT-AS-THE-HERO (CONSOLA PERICIAL UNIFICADA) ══ */}
       <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
         <div className="max-w-7xl mx-auto space-y-12">
-          
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-green/30 bg-green/10 px-3.5 py-1 text-xs font-semibold text-green font-mono">
-              <span className="h-1.5 w-1.5 rounded-full bg-green animate-ping" />
-              <span>Red de Auditoría Activa · Asunción, CDE y Encarnación</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-green animate-ping" aria-hidden="true" />
+              <span>Red de Auditoría Activa • Asunción, Central, CDE y Encarnación</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.04] text-text">
@@ -57,7 +52,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-base sm:text-xl text-subtext0 leading-relaxed font-normal">
-              Constatamos in situ la residencia efectiva, solvencia declarada y referencias vecinales. Emitimos el legajo en 5 láminas ejecutivas (.pptx y PDF).
+              Constatamos in situ la residencia efectiva, solvencia declarada y referencias vecinales con evidencia GPS e IA. Emitimos el dictamen ejecutivo en menos de 24 horas (.pptx y PDF).
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -66,44 +61,44 @@ export default function LandingPage() {
                 className="group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3.5 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/20"
               >
                 <span>Explorar Formulario Demo</span>
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
               <Link
                 href="/login"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-surface1 px-7 py-3.5 text-sm font-semibold text-text hover:bg-surface2 transition-all"
+                className="flex items-center justify-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-7 py-3.5 text-sm font-semibold text-text hover:bg-surface2 transition-all"
               >
-                <Lock className="h-4 w-4 text-subtext0" />
+                <Lock className="h-4 w-4 text-subtext0" aria-hidden="true" />
                 <span>Portal de Evaluadores</span>
               </Link>
             </div>
 
-            {/* Sellos de Estándar */}
-            <div className="pt-4 border-t border-white/[0.08] flex flex-wrap items-center gap-6 text-xs text-subtext0 font-medium">
+            <div className="pt-4 border-t border-overlay0/40 flex flex-wrap items-center gap-6 text-xs text-subtext0 font-medium">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
+                <ShieldCheck className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
                 <span>Matrícula Pericial N° 4.819</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-gold shrink-0" />
+                <MapPin className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
                 <span>Georreferenciación GPS In Situ</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <EyeOff className="h-4 w-4 text-gold shrink-0" />
-                <span>Reserva Confidencial Ley N° 1682/01</span>
+                <Clock className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+                <span>SLA Ejecutivo &lt; 24 Horas</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <EyeOff className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+                <span>Cumplimiento Ley N° 6534/20 y 1682/01</span>
               </span>
             </div>
           </div>
 
-          {/* ══ PRODUCTO INTERACTIVO: CONSOLA PERICIAL UNIFICADA ══ */}
-          <section id="showcase">
+          <section id="showcase" aria-label="Demostración interactiva de consola pericial">
             <HeroProductShowcase />
           </section>
-
         </div>
       </main>
 
-      {/* ══ BENTO GRID DE CAPACIDADES TECNOLÓGICAS (SHOW, DON'T TELL) ══ */}
-      <section id="tecnologia" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+      <section id="tecnologia" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -115,43 +110,37 @@ export default function LandingPage() {
               </h2>
             </div>
             <span className="text-xs text-subtext0 font-mono">
-              Auditoría en fachada y algoritmos predictivos
+              Auditoría en fachada y detección de inconsistencias con IA
             </span>
           </div>
-
           <BentoFeatures />
         </div>
       </section>
 
-      {/* ══ SIMULADOR DE ARANCELES (COMPACTO) ══ */}
-      <section id="simulador" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+      <section id="simulador" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
         <div className="max-w-7xl mx-auto">
           <PeritajeCalculator />
         </div>
       </section>
 
-      {/* ══ COBERTURA TERRITORIAL PARAGUAY ══ */}
-      <section id="cobertura" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+      <section id="cobertura" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
         <div className="max-w-7xl mx-auto space-y-6">
           <ParaguayOperationalMap />
         </div>
       </section>
 
-      {/* ══ PREGUNTAS FRECUENTES DE COMITÉS DE RIESGO ══ */}
-      <section id="faqs" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.08]">
+      <section id="faqs" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
         <div className="max-w-7xl mx-auto">
           <FaqSection />
         </div>
       </section>
 
-      {/* ══ PIE DE PÁGINA SOBRIO Y ELEGANTE ══ */}
-      <footer className="border-t border-white/[0.08] py-8 bg-mantle">
+      <footer className="border-t border-overlay0/40 py-8 bg-mantle">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext0">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <span>· Peritajes Socioambientales · Asunción, Paraguay</span>
+            <span>• Peritajes Socioambientales • Asunción, Paraguay</span>
           </div>
-
           <div className="flex items-center gap-6 font-semibold">
             <Link href="/login" className="hover:text-text transition-colors">Portal Pericial</Link>
             <Link href="/entrevista/demo" className="hover:text-text transition-colors">Formulario Demo</Link>
