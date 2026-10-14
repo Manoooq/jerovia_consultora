@@ -14,6 +14,7 @@
     "@types/leaflet": "^1.9.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "escape-html": "^1.0.3",
     "framer-motion": "^13.4.6",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.49.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/escape-html": "^1.0.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
