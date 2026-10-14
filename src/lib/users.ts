@@ -100,15 +100,35 @@ function initUsers() {
   persistUsers();
 }
 
-function persistUsers() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+let persistPromise: Promise<void> | null = null;
+let dirExists = false;
+
+async function persistUsers() {
+  const doPersist = async () => {
+    try {
+      if (!dirExists) {
+        if (!fs.existsSync(DATA_DIR)) {
+          await fs.promises.mkdir(DATA_DIR, { recursive: true });
+        }
+        dirExists = true;
+      }
+      const list = Array.from(usersStore.values());
+      await fs.promises.writeFile(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    } catch (err) {
+      console.warn("[persistUsers warn]:", err);
     }
-    const list = Array.from(usersStore.values());
-    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
-  } catch (err) {
-    console.warn("[persistUsers warn]:", err);
+  };
+
+  if (persistPromise) {
+    persistPromise = persistPromise.then(doPersist);
+  } else {
+    persistPromise = doPersist();
+  }
+
+  try {
+    await persistPromise;
+  } finally {
+    persistPromise = null;
   }
 }
 
