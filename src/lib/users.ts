@@ -51,9 +51,26 @@ export async function verifyPassword(password: string, hash: string, salt: strin
 }
 
 const usersStore = new Map<string, User>();
+const usernameIndex = new Map<string, User>();
+const emailIndex = new Map<string, User>();
+
+function _addUserToStore(user: User) {
+  usersStore.set(user.id, user);
+  usernameIndex.set(user.username.toLowerCase(), user);
+  emailIndex.set(user.email.toLowerCase(), user);
+}
+
+function _removeUserFromStore(id: string) {
+  const user = usersStore.get(id);
+  if (user) {
+    usersStore.delete(id);
+    usernameIndex.delete(user.username.toLowerCase());
+    emailIndex.delete(user.email.toLowerCase());
+  }
+}
 
 function seedDefaultUsers() {
-  usersStore.set("usr_admin_01", {
+  _addUserToStore({
     id: "usr_admin_01",
     username: "admin",
     email: "admin@jerovia.com.py",
@@ -65,7 +82,7 @@ function seedDefaultUsers() {
     creadoEn: "2026-09-01T08:00:00.000Z",
   });
 
-  usersStore.set("usr_eval_01", {
+  _addUserToStore({
     id: "usr_eval_01",
     username: "evaluador",
     email: "evaluador@jerovia.com.py",
@@ -88,7 +105,9 @@ function initUsers() {
       if (content.trim()) {
         const list: User[] = JSON.parse(content);
         usersStore.clear();
-        list.forEach((u) => usersStore.set(u.id, u));
+        usernameIndex.clear();
+        emailIndex.clear();
+        list.forEach((u) => _addUserToStore(u));
         return;
       }
     }
@@ -140,12 +159,7 @@ export function obtenerUsuarioPorId(id: string): User | undefined {
 export function obtenerUsuarioPorIdentificador(identifier: string): User | undefined {
   if (usersStore.size === 0) initUsers();
   const clean = identifier.toLowerCase().trim();
-  for (const user of usersStore.values()) {
-    if (user.username.toLowerCase() === clean || user.email.toLowerCase() === clean) {
-      return user;
-    }
-  }
-  return undefined;
+  return usernameIndex.get(clean) || emailIndex.get(clean);
 }
 
 export async function crearUsuario(datos: {
@@ -175,7 +189,7 @@ export async function crearUsuario(datos: {
     creadoEn: new Date().toISOString(),
   };
 
-  usersStore.set(id, nuevoUsuario);
+  _addUserToStore(nuevoUsuario);
   persistUsers();
   return toSafeUser(nuevoUsuario);
 }
@@ -186,8 +200,11 @@ export function actualizarUsuario(
 ): SafeUser | null {
   const user = usersStore.get(id);
   if (!user) return null;
+
+  _removeUserFromStore(id); // Remove old entries from indexes
   const updated: User = { ...user, ...patch };
-  usersStore.set(id, updated);
+  _addUserToStore(updated); // Add new entries to indexes
+
   persistUsers();
   return toSafeUser(updated);
 }
@@ -201,7 +218,7 @@ export async function cambiarContrasena(id: string, nuevaContrasena: string): Pr
   const { hash, salt } = await hashPassword(nuevaContrasena);
   user.passwordHash = hash;
   user.passwordSalt = salt;
-  usersStore.set(id, user);
+  _addUserToStore(user); // _addUserToStore will overwrite existing index and store
   persistUsers();
   return true;
 }
@@ -212,9 +229,9 @@ export function eliminarUsuario(id: string): boolean {
   if (user.username === "admin") {
     throw new Error("No es posible eliminar la cuenta principal de administración.");
   }
-  const deleted = usersStore.delete(id);
-  if (deleted) persistUsers();
-  return deleted;
+  _removeUserFromStore(id);
+  persistUsers();
+  return true;
 }
 
 export async function verificarCredenciales(identifier: string, password: string): Promise<SafeUser | null> {
