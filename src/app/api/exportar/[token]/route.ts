@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { obtenerEntrevista, crearEntrevista, actualizarEntrevista } from "@/lib/store";
 import { generarPptxInforme } from "@/lib/exportPptx";
+import escapeHtml from "escape-html";
 
 export async function GET(
   req: NextRequest,
@@ -119,11 +120,14 @@ export async function GET(
 
   // Formato HTML imprimible para PDF
   const d = entrevista.datos;
+  // Sanitization helper
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const e = (val: any) => val != null && val !== "" ? escapeHtml(String(val)) : "";
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Informe Confidencial - ${nombreCandidato}</title>
+  <title>Informe Confidencial - ${e(nombreCandidato)}</title>
   <style>
     @page { size: A4 portrait; margin: 15mm; }
     body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 20px; font-size: 11pt; line-height: 1.5; }
@@ -159,56 +163,56 @@ export async function GET(
     </div>
     <div style="text-align: right;">
       <span class="badge">ESTRICTAMENTE CONFIDENCIAL</span>
-      <div class="subtitle" style="margin-top: 4px;">Solicitado por: <strong>${entrevista.entidadSolicitante}</strong></div>
+      <div class="subtitle" style="margin-top: 4px;">Solicitado por: <strong>${e(entrevista.entidadSolicitante)}</strong></div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">1. Identificación Personal y Trayectoria Laboral</div>
     <div class="grid">
-      <div class="field"><div class="label">Postulante</div><div class="val">${d.nombre || ""} ${d.apellido || ""}</div></div>
-      <div class="field"><div class="label">Cédula de Identidad</div><div class="val">${d.cedula || "N/A"}</div></div>
-      <div class="field"><div class="label">Contacto Telefónico</div><div class="val">${d.telefono || "N/A"}</div></div>
-      <div class="field"><div class="label">Estado Civil</div><div class="val">${d.estadoCivil || "N/A"}</div></div>
-      <div class="field"><div class="label">Formación Académica</div><div class="val">${d.carrera || "N/A"} (${d.universidad || "N/A"})</div></div>
-      <div class="field"><div class="label">Situación Laboral</div><div class="val">${d.situacionActual || "N/A"} (Ant. ${d.empresaAnterior || "N/A"})</div></div>
+      <div class="field"><div class="label">Postulante</div><div class="val">${e(d.nombre)} ${e(d.apellido)}</div></div>
+      <div class="field"><div class="label">Cédula de Identidad</div><div class="val">${e(d.cedula) || "N/A"}</div></div>
+      <div class="field"><div class="label">Contacto Telefónico</div><div class="val">${e(d.telefono) || "N/A"}</div></div>
+      <div class="field"><div class="label">Estado Civil</div><div class="val">${e(d.estadoCivil) || "N/A"}</div></div>
+      <div class="field"><div class="label">Formación Académica</div><div class="val">${e(d.carrera) || "N/A"} (${e(d.universidad) || "N/A"})</div></div>
+      <div class="field"><div class="label">Situación Laboral</div><div class="val">${e(d.situacionActual) || "N/A"} (Ant. ${e(d.empresaAnterior) || "N/A"})</div></div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">2. Entorno Familiar y Estado de Salud</div>
     <div class="grid">
-      <div class="field"><div class="label">Estructura del Hogar</div><div class="val">${d.estructuraFamiliar || "N/A"}</div></div>
-      <div class="field"><div class="label">Hijos</div><div class="val">${d.hijos ? `Sí (${d.cantidadHijos || 0})` : "No"}</div></div>
-      <div class="field"><div class="label">Datos del Padre</div><div class="val">${d.nombrePadre || "N/A"} (${d.ocupacionPadre || "N/A"})</div></div>
-      <div class="field"><div class="label">Datos de la Madre</div><div class="val">${d.nombreMadre || "N/A"} (${d.ocupacionMadre || "N/A"})</div></div>
-      <div class="field"><div class="label">Seguro Médico</div><div class="val">${d.seguroMedico ? d.seguroMedico.toUpperCase() : "NINGUNO"}</div></div>
-      <div class="field"><div class="label">Enfermedades de Base</div><div class="val">${d.enfermedadBase ? d.enfermedadBaseDetalle : "No refiere"}</div></div>
+      <div class="field"><div class="label">Estructura del Hogar</div><div class="val">${e(d.estructuraFamiliar) || "N/A"}</div></div>
+      <div class="field"><div class="label">Hijos</div><div class="val">${d.hijos ? `Sí (${e(d.cantidadHijos || 0)})` : "No"}</div></div>
+      <div class="field"><div class="label">Datos del Padre</div><div class="val">${e(d.nombrePadre) || "N/A"} (${e(d.ocupacionPadre) || "N/A"})</div></div>
+      <div class="field"><div class="label">Datos de la Madre</div><div class="val">${e(d.nombreMadre) || "N/A"} (${e(d.ocupacionMadre) || "N/A"})</div></div>
+      <div class="field"><div class="label">Seguro Médico</div><div class="val">${d.seguroMedico ? e(d.seguroMedico.toUpperCase()) : "NINGUNO"}</div></div>
+      <div class="field"><div class="label">Enfermedades de Base</div><div class="val">${d.enfermedadBase ? e(d.enfermedadBaseDetalle) : "No refiere"}</div></div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">3. Situación Económica y Condiciones Habitacionales</div>
     <div class="grid">
-      <div class="field"><div class="label">Ingresos Familiares</div><div class="val">${d.ingresosFamiliares || "No declarado"}</div></div>
-      <div class="field"><div class="label">Tenencia Inmueble</div><div class="val">${d.tenenciaVivienda ? d.tenenciaVivienda.toUpperCase() : "PROPIA"}</div></div>
-      <div class="field full"><div class="label">Dirección y Referencias</div><div class="val">${d.direccion || "N/A"}, Barrio ${d.barrio || "N/A"}, ${d.ciudad || "N/A"}</div></div>
-      <div class="field"><div class="label">Coordenadas GPS</div><div class="val">${d.coordenadas || "N/A"} (${d.plusCode || "N/A"})</div></div>
-      <div class="field"><div class="label">Tipo de Acceso</div><div class="val">${d.tipoCamino ? d.tipoCamino.toUpperCase() : "N/A"}</div></div>
-      <div class="field full"><div class="label">Construcción</div><div class="val">Techo: ${d.techo || "Tejas"} | Paredes: ${d.paredes || "Ladrillo"} | Pisos: ${d.pisos || "Cerámica"}</div></div>
+      <div class="field"><div class="label">Ingresos Familiares</div><div class="val">${e(d.ingresosFamiliares) || "No declarado"}</div></div>
+      <div class="field"><div class="label">Tenencia Inmueble</div><div class="val">${d.tenenciaVivienda ? e(d.tenenciaVivienda.toUpperCase()) : "PROPIA"}</div></div>
+      <div class="field full"><div class="label">Dirección y Referencias</div><div class="val">${e(d.direccion) || "N/A"}, Barrio ${e(d.barrio) || "N/A"}, ${e(d.ciudad) || "N/A"}</div></div>
+      <div class="field"><div class="label">Coordenadas GPS</div><div class="val">${e(d.coordenadas) || "N/A"} (${e(d.plusCode) || "N/A"})</div></div>
+      <div class="field"><div class="label">Tipo de Acceso</div><div class="val">${d.tipoCamino ? e(d.tipoCamino.toUpperCase()) : "N/A"}</div></div>
+      <div class="field full"><div class="label">Construcción</div><div class="val">Techo: ${e(d.techo) || "Tejas"} | Paredes: ${e(d.paredes) || "Ladrillo"} | Pisos: ${e(d.pisos) || "Cerámica"}</div></div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">4. Conclusiones y Dictamen del Perito</div>
     <div class="field full">
-      <div class="val" style="line-height: 1.6; text-align: justify;">${d.observacionesEntrevista || "El postulante demuestra actitud cooperativa y predisposición favorable. Las condiciones habitacionales y de entorno resultan acordes a lo declarado."}</div>
+      <div class="val" style="line-height: 1.6; text-align: justify;">${e(d.observacionesEntrevista) || "El postulante demuestra actitud cooperativa y predisposición favorable. Las condiciones habitacionales y de entorno resultan acordes a lo declarado."}</div>
     </div>
   </div>
 
   <div class="footer">
-    <div>Fecha de Visita: <strong>${d.fechaVisita || "17/02/2026"}</strong></div>
-    <div>Perito Responsable: <strong>${d.consultorNombre || "Michelle Romero"}</strong> (Jerovia Consultora)</div>
+    <div>Fecha de Visita: <strong>${e(d.fechaVisita) || "17/02/2026"}</strong></div>
+    <div>Perito Responsable: <strong>${e(d.consultorNombre) || "Michelle Romero"}</strong> (Jerovia Consultora)</div>
   </div>
 </body>
 </html>`;
