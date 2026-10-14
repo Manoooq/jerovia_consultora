@@ -115,21 +115,39 @@ function persistUsers() {
 initUsers();
 
 function toSafeUser(user: User): SafeUser {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, passwordSalt, ...safe } = user;
+  const safe: SafeUser = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    activo: user.activo,
+    creadoEn: user.creadoEn,
+  };
+  if (user.ultimoAcceso !== undefined) safe.ultimoAcceso = user.ultimoAcceso;
+  if (user.cargo !== undefined) safe.cargo = user.cargo;
+  if (user.telefono !== undefined) safe.telefono = user.telefono;
   return safe;
 }
 
 export function listarUsuarios(): SafeUser[] {
   if (usersStore.size === 0) initUsers();
-  return Array.from(usersStore.values()).map(toSafeUser);
+  const result: SafeUser[] = [];
+  for (const user of usersStore.values()) {
+    result.push(toSafeUser(user));
+  }
+  return result;
 }
 
 export function listarEvaluadores(): SafeUser[] {
   if (usersStore.size === 0) initUsers();
-  return Array.from(usersStore.values())
-    .filter((u) => u.activo && (u.role === "evaluador" || u.role === "admin"))
-    .map(toSafeUser);
+  const result: SafeUser[] = [];
+  for (const u of usersStore.values()) {
+    if (u.activo && (u.role === "evaluador" || u.role === "admin")) {
+      result.push(toSafeUser(u));
+    }
+  }
+  return result;
 }
 
 export function obtenerUsuarioPorId(id: string): User | undefined {
