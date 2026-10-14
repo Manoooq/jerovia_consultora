@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 import type { SafeUser, UserRole } from "@/lib/users";
 
 export const AUTH_COOKIE = "jerovia_session";
-const SECRET = process.env.AUTH_SECRET || "jerovia_secret_key_prod_2026_super_secure";
+const SECRET = process.env.AUTH_SECRET;
+if (!SECRET) {
+  throw new Error("AUTH_SECRET environment variable is not set.");
+}
 
 export interface SessionPayload {
   userId: string;
