@@ -100,16 +100,35 @@ function initUsers() {
   persistUsers();
 }
 
-function persistUsers() {
+let isWritingUsers = false;
+let pendingWriteUsers = false;
+
+async function executeWriteUsers() {
+  if (isWritingUsers) {
+    pendingWriteUsers = true;
+    return;
+  }
+  isWritingUsers = true;
+  pendingWriteUsers = false;
+
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     const list = Array.from(usersStore.values());
-    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    await fs.promises.writeFile(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
     console.warn("[persistUsers warn]:", err);
+  } finally {
+    isWritingUsers = false;
+    if (pendingWriteUsers) {
+      executeWriteUsers().catch(err => console.error("[persistUsers pending error]:", err));
+    }
   }
+}
+
+function persistUsers() {
+  executeWriteUsers().catch(err => console.error("[persistUsers error]:", err));
 }
 
 initUsers();
