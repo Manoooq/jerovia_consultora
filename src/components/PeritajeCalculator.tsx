@@ -28,24 +28,24 @@ interface Urgencia {
 }
 
 const TIPOS_PERITAJE: TipoPeritaje[] = [
-  { id: "consumo", name: "Crédito de Consumo / Personal", basePrice: 280000 },
-  { id: "hipotecario", name: "Crédito Hipotecario / Inmueble", basePrice: 420000 },
+  { id: "consumo", name: "Crédito de Consumo", basePrice: 280000 },
+  { id: "hipotecario", name: "Crédito Hipotecario", basePrice: 420000 },
   { id: "comercial", name: "Comercial / PYMES", basePrice: 550000 },
-  { id: "rrhh", name: "Auditoría de Confianza (RRHH)", basePrice: 320000 },
+  { id: "rrhh", name: "Auditoría de Confianza", basePrice: 320000 },
 ];
 
 const ZONAS: ZonaRecargo[] = [
-  { id: "asuncion", name: "Gran Asunción (Capital, Luque, San Lorenzo)", recargo: 0, slaBase: 24 },
-  { id: "central_ext", name: "Central Exterior (Capiatá, Itauguá, Ypacaraí)", recargo: 45000, slaBase: 28 },
-  { id: "alto_parana", name: "Alto Paraná (CDE, Hernandarias)", recargo: 110000, slaBase: 48 },
-  { id: "itapua", name: "Itapúa (Encarnación, Colonias)", recargo: 135000, slaBase: 48 },
-  { id: "caaguazu", name: "Caaguazú y Cordillera (Oviedo, Caacupé)", recargo: 80000, slaBase: 36 },
+  { id: "asuncion", name: "Gran Asunción", recargo: 0, slaBase: 24 },
+  { id: "central_ext", name: "Central Exterior", recargo: 45000, slaBase: 28 },
+  { id: "alto_parana", name: "Alto Paraná", recargo: 110000, slaBase: 48 },
+  { id: "itapua", name: "Itapúa", recargo: 135000, slaBase: 48 },
+  { id: "caaguazu", name: "Caaguazú y Cordillera", recargo: 80000, slaBase: 36 },
 ];
 
 const URGENCIAS: Urgencia[] = [
-  { id: "estandar", name: "Estándar (24 - 48 hs)", factor: 1.0, slaFactor: 1.0 },
+  { id: "estandar", name: "Estándar (24-48 hs)", factor: 1.0, slaFactor: 1.0 },
   { id: "prioritario", name: "Prioritario (< 18 hs)", factor: 1.25, slaFactor: 0.65 },
-  { id: "mismo_dia", name: "Express Mismo Día (< 10 hs)", factor: 1.5, slaFactor: 0.4 },
+  { id: "mismo_dia", name: "Express (< 10 hs)", factor: 1.5, slaFactor: 0.4 },
 ];
 
 export function PeritajeCalculator() {
@@ -84,7 +84,7 @@ Zona: ${calculo.zonaObj.name}
 Plazo: ${calculo.urgenciaObj.name} (< ${calculo.tiempoHoras}hs)
 Total con IVA (10%): ${calculo.total.toLocaleString("es-PY")} Gs.
 --------------------------------------------------
-Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictamen firmado.`;
+Incluye: Legajo 5 láminas, GPS satelital, ANDE verificado y dictamen firmado.`;
 
     navigator.clipboard.writeText(texto);
     setCopied(true);
@@ -92,30 +92,22 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
   };
 
   return (
-    <div id="simulador" className="rounded-3xl border border-overlay0/40 bg-surface0 p-6 sm:p-8 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-6 border-b border-overlay0/30 mb-6">
-        <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-            Simulador de Aranceles
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-text">
-            Cotización oficial por expediente
-          </h2>
-        </div>
-        <span className="text-xs text-subtext0 font-mono">Aranceles oficiales con IVA</span>
-      </div>
+    <div className="rounded-2xl border border-overlay0 bg-surface0 p-6 sm:p-10 shadow-lg">
+      <header className="pb-8 border-b border-overlay0 mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-text">
+          Cotización Oficial
+        </h2>
+        <p className="text-sm text-subtext0 mt-2">Aranceles transparentes para servicios periciales (IVA Incluido)</p>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* Parámetros de Selección (7 cols) */}
-        <div className="lg:col-span-7 space-y-5">
+        {/* Parámetros de Selección */}
+        <div className="lg:col-span-7 space-y-8">
           
-          {/* 1. Tipo */}
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              1. Tipo de Evaluación
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-text uppercase tracking-wider">1. Tipo de Evaluación</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {TIPOS_PERITAJE.map((item) => {
                 const isSelected = tipo === item.id;
                 return (
@@ -123,25 +115,22 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
                     key={item.id}
                     type="button"
                     onClick={() => setTipo(item.id)}
-                    className={`p-3 rounded-xl text-left border transition-all text-xs ${
+                    className={`p-4 rounded-xl text-left border transition-all text-sm ${
                       isSelected
-                        ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/60 hover:bg-surface1 text-subtext0 hover:text-text"
+                        ? "border-text bg-surface1 text-text font-medium shadow-sm"
+                        : "border-overlay0 bg-surface0 hover:bg-surface1 text-subtext0"
                     }`}
                   >
-                    <span className="text-text">{item.name}</span>
+                    {item.name}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 2. Zona */}
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              2. Zona Geográfica
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-text uppercase tracking-wider">2. Zona Geográfica</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ZONAS.map((item) => {
                 const isSelected = zona === item.id;
                 return (
@@ -149,28 +138,27 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
                     key={item.id}
                     type="button"
                     onClick={() => setZona(item.id)}
-                    className={`p-2.5 rounded-xl text-left border transition-all flex items-center justify-between text-xs ${
+                    className={`p-4 rounded-xl text-left border transition-all text-sm ${
                       isSelected
-                        ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
+                        ? "border-text bg-surface1 text-text font-medium shadow-sm"
+                        : "border-overlay0 bg-surface0 hover:bg-surface1 text-subtext0"
                     }`}
                   >
-                    <span className="truncate pr-1">{item.name.split("(")[0]}</span>
-                    <span className="font-mono text-[10px] text-subtext0 shrink-0">
-                      {item.recargo === 0 ? "Sin viático" : `+${item.recargo.toLocaleString("es-PY")}`}
-                    </span>
+                    <div className="flex items-center justify-between">
+                       <span>{item.name}</span>
+                       <span className="text-xs text-subtext1">
+                         {item.recargo === 0 ? "Base" : `+${(item.recargo/1000).toFixed(0)}k`}
+                       </span>
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 3. Modalidad de Urgencia */}
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              3. Plazo de Entrega
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-text uppercase tracking-wider">3. Modalidad de Urgencia</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {URGENCIAS.map((item) => {
                 const isSelected = urgencia === item.id;
                 return (
@@ -178,14 +166,13 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
                     key={item.id}
                     type="button"
                     onClick={() => setUrgencia(item.id)}
-                    className={`p-2.5 rounded-xl text-center border transition-all text-xs ${
+                    className={`p-4 rounded-xl text-center border transition-all text-sm ${
                       isSelected
-                        ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
+                        ? "border-text bg-surface1 text-text font-medium shadow-sm"
+                        : "border-overlay0 bg-surface0 hover:bg-surface1 text-subtext0"
                     }`}
                   >
-                    <div className="font-bold text-[11px] text-text">{item.name.split("(")[0]}</div>
-                    <div className="text-[10px] text-subtext0 mt-0.5 font-mono">{item.name.includes("(") ? item.name.split("(")[1].replace(")", "") : ""}</div>
+                    {item.name}
                   </button>
                 );
               })}
@@ -194,66 +181,52 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
 
         </div>
 
-        {/* Resumen de Liquidación (5 cols) */}
+        {/* Resumen de Liquidación */}
         <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-overlay0/60 bg-surface1 p-5 space-y-4 shadow-sm">
+          <div className="rounded-2xl border border-overlay0 bg-surface1 p-6 sm:p-8 space-y-6 sticky top-24">
             
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-                Total Estimado
-              </span>
-              <div className="text-3xl font-black text-text font-mono tracking-tight mt-0.5">
-                {calculo.total.toLocaleString("es-PY")}{" "}
-                <span className="text-xs font-sans text-subtext0 font-semibold">Gs.</span>
+            <div className="space-y-2 pb-6 border-b border-overlay0">
+              <span className="text-sm font-medium text-subtext0">Total Estimado</span>
+              <div className="text-4xl font-bold text-text tracking-tight">
+                {calculo.total.toLocaleString("es-PY")} <span className="text-xl text-subtext0 font-normal">Gs.</span>
               </div>
-              <div className="flex items-center gap-1.5 text-green text-xs font-mono font-bold mt-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Entrega en &lt; {calculo.tiempoHoras} horas hábiles</span>
+              <div className="flex items-center gap-2 text-sm text-green font-medium pt-2">
+                <Clock className="h-4 w-4" />
+                <span>Entrega en &lt; {calculo.tiempoHoras} hs</span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-xs font-mono pt-2 border-t border-overlay0/20 text-subtext0">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span className="text-text">{calculo.subtotal.toLocaleString("es-PY")} Gs.</span>
-              </div>
-              <div className="flex justify-between">
-                <span>IVA (10%):</span>
-                <span className="text-text">{calculo.iva.toLocaleString("es-PY")} Gs.</span>
-              </div>
+            <div className="space-y-3 text-sm text-subtext0 pb-6 border-b border-overlay0">
+               <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-text shrink-0" />
+                  <span>Legajo 5 láminas (.pptx + PDF)</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-text shrink-0" />
+                  <span>GPS satelital + Medidor ANDE verificado</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-text shrink-0" />
+                  <span>Dictamen firmado (Matrícula N° 4.819)</span>
+               </div>
             </div>
 
-            <div className="pt-2 border-t border-overlay0/20 space-y-1.5 text-[11px] text-subtext0">
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>Legajo 5 láminas (.pptx + PDF)</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>GPS satelital + Medidor ANDE verificado</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>Dictamen firmado (Matrícula N° 4.819)</span>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
+            <div className="space-y-3 pt-2">
               <button
                 type="button"
                 onClick={handleCopyBudget}
-                className="w-full py-2 rounded-xl border border-overlay0/60 bg-surface0 hover:border-gold text-xs font-bold text-text flex items-center justify-center gap-1.5 transition-all"
+                className="w-full py-3 rounded-xl border border-overlay0 bg-surface0 hover:bg-surface2 text-sm font-medium text-text flex items-center justify-center gap-2 transition-all"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-green" /> : <Copy className="h-3.5 w-3.5 text-gold" />}
-                <span>{copied ? "¡Copiado!" : "Copiar Presupuesto"}</span>
+                {copied ? <Check className="h-4 w-4 text-green" /> : <Copy className="h-4 w-4" />}
+                <span>{copied ? "Presupuesto Copiado" : "Copiar Presupuesto"}</span>
               </button>
 
               <Link
                 href="/entrevista/demo"
-                className="w-full py-2.5 rounded-xl bg-gold text-black font-bold text-xs hover:bg-gold-light flex items-center justify-center gap-1.5 transition-all text-center"
+                className="w-full py-3 rounded-xl bg-text text-base font-medium text-surface0 hover:opacity-90 flex items-center justify-center gap-2 transition-opacity text-center"
               >
-                <span>Probar Formulario</span>
-                <ArrowRight className="h-3 w-3" />
+                <span>Solicitar Servicio</span>
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 

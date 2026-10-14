@@ -14,138 +14,142 @@ import { ShieldCheck, MapPin, ChevronRight, Lock, EyeOff, Clock } from "lucide-r
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-base text-text selection:bg-gold/30 selection:text-gold">
-      <nav aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 glass-panel">
+      <header aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 glass-panel">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Logo size="md" />
 
-          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-subtext0">
             <a href="#showcase" className="hover:text-text transition-colors">Plataforma</a>
             <a href="#tecnologia" className="hover:text-text transition-colors">Tecnología</a>
             <a href="#simulador" className="hover:text-text transition-colors">Aranceles</a>
             <a href="#cobertura" className="hover:text-text transition-colors">Cobertura</a>
             <a href="#faqs" className="hover:text-text transition-colors">Normativa</a>
-          </div>
+          </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <CommandPalette />
             <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-xl border border-gold/40 bg-surface1 px-4 py-2 text-xs font-bold text-text hover:border-gold hover:text-gold transition-all shadow-sm"
+              className="rounded-lg border border-overlay0 bg-surface1 px-4 py-2 text-sm font-medium text-text hover:border-overlay1 hover:bg-surface2 transition-all shadow-sm"
             >
               Portal Pericial
             </Link>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main id="main-content" tabIndex={-1} className="relative pt-28 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-green/30 bg-green/10 px-3.5 py-1 text-xs font-semibold text-green font-mono">
-              <span className="h-1.5 w-1.5 rounded-full bg-green animate-ping" aria-hidden="true" />
+      <main id="main-content" tabIndex={-1} className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8 outline-none">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <section className="max-w-3xl space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-green/20 bg-green/10 px-4 py-1.5 text-xs font-medium text-green">
+              <span className="h-2 w-2 rounded-full bg-green animate-pulse" aria-hidden="true" />
               <span>Red de Auditoría Activa • Asunción, Central, CDE y Encarnación</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.04] text-text">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-tight">
               Verificación domiciliaria y peritajes de crédito.
             </h1>
 
-            <p className="text-base sm:text-xl text-subtext0 leading-relaxed font-normal">
-              Constatamos in situ la residencia efectiva, solvencia declarada y referencias vecinales con evidencia GPS e IA. Emitimos el dictamen ejecutivo en menos de 24 horas (.pptx y PDF).
+            <p className="text-lg sm:text-xl text-subtext0 leading-relaxed max-w-2xl">
+              Constatamos in situ la residencia efectiva, solvencia declarada y referencias vecinales con evidencia GPS. Emitimos dictámenes ejecutivos en menos de 24 horas.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 href="/entrevista/demo"
-                className="group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3.5 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/20"
+                className="group flex items-center justify-center gap-2 rounded-lg bg-gold px-8 py-3.5 text-sm font-semibold text-white hover:bg-gold-light transition-all shadow-md"
               >
-                <span>Explorar Formulario Demo</span>
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <span>Explorar Demo</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </Link>
               <Link
                 href="/login"
-                className="flex items-center justify-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-7 py-3.5 text-sm font-semibold text-text hover:bg-surface2 transition-all"
+                className="flex items-center justify-center gap-2 rounded-lg border border-overlay1 bg-surface0 px-8 py-3.5 text-sm font-medium text-text hover:bg-surface1 transition-all"
               >
-                <Lock className="h-4 w-4 text-subtext0" aria-hidden="true" />
+                <Lock className="h-4 w-4 text-subtext1" aria-hidden="true" />
                 <span>Portal de Evaluadores</span>
               </Link>
             </div>
 
-            <div className="pt-4 border-t border-overlay0/40 flex flex-wrap items-center gap-6 text-xs text-subtext0 font-medium">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+            <div className="pt-8 border-t border-overlay0 flex flex-wrap items-center gap-8 text-sm text-subtext0">
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-gold shrink-0" aria-hidden="true" />
                 <span>Matrícula Pericial N° 4.819</span>
               </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+              <span className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-gold shrink-0" aria-hidden="true" />
                 <span>Georreferenciación GPS In Situ</span>
               </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+              <span className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-gold shrink-0" aria-hidden="true" />
                 <span>SLA Ejecutivo &lt; 24 Horas</span>
               </span>
-              <span className="flex items-center gap-1.5">
-                <EyeOff className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
-                <span>Cumplimiento Ley N° 6534/20 y 1682/01</span>
+              <span className="flex items-center gap-2">
+                <EyeOff className="h-5 w-5 text-gold shrink-0" aria-hidden="true" />
+                <span>Cumplimiento Ley N° 6534/20</span>
               </span>
             </div>
-          </div>
+          </section>
 
-          <section id="showcase" aria-label="Demostración interactiva de consola pericial">
+          <section id="showcase" aria-label="Plataforma de Consola Pericial">
             <HeroProductShowcase />
           </section>
         </div>
       </main>
 
-      <section id="tecnologia" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-wider">
-                Infraestructura Probatoria
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight mt-0.5">
-                Rigor Técnico y Metodología Inviolable
-              </h2>
-            </div>
-            <span className="text-xs text-subtext0 font-mono">
-              Auditoría en fachada y detección de inconsistencias con IA
-            </span>
-          </div>
+      <section id="tecnologia" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0 bg-surface1/30">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <header className="max-w-2xl">
+            <h2 className="text-2xl sm:text-3xl font-bold text-text tracking-tight">
+              Rigor Técnico y Metodología Inviolable
+            </h2>
+            <p className="mt-4 text-lg text-subtext0">
+              Auditoría en fachada y detección de inconsistencias para decisiones de crédito seguras.
+            </p>
+          </header>
           <BentoFeatures />
         </div>
       </section>
 
-      <section id="simulador" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
+      <section id="simulador" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0 bg-base">
         <div className="max-w-7xl mx-auto">
           <PeritajeCalculator />
         </div>
       </section>
 
-      <section id="cobertura" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <section id="cobertura" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0 bg-surface1/30">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <header className="max-w-2xl">
+            <h2 className="text-2xl sm:text-3xl font-bold text-text tracking-tight">
+              Cobertura Operativa
+            </h2>
+            <p className="mt-4 text-lg text-subtext0">
+              Red nacional de peritaje con nodos activos en los principales departamentos del país.
+            </p>
+          </header>
           <ParaguayOperationalMap />
         </div>
       </section>
 
-      <section id="faqs" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
+      <section id="faqs" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-overlay0 bg-base">
         <div className="max-w-7xl mx-auto">
           <FaqSection />
         </div>
       </section>
 
-      <footer className="border-t border-overlay0/40 py-8 bg-mantle">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext0">
-          <div className="flex items-center gap-3">
+      <footer className="border-t border-overlay0 py-12 bg-surface1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-subtext0">
+          <div className="flex items-center gap-4">
             <Logo size="sm" />
-            <span>• Peritajes Socioambientales • Asunción, Paraguay</span>
+            <span className="hidden sm:inline">•</span>
+            <span>Peritajes Socioambientales • Asunción, Paraguay</span>
           </div>
-          <div className="flex items-center gap-6 font-semibold">
+          <nav className="flex flex-wrap justify-center items-center gap-6 font-medium">
             <Link href="/login" className="hover:text-text transition-colors">Portal Pericial</Link>
             <Link href="/entrevista/demo" className="hover:text-text transition-colors">Formulario Demo</Link>
-            <span className="text-subtext0/60 font-mono">© 2026 Jerovia Consultora</span>
-          </div>
+            <span className="text-subtext1">© {new Date().getFullYear()} Jerovia Consultora</span>
+          </nav>
         </div>
       </footer>
     </div>

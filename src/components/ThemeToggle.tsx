@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, Moon, Smartphone } from "lucide-react";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ThemeMode = "light" | "dark" | "system";
@@ -61,7 +61,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   if (!mounted) {
     return (
-      <div className={cn("flex items-center rounded-xl border border-overlay0/40 bg-surface1 p-1", className)}>
+      <div className={cn("flex items-center rounded-lg border border-overlay0 bg-surface1 p-1", className)}>
         <div className="h-7 w-20" />
       </div>
     );
@@ -70,9 +70,9 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <div
       role="radiogroup"
-      aria-label="Selector de apariencia visual"
+      aria-label="Selector de tema"
       className={cn(
-        "inline-flex items-center gap-1 rounded-xl border border-overlay0/60 bg-surface1 p-1 shadow-sm",
+        "inline-flex items-center gap-1 rounded-lg border border-overlay0 bg-surface1 p-1 shadow-sm",
         className
       )}
     >
@@ -80,12 +80,12 @@ export function ThemeToggle({ className }: { className?: string }) {
         type="button"
         role="radio"
         aria-checked={theme === "light"}
-        aria-label="Activar modo claro"
+        aria-label="Tema Claro"
         onClick={() => handleSelect("light")}
         className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-lg transition-colors focus-visible:ring-2",
+          "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
           theme === "light"
-            ? "bg-gold text-black shadow-sm font-bold"
+            ? "bg-surface0 text-text shadow-sm border border-overlay1"
             : "text-subtext0 hover:text-text hover:bg-surface2"
         )}
       >
@@ -96,28 +96,28 @@ export function ThemeToggle({ className }: { className?: string }) {
         type="button"
         role="radio"
         aria-checked={theme === "system"}
-        aria-label="Modo automático según la configuración de tu teléfono o sistema"
+        aria-label="Tema del Sistema"
         onClick={() => handleSelect("system")}
         className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-lg transition-colors focus-visible:ring-2",
+          "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
           theme === "system"
-            ? "bg-gold text-black shadow-sm font-bold"
+            ? "bg-surface0 text-text shadow-sm border border-overlay1"
             : "text-subtext0 hover:text-text hover:bg-surface2"
         )}
       >
-        <Smartphone className="h-4 w-4" aria-hidden="true" />
+        <Monitor className="h-4 w-4" aria-hidden="true" />
       </button>
 
       <button
         type="button"
         role="radio"
         aria-checked={theme === "dark"}
-        aria-label="Activar modo oscuro"
+        aria-label="Tema Oscuro"
         onClick={() => handleSelect("dark")}
         className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-lg transition-colors focus-visible:ring-2",
+          "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
           theme === "dark"
-            ? "bg-gold text-black shadow-sm font-bold"
+            ? "bg-surface0 text-text shadow-sm border border-overlay1"
             : "text-subtext0 hover:text-text hover:bg-surface2"
         )}
       >

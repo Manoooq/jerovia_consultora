@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Clock, ShieldCheck, Car, Users, Radio, Navigation } from "lucide-react";
+import { Clock, ShieldCheck, Users, Navigation } from "lucide-react";
 
 interface OperationalZone {
   id: string;
@@ -22,8 +22,8 @@ const ZONAS_OPERATIVAS: OperationalZone[] = [
     name: "Gran Asunción y Central",
     departamento: "Distrito Capital y Central",
     sla: "< 24 horas",
-    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Fernando de la Mora", "Capiatá"],
-    rutas: "Avda. Mcal. López, Autopista Silvio Pettirossi, Rutas PY01, PY02 y PY03",
+    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Capiatá"],
+    rutas: "Avda. Mcal. López, Autopista Silvio Pettirossi, Rutas PY01, PY02",
     peritos: 4,
     status: "Inmediato",
     detalles: "Base de peritos con movilidad propia y cobertura en el mismo día hábil.",
@@ -31,19 +31,19 @@ const ZONAS_OPERATIVAS: OperationalZone[] = [
   },
   {
     id: "este",
-    name: "Alto Paraná (Zona Este)",
+    name: "Alto Paraná",
     departamento: "Alto Paraná",
     sla: "24 - 48 horas",
-    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Presidente Franco"],
+    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Franco"],
     rutas: "Corredor Nacional Ruta PY02",
     peritos: 2,
     status: "Programado",
-    detalles: "Peritos residentes en Ciudad del Este con despliegue ágil en el área metropolitana este.",
+    detalles: "Peritos residentes con despliegue ágil en el área metropolitana este.",
     coords: { x: 310, y: 250 },
   },
   {
     id: "sur",
-    name: "Itapúa (Zona Sur)",
+    name: "Itapúa",
     departamento: "Itapúa",
     sla: "48 horas",
     ciudades: ["Encarnación", "Cambyretá", "Fram", "Colonias Unidas"],
@@ -62,7 +62,7 @@ const ZONAS_OPERATIVAS: OperationalZone[] = [
     rutas: "Ruta PY02 y enlace PY08",
     peritos: 2,
     status: "Inmediato",
-    detalles: "Conexión vial central para verificaciones en ciudades intermedias del interior.",
+    detalles: "Conexión vial central para verificaciones en ciudades intermedias.",
     coords: { x: 245, y: 235 },
   },
 ];
@@ -71,63 +71,43 @@ export function ParaguayOperationalMap() {
   const [selectedZone, setSelectedZone] = useState<OperationalZone>(ZONAS_OPERATIVAS[0]);
 
   return (
-    <div className="rounded-3xl glass-panel p-6 sm:p-8 shadow-2xl">
-      {/* HUD Bar */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-        <div className="flex items-center gap-2">
-          <Radio className="h-4 w-4 text-gold animate-pulse" />
-          <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
-            RED NACIONAL DE PERITAJE · PARAGUAY
-          </span>
-        </div>
-        <span className="text-xs font-mono text-green bg-green/10 border border-green/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-green animate-ping" />
-          4 NODOS ACTIVOS
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+    <div className="rounded-2xl border border-overlay0 bg-surface0 p-6 sm:p-10 shadow-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         
-        {/* Columna Izquierda: Mapa Vectorial Geográfico */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center">
-          <div className="relative w-full max-w-[360px] aspect-[4/5] bg-surface1/60 rounded-3xl p-4 border border-white/[0.08] flex items-center justify-center overflow-hidden">
-            
-            <svg viewBox="0 0 400 480" className="w-full h-full drop-shadow-2xl">
-              {/* Contorno Chaco (Occidental) */}
+        {/* Mapa Vectorial */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center bg-surface1 rounded-2xl p-6 border border-overlay0 relative">
+            <svg viewBox="0 0 400 480" className="w-full max-w-[320px] h-auto drop-shadow-md">
+              {/* Contorno Chaco */}
               <path
                 d="M 120 40 L 210 50 L 230 140 L 195 240 L 120 220 L 70 160 Z"
                 fill="currentColor"
-                className="text-surface2/40 hover:text-surface2/60 transition-colors"
-                stroke="rgba(255, 255, 255, 0.12)"
+                className="text-surface2"
+                stroke="var(--border-overlay0)"
                 strokeWidth="1.5"
               />
-              <text x="110" y="140" fill="currentColor" className="text-[10px] text-subtext0/70 font-mono font-bold tracking-widest select-none">
-                CHACO
+              <text x="110" y="140" fill="currentColor" className="text-xs text-subtext1 font-medium select-none">
+                OCCIDENTAL
               </text>
 
               {/* Río Paraguay divisor */}
               <path
                 d="M 210 50 Q 225 150 195 240 T 175 320 T 190 380"
                 fill="none"
-                stroke="#38bdf8"
-                strokeWidth="2.5"
-                strokeDasharray="4 2"
-                opacity="0.85"
+                stroke="var(--color-blue)"
+                strokeWidth="2"
+                opacity="0.5"
               />
 
               {/* Contorno Región Oriental */}
               <path
                 d="M 210 50 L 290 80 L 330 160 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 240 Q 225 150 210 50 Z"
                 fill="currentColor"
-                className="text-surface2/80 hover:text-surface2 transition-colors"
-                stroke="rgba(229, 192, 123, 0.4)"
+                className="text-surface0"
+                stroke="var(--border-overlay0)"
                 strokeWidth="2"
               />
-              <text x="245" y="160" fill="currentColor" className="text-[10px] text-gold/60 font-mono font-bold tracking-widest select-none">
-                ORIENTAL
-              </text>
 
-              {/* Nodos Interactivos */}
+              {/* Nodos */}
               {ZONAS_OPERATIVAS.map((zone) => {
                 const isSelected = selectedZone.id === zone.id;
                 return (
@@ -136,106 +116,81 @@ export function ParaguayOperationalMap() {
                     onClick={() => setSelectedZone(zone)}
                     className="cursor-pointer group"
                   >
-                    {isSelected && (
-                      <circle
-                        cx={zone.coords.x}
-                        cy={zone.coords.y}
-                        r="18"
-                        fill="none"
-                        stroke="#E5C07B"
-                        strokeWidth="1.5"
-                        className="animate-ping opacity-40 origin-center"
-                      />
-                    )}
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
-                      r={isSelected ? "11" : "7"}
-                      fill={isSelected ? "rgba(229, 192, 123, 0.35)" : "rgba(16, 185, 129, 0.25)"}
-                      stroke={isSelected ? "#E5C07B" : "#10b981"}
-                      strokeWidth="2"
+                      r={isSelected ? "12" : "8"}
+                      fill={isSelected ? "var(--color-gold)" : "var(--color-surface2)"}
                       className="transition-all duration-200"
                     />
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
                       r="4"
-                      fill={isSelected ? "#E5C07B" : "#10b981"}
+                      fill={isSelected ? "var(--color-base)" : "var(--color-text)"}
                     />
-                    <text
-                      x={zone.coords.x + 14}
-                      y={zone.coords.y + 4}
-                      fill={isSelected ? "#E5C07B" : "#cbd5e1"}
-                      className={`text-[11px] font-mono font-bold select-none ${isSelected ? "text-gold font-black" : ""}`}
-                    >
-                      {zone.name.split(" ")[0]}
-                    </text>
                   </g>
                 );
               })}
             </svg>
 
-            <div className="absolute bottom-3 left-4 text-[9px] font-mono text-subtext0 flex items-center gap-1">
-              <Navigation className="h-3 w-3 text-gold" />
-              <span>Clic para consultar tiempos de respuesta</span>
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 text-xs text-subtext0 bg-surface0 px-3 py-1.5 rounded-lg border border-overlay0 shadow-sm">
+               <Navigation className="h-3.5 w-3.5" />
+               <span>Seleccione un nodo</span>
             </div>
-          </div>
         </div>
 
-        {/* Columna Derecha: Tarjeta de Zona Seleccionada */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-                Cabecera Seleccionada
-              </span>
-              <h3 className="text-xl font-black text-text mt-0.5">{selectedZone.name}</h3>
-              <p className="text-xs text-subtext0">{selectedZone.departamento}</p>
+        {/* Detalles de la Zona */}
+        <div className="lg:col-span-7 space-y-8">
+          <header className="border-b border-overlay0 pb-6">
+            <h3 className="text-2xl font-bold text-text">{selectedZone.name}</h3>
+            <div className="flex items-center gap-3 mt-2">
+               <p className="text-sm text-subtext0">{selectedZone.departamento}</p>
+               <span className="h-1 w-1 rounded-full bg-overlay1" />
+               <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                 selectedZone.status === "Inmediato" ? "bg-green/10 text-green" : "bg-surface2 text-subtext0"
+               }`}>
+                 {selectedZone.status}
+               </span>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green/15 text-green border border-green/30">
-              {selectedZone.status}
-            </span>
-          </div>
+          </header>
 
-          <p className="text-xs text-subtext0 leading-relaxed font-normal">
+          <p className="text-base text-text leading-relaxed">
             {selectedZone.detalles}
           </p>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-surface1 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-gold font-semibold mb-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Tiempo de Respuesta</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-surface1 border border-overlay0 flex items-start gap-3">
+              <Clock className="h-5 w-5 text-subtext0 shrink-0 mt-0.5" />
+              <div>
+                 <p className="text-sm font-medium text-subtext0">Tiempo de Respuesta</p>
+                 <p className="text-base font-semibold text-text mt-1">{selectedZone.sla}</p>
               </div>
-              <p className="text-sm font-black text-text font-mono">{selectedZone.sla}</p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-surface1 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-blue font-semibold mb-1">
-                <Users className="h-3.5 w-3.5" />
-                <span>Peritos en Zona</span>
+            <div className="p-4 rounded-xl bg-surface1 border border-overlay0 flex items-start gap-3">
+              <Users className="h-5 w-5 text-subtext0 shrink-0 mt-0.5" />
+               <div>
+                 <p className="text-sm font-medium text-subtext0">Peritos Asignados</p>
+                 <p className="text-base font-semibold text-text mt-1">{selectedZone.peritos} evaluadores en zona</p>
               </div>
-              <p className="text-sm font-black text-text font-mono">{selectedZone.peritos} evaluadores</p>
             </div>
           </div>
 
-          <div className="space-y-1.5 text-xs text-subtext0 font-mono text-[11px]">
-            <div>
-              <strong className="text-text">Cobertura: </strong>
-              <span>{selectedZone.ciudades.join(", ")}.</span>
+          <div className="space-y-3 pt-4 text-sm">
+            <div className="flex gap-2">
+              <strong className="text-text w-24 shrink-0">Cobertura:</strong>
+              <span className="text-subtext0">{selectedZone.ciudades.join(", ")}.</span>
             </div>
-            <div>
-              <strong className="text-text">Rutas: </strong>
-              <span>{selectedZone.rutas}.</span>
+            <div className="flex gap-2">
+              <strong className="text-text w-24 shrink-0">Rutas:</strong>
+              <span className="text-subtext0">{selectedZone.rutas}.</span>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs text-subtext0">
-            <span className="flex items-center gap-1.5 text-green font-semibold">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Certificación in situ GPS</span>
-            </span>
-            <span className="font-mono text-gold font-bold">100% Cobertura</span>
+          <div className="pt-6 border-t border-overlay0 flex items-center gap-2 text-sm text-green font-medium">
+            <ShieldCheck className="h-5 w-5" />
+            <span>Certificación in situ con GPS garantizada en esta zona.</span>
           </div>
         </div>
 

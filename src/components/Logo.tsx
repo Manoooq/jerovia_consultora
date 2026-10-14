@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface LogoProps {
   className?: string;
@@ -16,24 +17,22 @@ export function Logo({ className, size = "md" }: LogoProps) {
 
   return (
     <div className={cn("inline-flex items-center select-none", className)}>
-      {/* Modo Claro: logotipo nítido en grafito oscuro sin fondo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-dark.png"
         alt="Jerovia Consultora"
         className={cn(
-          "w-auto object-contain dark:hidden brightness-95 contrast-125 transition-all",
+          "w-auto object-contain dark:hidden",
           sizes[size]
         )}
         loading="eager"
       />
-      {/* Modo Oscuro: logotipo blanco puro de alto contraste y brillo sin fondo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-white.png"
         alt="Jerovia Consultora"
         className={cn(
-          "w-auto object-contain hidden dark:block brightness-105 contrast-125 transition-all",
+          "w-auto object-contain hidden dark:block",
           sizes[size]
         )}
         loading="eager"
