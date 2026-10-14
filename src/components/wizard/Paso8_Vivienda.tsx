@@ -46,9 +46,14 @@ export function Paso8_Vivienda({ defaultValues, onNext, onPrev }: PasoProps) {
           tipo="vivienda"
           onAnalizado={(data: Record<string, unknown>) => {
             // Ejemplo de uso de datos analizados, si corresponde
-            if (typeof data.techo === "string") setValue("techo", data.techo as any);
-            if (typeof data.paredes === "string") setValue("paredes", data.paredes as any);
-            if (typeof data.pisos === "string") setValue("pisos", data.pisos as any);
+            const techoResult = paso8Schema.shape.techo.safeParse(data.techo);
+            if (techoResult.success) setValue("techo", techoResult.data);
+
+            const paredesResult = paso8Schema.shape.paredes.safeParse(data.paredes);
+            if (paredesResult.success) setValue("paredes", paredesResult.data);
+
+            const pisosResult = paso8Schema.shape.pisos.safeParse(data.pisos);
+            if (pisosResult.success) setValue("pisos", pisosResult.data);
           }}
         />
 
