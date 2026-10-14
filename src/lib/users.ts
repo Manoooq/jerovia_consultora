@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import cryptoNode from "crypto";
 
 export type UserRole = "admin" | "evaluador";
 
@@ -53,29 +54,44 @@ export async function verifyPassword(password: string, hash: string, salt: strin
 const usersStore = new Map<string, User>();
 
 function seedDefaultUsers() {
-  usersStore.set("usr_admin_01", {
-    id: "usr_admin_01",
-    username: "admin",
-    email: "admin@jerovia.com.py",
-    name: "Lic. Michelle Romero",
-    role: "admin",
-    passwordHash: "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
-    passwordSalt: "salt_adm_2026",
-    activo: true,
-    creadoEn: "2026-09-01T08:00:00.000Z",
-  });
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  usersStore.set("usr_eval_01", {
-    id: "usr_eval_01",
-    username: "evaluador",
-    email: "evaluador@jerovia.com.py",
-    name: "Lic. Carlos Benítez",
-    role: "evaluador",
-    passwordHash: "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
-    passwordSalt: "salt_eval_2026",
-    activo: true,
-    creadoEn: "2026-09-15T09:30:00.000Z",
-  });
+  if (adminPassword) {
+    const salt = cryptoNode.randomBytes(16).toString("hex");
+    const hash = cryptoNode.createHash("sha256").update(`${salt}:${adminPassword}`).digest("hex");
+
+    usersStore.set("usr_admin_01", {
+      id: "usr_admin_01",
+      username: process.env.ADMIN_USERNAME || "admin",
+      email: process.env.ADMIN_EMAIL || "admin@jerovia.com.py",
+      name: "Administrador Principal",
+      role: "admin",
+      passwordHash: hash,
+      passwordSalt: salt,
+      activo: true,
+      creadoEn: new Date().toISOString(),
+    });
+  } else {
+    console.warn("No ADMIN_PASSWORD provided in environment. Default admin user was not created.");
+  }
+
+  const evalPassword = process.env.EVALUADOR_PASSWORD;
+  if (evalPassword) {
+    const salt = cryptoNode.randomBytes(16).toString("hex");
+    const hash = cryptoNode.createHash("sha256").update(`${salt}:${evalPassword}`).digest("hex");
+
+    usersStore.set("usr_eval_01", {
+      id: "usr_eval_01",
+      username: process.env.EVALUADOR_USERNAME || "evaluador",
+      email: process.env.EVALUADOR_EMAIL || "evaluador@jerovia.com.py",
+      name: "Evaluador Principal",
+      role: "evaluador",
+      passwordHash: hash,
+      passwordSalt: salt,
+      activo: true,
+      creadoEn: new Date().toISOString(),
+    });
+  }
 }
 
 function initUsers() {
