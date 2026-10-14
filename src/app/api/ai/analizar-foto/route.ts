@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analizarImagen } from "@/lib/gemini";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { ipAddress } from "@vercel/functions";
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "localhost";
+    const ip = ipAddress(req) ?? "127.0.0.1";
     const rateCheck = checkRateLimit(`ai_foto_${ip}`, 20, 60 * 1000);
 
     if (!rateCheck.allowed) {
