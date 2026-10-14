@@ -1,10 +1,9 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { paso8Schema, type Paso8Data } from "@/lib/validations";
-import { Input, Select, Textarea, Toggle } from "@/components/ui/FormFields";
+import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { GeoCapture } from "@/components/GeoCapture";
@@ -18,133 +17,272 @@ interface PasoProps {
 
 export function Paso8_Vivienda({ defaultValues, onNext, onPrev }: PasoProps) {
   const {
-    register, handleSubmit, setValue, watch, formState: { errors },
-  // @ts-expect-error — known zodResolver/RHF type mismatch with .optional().default()
-  } = useForm<Paso8Data>({ resolver: zodResolver(paso8Schema), defaultValues: { ...defaultValues } });
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<Paso8Data>({
+    // @ts-expect-error — RHF + Zod optional default inference compatibility
+    resolver: zodResolver(paso8Schema),
+    defaultValues: { cocina: true, sala: true, plantas: 1, ...defaultValues },
+  });
 
   const tenenciaVivienda = watch("tenenciaVivienda");
-  const cocina = watch("cocina");
-  const sala = watch("sala");
+  const cocina = Boolean(watch("cocina"));
+  const sala = Boolean(watch("sala"));
+
+  const onSubmit: SubmitHandler<Paso8Data> = (data) => onNext(data);
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-      <form onSubmit={handleSubmit(onNext as any)} className="flex flex-col gap-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Home className="w-6 h-6 text-primary" />
-          <h2 className="text-xl font-semibold">Datos de la Vivienda</h2>
+    <form
+      onSubmit={handleSubmit(onSubmit as SubmitHandler<Record<string, unknown>>)}
+      className="flex flex-col gap-6"
+      noValidate
+    >
+      <div className="flex items-center gap-3 pb-4 border-b border-overlay0/50">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 border border-gold/30 shrink-0">
+          <Home className="h-5 w-5 text-gold" aria-hidden="true" />
         </div>
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-text">
+            8. Inspección Física del Inmueble y Georreferenciación
+          </h2>
+          <p className="text-xs text-subtext0">
+            Coordenadas GPS in situ, evidencia fotográfica y calidad constructiva
+          </p>
+        </div>
+      </div>
 
-        <GeoCapture 
-          onCapturado={(data: {coordenadas: string; plusCode: string; ciudad?: string}) => {
-            setValue("coordenadas", data.coordenadas);
-            setValue("plusCode", data.plusCode);
-            if (data.ciudad) setValue("ciudad", data.ciudad);
-          }}
-        />
+      {/* 1. Captura Satelital GPS */}
+      <GeoCapture
+        ciudad={watch("ciudad")}
+        coordenadas={watch("coordenadas")}
+        onCapturado={(geo) => {
+          setValue("coordenadas", geo.coordenadas, { shouldValidate: true, shouldDirty: true });
+          setValue("plusCode", geo.plusCode, { shouldDirty: true });
+          if (geo.ciudad) {
+            setValue("ciudad", geo.ciudad, { shouldValidate: true, shouldDirty: true });
+          }
+        }}
+      />
 
-        <FotoUploader 
+      {/* 2. Fotografía de Fachada y Suministro ANDE */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <FotoUploader
           tipo="vivienda"
-          onAnalizado={(data: Record<string, unknown>) => {
-            // Ejemplo de uso de datos analizados, si corresponde
-            if (typeof data.techo === "string") setValue("techo", data.techo as any);
-            if (typeof data.paredes === "string") setValue("paredes", data.paredes as any);
-            if (typeof data.pisos === "string") setValue("pisos", data.pisos as any);
+          onAnalizado={(data) => {
+            if (typeof data.techo === "string")
+              setValue("techo", data.techo as Paso8Data["techo"], { shouldDirty: true });
+            if (typeof data.paredes === "string")
+              setValue("paredes", data.paredes as Paso8Data["paredes"], { shouldDirty: true });
+            if (typeof data.pisos === "string")
+              setValue("pisos", data.pisos as Paso8Data["pisos"], { shouldDirty: true });
           }}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Ciudad" {...register("ciudad")} error={errors.ciudad?.message} />
-          <Input label="Barrio" {...register("barrio")} error={errors.barrio?.message} />
-          <Input label="Dirección" {...register("direccion")} error={errors.direccion?.message} />
-          <Input label="Coordenadas" {...register("coordenadas")} error={errors.coordenadas?.message} />
-          <Input label="Plus Code" {...register("plusCode")} error={errors.plusCode?.message} />
-          
-          <Select
-            label="Tipo de Camino"
-            options={[
-              { value: "asfalto", label: "Asfalto" },
-              { value: "empedrado", label: "Empedrado" },
-              { value: "tierra", label: "Tierra" },
-            ]}
-            {...register("tipoCamino")}
-            error={errors.tipoCamino?.message}
+        <FotoUploader
+          tipo="factura"
+          onAnalizado={(data) => {
+            if (typeof data.direccion === "string" && !watch("direccion")) {
+              setValue("direccion", data.direccion, { shouldDirty: true });
+            }
+          }}
+        />
+      </div>
+
+      {/* 3. Localización Postal */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Ciudad / Municipio"
+          required
+          placeholder="Ej: Asunción / Luque"
+          {...register("ciudad")}
+          error={errors.ciudad?.message}
+        />
+        <Input
+          label="Barrio o Compañía"
+          required
+          placeholder="Ej: Villa Morra"
+          {...register("barrio")}
+          error={errors.barrio?.message}
+        />
+        <div className="sm:col-span-2">
+          <Input
+            label="Dirección Exacta (Calle, número de casa y referencias)"
+            required
+            placeholder="Ej: Avda. Mariscal López N° 1420 casi Charles de Gaulle"
+            {...register("direccion")}
+            error={errors.direccion?.message}
           />
         </div>
+        <Input
+          label="Coordenadas GPS (Lat, Lng)"
+          placeholder="-25.286700, -57.647000"
+          className="font-mono tabular-nums"
+          {...register("coordenadas")}
+          error={errors.coordenadas?.message}
+        />
+        <Input
+          label="Código Postal / Plus Code"
+          placeholder="Ej: 79FM+8R PY"
+          className="font-mono"
+          {...register("plusCode")}
+          error={errors.plusCode?.message}
+        />
+      </div>
 
+      {/* 4. Régimen de Tenencia y Vía de Acceso */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Tenencia de la Vivienda"
+          label="Régimen de Tenencia de la Vivienda"
+          required
           options={[
-            { value: "propia", label: "Propia" },
-            { value: "alquilada", label: "Alquilada" },
-            { value: "prestada", label: "Prestada" },
-            { value: "familiar", label: "Familiar" },
+            { value: "propia", label: "Propia (Titulada / En pago)" },
+            { value: "familiar", label: "Propiedad Familiar" },
+            { value: "alquilada", label: "Alquilada / Arrendada" },
+            { value: "prestada", label: "Cedida / Prestada" },
           ]}
           {...register("tenenciaVivienda")}
           error={errors.tenenciaVivienda?.message}
         />
 
+        <Select
+          label="Pavimentación de la Vía de Acceso"
+          options={[
+            { value: "asfalto", label: "Pavimento Asfáltico / Hormigón" },
+            { value: "empedrado", label: "Empedrado / Adoquinado" },
+            { value: "tierra", label: "Camino de Tierra / Enripiado" },
+          ]}
+          {...register("tipoCamino")}
+          error={errors.tipoCamino?.message}
+        />
+
         {tenenciaVivienda === "alquilada" && (
-          <Input type="number" label="Costo de Alquiler" {...register("costoAlquiler", { valueAsNumber: true })} error={errors.costoAlquiler?.message} />
+          <div className="sm:col-span-2">
+            <Input
+              type="number"
+              inputMode="numeric"
+              label="Canon Mensual de Alquiler (Gs.)"
+              placeholder="Ej: 2.200.000"
+              {...register("costoAlquiler", { valueAsNumber: true })}
+              error={errors.costoAlquiler?.message}
+            />
+          </div>
         )}
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input type="number" label="Cantidad de Personas" {...register("cantidadPersonas", { valueAsNumber: true })} error={errors.cantidadPersonas?.message} />
-          <Input type="number" label="Habitaciones" {...register("habitaciones", { valueAsNumber: true })} error={errors.habitaciones?.message} />
-          <Input type="number" label="Baños" {...register("banos", { valueAsNumber: true })} error={errors.banos?.message} />
+      {/* 5. Distribución y Materiales Constructivos */}
+      <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-4 sm:p-5 space-y-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-subtext1">
+          Capacidad Habitacional y Materiales Constructivos
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            label="Habitantes"
+            {...register("cantidadPersonas", { valueAsNumber: true })}
+            error={errors.cantidadPersonas?.message}
+          />
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            label="Dormitorios"
+            {...register("habitaciones", { valueAsNumber: true })}
+            error={errors.habitaciones?.message}
+          />
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            label="Sanitarios"
+            {...register("banos", { valueAsNumber: true })}
+            error={errors.banos?.message}
+          />
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            label="N° Plantas"
+            {...register("plantas", { valueAsNumber: true })}
+            error={errors.plantas?.message}
+          />
         </div>
 
-        <div className="flex gap-4">
-          <Toggle label="¿Tiene cocina?" checked={!!cocina} onChange={(val) => setValue("cocina", val)} />
-          <Toggle label="¿Tiene sala?" checked={!!sala} onChange={(val) => setValue("sala", val)} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Select
-            label="Material del Techo"
+            label="Cubierta / Techo"
             options={[
-              { value: "tejas", label: "Tejas" },
-              { value: "chapa", label: "Chapa" },
-              { value: "losa", label: "Losa" },
-              { value: "otro", label: "Otro" },
+              { value: "tejas", label: "Tejas cerámicas / coloniales" },
+              { value: "losa", label: "Losa de hormigón armado" },
+              { value: "chapa", label: "Chapa termoacústica / zinc" },
+              { value: "otro", label: "Otro material" },
             ]}
             {...register("techo")}
             error={errors.techo?.message}
           />
           <Select
-            label="Material de las Paredes"
+            label="Mampostería / Paredes"
             options={[
-              { value: "ladrillo", label: "Ladrillo" },
+              { value: "ladrillo", label: "Ladrillo revocado / visto" },
+              { value: "prefabricado", label: "Bloque / Prefabricado" },
               { value: "madera", label: "Madera" },
-              { value: "prefabricado", label: "Prefabricado" },
-              { value: "otro", label: "Otro" },
+              { value: "otro", label: "Otro material" },
             ]}
             {...register("paredes")}
             error={errors.paredes?.message}
           />
           <Select
-            label="Material de los Pisos"
+            label="Solado / Pisos"
             options={[
-              { value: "ceramica", label: "Cerámica" },
-              { value: "cemento", label: "Cemento" },
-              { value: "mosaico", label: "Mosaico" },
-              { value: "otro", label: "Otro" },
+              { value: "ceramica", label: "Cerámico / Porcelanato" },
+              { value: "mosaico", label: "Granito / Mosaico" },
+              { value: "cemento", label: "Alisado de cemento" },
+              { value: "otro", label: "Otro material" },
             ]}
             {...register("pisos")}
             error={errors.pisos?.message}
           />
         </div>
-        
-        <Input type="number" label="Número de Plantas" {...register("plantas", { valueAsNumber: true })} error={errors.plantas?.message} />
 
-        <div className="flex justify-between pt-2">
-          <Button type="button" variant="secondary" size="lg" onClick={onPrev}>
-            <ChevronLeft className="h-5 w-5 mr-2" /> Anterior
-          </Button>
-          <Button type="submit" size="lg">
-            Siguiente <ChevronRight className="h-5 w-5 ml-2" />
-          </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-overlay0/40">
+          <Toggle
+            label="Cuenta con ambiente de cocina independiente equipada"
+            checked={cocina}
+            onChange={(val) => setValue("cocina", val, { shouldDirty: true })}
+          />
+          <Toggle
+            label="Cuenta con sala de estar / comedor diferenciado"
+            checked={sala}
+            onChange={(val) => setValue("sala", val, { shouldDirty: true })}
+          />
         </div>
-      </form>
-    </motion.div>
+      </div>
+
+      <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-3 border-t border-overlay0/40">
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          onClick={onPrev}
+          className="w-full sm:w-auto"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Anterior</span>
+        </Button>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full sm:w-auto min-w-[180px]"
+        >
+          <span>Guardar y Continuar</span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -1,13 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
-import { paso9Schema, type Paso9Data, type FormularioCompleto } from "@/lib/validations";
+import {
+  paso9Schema,
+  type Paso9Data,
+  type FormularioCompleto,
+} from "@/lib/validations";
 import { Input, Select, Textarea } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeft, CheckCircle, FileCheck, Loader2, Scale } from "lucide-react";
+import {
+  ChevronLeft,
+  CheckCircle2,
+  FileCheck,
+  Scale,
+  MapPin,
+  UserCheck,
+} from "lucide-react";
 
 interface PasoProps {
   defaultValues?: Partial<Paso9Data>;
@@ -16,131 +26,228 @@ interface PasoProps {
   onPrev: () => void;
 }
 
-export function Paso9_Conclusion({ defaultValues, data, onNext, onPrev }: PasoProps) {
+export function Paso9_Conclusion({
+  defaultValues,
+  data,
+  onNext,
+  onPrev,
+}: PasoProps) {
   const [sintetizando, setSintetizando] = useState(false);
 
-  const {
-    register, handleSubmit, setValue, watch, formState: { errors },
-  // @ts-expect-error — known zodResolver/RHF type mismatch with .optional().default()
-  } = useForm<Paso9Data>({ resolver: zodResolver(paso9Schema), defaultValues: { ...defaultValues }, ...({ f: 1 } as unknown) });
+  const todayIso = new Date().toISOString().slice(0, 10);
 
-  const handleSintetizar = async () => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<Paso9Data>({
+    // @ts-expect-error — RHF + Zod optional default inference compatibility
+    resolver: zodResolver(paso9Schema),
+    defaultValues: {
+      fechaVisita: defaultValues?.fechaVisita || todayIso,
+      consultorNombre:
+        defaultValues?.consultorNombre || "Lic. Michelle Romero",
+      ...defaultValues,
+    },
+  });
+
+  async function handleSintetizar() {
     setSintetizando(true);
     try {
       const response = await fetch("/api/ai/sintetizar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ datosCompletos: data, observacionActual: watch("observacionesEntrevista") })
+        body: JSON.stringify({
+          datosCompletos: data,
+          observacionActual: watch("observacionesEntrevista"),
+        }),
       });
-      const result = await response.json();
-      if (result.sintesis) {
-        setValue("observacionesEntrevista", result.sintesis);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.sintesis) {
+          setValue("observacionesEntrevista", result.sintesis, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        }
       }
     } catch (e) {
-      console.error("Error al sintetizar:", e);
+      console.error("Error al sintetizar dictamen:", e);
     } finally {
       setSintetizando(false);
     }
-  };
+  }
+
+  const onSubmit: SubmitHandler<Paso9Data> = (formData) => onNext(formData);
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <form onSubmit={handleSubmit(onNext as any)} className="flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-overlay0/30">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-gold/15 text-gold flex items-center justify-center">
-              <Scale className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-text">Conclusión y Dictamen Pericial</h2>
-              <p className="text-[11px] text-subtext0">Dictamen final del evaluador para homologación institucional</p>
+    <form
+      onSubmit={handleSubmit(onSubmit as SubmitHandler<Record<string, unknown>>)}
+      className="flex flex-col gap-6"
+      noValidate
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-overlay0/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 border border-gold/30 shrink-0">
+            <Scale className="h-5 w-5 text-gold" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-text">
+              9. Conclusión y Dictamen Pericial
+            </h2>
+            <p className="text-xs text-subtext0">
+              Valoración técnica final para el Comité de Riesgos
+            </p>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleSintetizar}
+          loading={sintetizando}
+          className="self-start sm:self-auto"
+        >
+          <FileCheck className="h-4 w-4 text-gold" />
+          <span>
+            {sintetizando
+              ? "Generando síntesis..."
+              : "Redactar Borrador con Datos Relevados"}
+          </span>
+        </Button>
+      </div>
+
+      {/* Tarjeta de Resumen Pre-Emisión */}
+      {data && (
+        <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-gold shrink-0" />
+            <div className="truncate">
+              <span className="text-subtext0 block">Postulante</span>
+              <span className="font-bold text-text truncate">
+                {data.nombre || "Sin nombre"} {data.apellido || ""}
+              </span>
             </div>
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleSintetizar}
-            loading={sintetizando}
-            className="border-gold/30 hover:border-gold text-xs font-semibold self-start sm:self-auto"
-          >
-            {sintetizando ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin text-gold" />
-                Redactando dictamen...
-              </>
-            ) : (
-              <>
-                <FileCheck className="w-3.5 h-3.5 mr-1.5 text-gold" />
-                Borrador de Dictamen Sugerido
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-gold shrink-0" />
+            <div className="truncate">
+              <span className="text-subtext0 block">Ubicación Relevada</span>
+              <span className="font-bold text-text truncate">
+                {data.ciudad || "Gran Asunción"}{" "}
+                {data.barrio ? `• ${data.barrio}` : ""}
+              </span>
+            </div>
+          </div>
+          <div className="truncate">
+            <span className="text-subtext0 block">Coordenada GPS</span>
+            <span className="font-mono font-bold text-gold tabular-nums">
+              {data.coordenadas || "Pendiente de fijar"}
+            </span>
+          </div>
         </div>
+      )}
 
-        <Textarea
-          label="Dictamen y Observaciones de la Visita"
-          {...register("observacionesEntrevista")}
-          error={errors.observacionesEntrevista?.message}
-          rows={6}
-          placeholder="Describa la actitud, consistencia de las declaraciones, entorno vecinal y justificación del dictamen..."
+      <Textarea
+        label="Dictamen Técnico y Concepto Integral de la Visita"
+        required
+        rows={6}
+        placeholder="Fundamente la verificación domiciliaria, el arraigo vecinal constatado, la coherencia socioeconómica y la recomendación final..."
+        {...register("observacionesEntrevista")}
+        error={errors.observacionesEntrevista?.message}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Desenvolvimiento y Comunicación del Entrevistado"
+          options={[
+            { value: "fluida", label: "Fluida, transparente y colaborativa" },
+            { value: "coherente", label: "Coherente y precisa" },
+            { value: "segura", label: "Segura y asertiva" },
+            { value: "timida", label: "Reservada / Escueta" },
+            { value: "otro", label: "Con contradicciones (detallar abajo)" },
+          ]}
+          {...register("diccion")}
+          error={errors.diccion?.message}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="Dicción y Expresión"
-            options={[
-              { value: "fluida", label: "Fluida y elocuente" },
-              { value: "coherente", label: "Coherente y precisa" },
-              { value: "segura", label: "Segura y asertiva" },
-              { value: "timida", label: "Tímida o reservada" },
-              { value: "otro", label: "Otra observación" },
-            ]}
-            {...register("diccion")}
-            error={errors.diccion?.message}
-          />
+        <Select
+          label="Calificación del Estado Físico del Inmueble"
+          options={[
+            {
+              value: "excelente",
+              label: "Excelente (Materiales nobles y óptimo mantenimiento)",
+            },
+            {
+              value: "bueno",
+              label: "Bueno (Estructura sólida y habitable)",
+            },
+            {
+              value: "regular",
+              label: "Regular (Mantenimiento diferido)",
+            },
+            {
+              value: "deficiente",
+              label: "Deficiente (Precariedad o deterioro severo)",
+            },
+          ]}
+          {...register("estadoVivienda")}
+          error={errors.estadoVivienda?.message}
+        />
+      </div>
 
-          <Select
-            label="Estado Físico de la Vivienda"
-            options={[
-              { value: "excelente", label: "Excelente (Materiales nobles, óptimo mantenimiento)" },
-              { value: "bueno", label: "Bueno (Habitable, estructura sólida)" },
-              { value: "regular", label: "Regular (Mantenimiento diferido o detalles menores)" },
-              { value: "deficiente", label: "Deficiente (Hacinamiento o deterioro severo)" },
-            ]}
-            {...register("estadoVivienda")}
-            error={errors.estadoVivienda?.message}
-          />
-        </div>
+      <Input
+        label="Personas Presentes Durante la Inspección"
+        placeholder="Ej: Titular y cónyuge"
+        {...register("quienesPresentes")}
+        error={errors.quienesPresentes?.message}
+      />
 
+      <Textarea
+        label="Referencias Vecinales y Observaciones del Entorno"
+        rows={3}
+        placeholder="Concepto de vecinos consultados en la cuadra, seguridad de la zona y servicios básicos..."
+        {...register("otrasObservaciones")}
+        error={errors.otrasObservaciones?.message}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Personas Presentes Durante la Entrevista"
-          placeholder="Ej: Postulante y su cónyuge"
-          {...register("quienesPresentes")}
-          error={errors.quienesPresentes?.message}
+          type="date"
+          label="Fecha Efectiva de Inspección"
+          {...register("fechaVisita")}
+          error={errors.fechaVisita?.message}
         />
-        
-        <Textarea
-          label="Otras Observaciones o Verificación Vecinal"
-          placeholder="Referencias de vecinos, acceso al barrio, seguridad de la zona..."
-          {...register("otrasObservaciones")}
-          error={errors.otrasObservaciones?.message}
+        <Input
+          label="Perito Evaluador Actuante (Firma)"
+          {...register("consultorNombre")}
+          error={errors.consultorNombre?.message}
         />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input type="date" label="Fecha de la Visita" {...register("fechaVisita")} error={errors.fechaVisita?.message} />
-          <Input label="Firma / Nombre del Perito Consultor" {...register("consultorNombre")} error={errors.consultorNombre?.message} />
-        </div>
-
-        <div className="flex justify-between pt-4 border-t border-overlay0/30">
-          <Button type="button" variant="secondary" size="lg" onClick={onPrev}>
-            <ChevronLeft className="h-5 w-5 mr-2" /> Anterior
-          </Button>
-          <Button type="submit" size="lg" className="bg-gold text-black hover:bg-gold-light font-bold px-8 shadow-xl shadow-gold/20">
-            Completar Entrevista <CheckCircle className="h-5 w-5 ml-2" />
-          </Button>
-        </div>
-      </form>
-    </motion.div>
+      <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-overlay0/50">
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          onClick={onPrev}
+          className="w-full sm:w-auto"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Anterior</span>
+        </Button>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full sm:w-auto min-w-[220px]"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Emitir Dictamen Final</span>
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Camera, Loader2, CheckCircle, AlertCircle, Upload, Zap } from "lucide-react";
+import { useState, useCallback, useId } from "react";
+import {
+  Camera,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ImagePlus,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -9,12 +16,10 @@ interface FotoUploaderProps {
   tipo: "vivienda" | "factura";
   onAnalizado: (data: Record<string, unknown>) => void;
   onFotoGuardada?: (base64: string) => void;
+  initialPreview?: string;
 }
 
-/**
- * Comprime imágenes en el cliente a máx 640px y 65% calidad para respuesta en < 1 segundo
- */
-function comprimirImagen(file: File, maxDim = 640, quality = 0.65): Promise<string> {
+function comprimirImagen(file: File, maxDim = 800, quality = 0.72): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -50,129 +55,193 @@ function comprimirImagen(file: File, maxDim = 640, quality = 0.65): Promise<stri
   });
 }
 
-export function FotoUploader({ tipo, onAnalizado, onFotoGuardada }: FotoUploaderProps) {
-  const [state, setState] = useState<"idle" | "analyzing" | "done" | "error">("idle");
-  const [preview, setPreview] = useState<string | null>(null);
+export function FotoUploader({
+  tipo,
+  onAnalizado,
+  onFotoGuardada,
+  initialPreview,
+}: FotoUploaderProps) {
+  const uid = useId();
+  const cameraInputId = `cam-${tipo}-${uid}`;
+  const galleryInputId = `gal-${tipo}-${uid}`;
+
+  const [state, setState] = useState<"idle" | "analyzing" | "done" | "error">(
+    initialPreview ? "done" : "idle"
+  );
+  const [preview, setPreview] = useState<string | null>(initialPreview || null);
   const [dragging, setDragging] = useState(false);
 
-  const processFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith("image/")) return;
+  const processFile = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith("image/")) return;
 
-    // Compresión instantánea en el cliente antes de enviar
-    const compressedDataUrl = await comprimirImagen(file);
-    if (!compressedDataUrl) return;
+      const compressedDataUrl = await comprimirImagen(file);
+      if (!compressedDataUrl) return;
 
-    setPreview(compressedDataUrl);
-    const base64 = compressedDataUrl.split(",")[1];
-    onFotoGuardada?.(compressedDataUrl);
-    setState("analyzing");
+      setPreview(compressedDataUrl);
+      const base64 = compressedDataUrl.split(",")[1];
+      onFotoGuardada?.(compressedDataUrl);
+      setState("analyzing");
 
-    try {
-      const res = await fetch("/api/ai/analizar-foto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imagen: base64, tipo }),
-      });
-      if (!res.ok) throw new Error("Error analizando imagen");
-      const data = await res.json();
-      onAnalizado(data);
-      setState("done");
-    } catch {
-      setState("error");
-      setTimeout(() => setState("idle"), 3000);
-    }
-  }, [tipo, onAnalizado, onFotoGuardada]);
+      try {
+        const res = await fetch("/api/ai/analizar-foto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagen: base64, tipo }),
+        });
+        if (!res.ok) throw new Error("Error analizando imagen");
+        const data = await res.json();
+        onAnalizado(data);
+        setState("done");
+      } catch {
+        setState("error");
+      }
+    },
+    [tipo, onAnalizado, onFotoGuardada]
+  );
 
   const titulos = {
-    vivienda: "Fotografía de la Vivienda",
-    factura: "Factura de Suministro (ANDE / ESSAP)",
+    vivienda: "Registro Fotográfico de Fachada e Inmueble",
+    factura: "Comprobante de Suministro (ANDE / ESSAP)",
   };
   const hints = {
-    vivienda: "Extracción automática de materiales (techo, paredes, pisos)",
-    factura: "Lectura rápida de NIS, titular y monto del suministro",
+    vivienda:
+      "Reconocimiento asistido de mampostería, techo, pisos y estado general",
+    factura:
+      "Detección de NIS, titularidad y estado del suministro eléctrico",
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-text">{titulos[tipo]}</p>
-        <span className="text-[11px] font-medium text-gold flex items-center gap-1">
-          <Zap className="h-3 w-3" /> Optimizado para velocidad
-        </span>
+    <div className="rounded-2xl border border-overlay0/70 bg-surface1/40 p-4 sm:p-5 space-y-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs sm:text-sm font-bold text-text">{titulos[tipo]}</p>
+          <p className="text-[11px] text-subtext0">{hints[tipo]}</p>
+        </div>
+        {state === "done" && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green bg-green/10 border border-green/30 px-2.5 py-1 rounded-md">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Evidencia adjuntada
+          </span>
+        )}
       </div>
 
-      <div
-        className={cn(
-          "relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-6 transition-all duration-200 cursor-pointer",
-          dragging ? "border-gold bg-gold/10 scale-[1.01]" : "border-overlay0 bg-surface1/60 hover:border-gold/50 hover:bg-surface1",
-          state === "done" && "border-green/50 bg-green/5",
-          state === "error" && "border-red/50 bg-red/5"
-        )}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) processFile(f); }}
-        onClick={() => document.getElementById(`foto-${tipo}`)?.click()}
-      >
-        <input
-          id={`foto-${tipo}`}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f); }}
-        />
+      {/* Inputs ocultos separados: uno para Cámara directa en celular y otro para Galería/PC */}
+      <input
+        id={cameraInputId}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) processFile(f);
+        }}
+      />
+      <input
+        id={galleryInputId}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) processFile(f);
+        }}
+      />
 
-        {preview ? (
-          <div className="relative w-full">
+      {preview ? (
+        <div className="space-y-3">
+          <div className="relative w-full overflow-hidden rounded-xl border border-overlay0/60 bg-crust">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="Vista previa" className="w-full max-h-48 object-cover rounded-xl" />
+            <img
+              src={preview}
+              alt={`Evidencia ${tipo}`}
+              className="w-full max-h-56 object-cover"
+            />
             {state === "analyzing" && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-base/80 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-7 w-7 text-gold animate-spin" />
-                  <p className="text-xs text-text font-semibold">Analizando instantáneamente...</p>
+              <div className="absolute inset-0 flex items-center justify-center bg-base/80 backdrop-blur-xs">
+                <div className="flex items-center gap-2.5 rounded-xl bg-surface0 border border-overlay1 px-4 py-2.5 shadow-lg">
+                  <Loader2 className="h-4 w-4 text-gold animate-spin" />
+                  <span className="text-xs font-semibold text-text">
+                    Relevando características constructivas...
+                  </span>
                 </div>
               </div>
             )}
-            {state === "done" && (
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-green text-black px-3 py-1 font-bold shadow-md">
-                <CheckCircle className="h-3.5 w-3.5" />
-                <span className="text-xs">Campos reconocidos</span>
-              </div>
-            )}
-            {state === "error" && (
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-red text-white px-3 py-1 font-bold shadow-md">
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span className="text-xs">Reintentar</span>
-              </div>
-            )}
           </div>
-        ) : (
-          <>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface2 text-subtext0">
-              {state === "idle" ? (
-                <Camera className="h-6 w-6" />
-              ) : (
-                <Upload className="h-6 w-6 text-gold" />
-              )}
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-text">Toma una foto o selecciona una imagen</p>
-              <p className="text-xs text-subtext0 mt-0.5">{hints[tipo]}</p>
-            </div>
-          </>
-        )}
-      </div>
 
-      {preview && state !== "analyzing" && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-start text-xs"
-          onClick={(e) => { e.stopPropagation(); setPreview(null); setState("idle"); }}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {state === "error" ? (
+              <span className="text-xs text-subtext0 flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-yellow" />
+                Foto guardada (complete los materiales manualmente abajo).
+              </span>
+            ) : (
+              <span className="text-xs text-subtext0">
+                Imagen comprimida y vinculada al expediente.
+              </span>
+            )}
+
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setPreview(null);
+                setState("idle");
+                onFotoGuardada?.("");
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red" />
+              <span>Reemplazar foto</span>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) processFile(f);
+          }}
+          className={cn(
+            "rounded-xl border border-dashed p-5 transition-colors flex flex-col items-center justify-center gap-3 text-center",
+            dragging
+              ? "border-gold bg-gold/10"
+              : "border-overlay1/70 bg-surface0/60"
+          )}
         >
-          Tomar otra foto
-        </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full max-w-sm">
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={() => document.getElementById(cameraInputId)?.click()}
+              className="w-full sm:flex-1"
+            >
+              <Camera className="h-4 w-4" />
+              <span>Tomar Foto</span>
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => document.getElementById(galleryInputId)?.click()}
+              className="w-full sm:flex-1"
+            >
+              <ImagePlus className="h-4 w-4 text-gold" />
+              <span>Subir de Galería</span>
+            </Button>
+          </div>
+          <p className="text-[11px] text-subtext0">
+            Compatible con cámara móvil en terreno o arrastrando archivos en PC
+          </p>
+        </div>
       )}
     </div>
   );
