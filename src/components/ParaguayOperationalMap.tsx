@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Clock, ShieldCheck, Users, Radio, Navigation } from "lucide-react";
+import { Clock, ShieldCheck, Users, MapPin } from "lucide-react";
 
 interface OperationalZone {
   id: string;
@@ -11,49 +10,49 @@ interface OperationalZone {
   sla: string;
   ciudades: string[];
   peritos: number;
-  status: "Despliegue Inmediato" | "Ruta Programada";
+  modalidad: string;
   coords: { x: number; y: number };
 }
 
 const ZONAS_OPERATIVAS: OperationalZone[] = [
   {
     id: "central",
-    name: "Asunción & Área Metropolitana",
-    shortName: "Asunción HQ",
-    sla: "< 24 hs",
-    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Fdo. de la Mora", "Capiatá"],
+    name: "Asunción y Departamento Central",
+    shortName: "Gran Asunción",
+    sla: "< 24 horas",
+    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Fernando de la Mora", "Capiatá", "Ñemby", "Mariano R. Alonso"],
     peritos: 4,
-    status: "Despliegue Inmediato",
+    modalidad: "Despliegue diario inmediato",
     coords: { x: 195, y: 245 },
   },
   {
     id: "centro",
-    name: "Corredor Centro (Cordillera / Caaguazú)",
-    shortName: "Cnel. Oviedo",
-    sla: "24 - 36 hs",
+    name: "Cordillera y Caaguazú",
+    shortName: "Centro / Oviedo",
+    sla: "24 a 36 horas",
     ciudades: ["Coronel Oviedo", "Caacupé", "Eusebio Ayala", "Itacurubí"],
     peritos: 2,
-    status: "Despliegue Inmediato",
+    modalidad: "Cobertura sobre corredor Ruta PY02",
     coords: { x: 248, y: 232 },
   },
   {
     id: "este",
-    name: "Hub Alto Paraná (Triple Frontera)",
+    name: "Alto Paraná",
     shortName: "Ciudad del Este",
-    sla: "24 - 48 hs",
-    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Pdte. Franco"],
+    sla: "24 a 48 horas",
+    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Presidente Franco"],
     peritos: 2,
-    status: "Ruta Programada",
+    modalidad: "Peritos residentes en área metropolitana Este",
     coords: { x: 315, y: 248 },
   },
   {
     id: "sur",
-    name: "Hub Sur (Itapúa)",
+    name: "Itapúa",
     shortName: "Encarnación",
-    sla: "24 - 48 hs",
+    sla: "24 a 48 horas",
     ciudades: ["Encarnación", "Cambyretá", "Colonias Unidas", "Fram"],
     peritos: 2,
-    status: "Ruta Programada",
+    modalidad: "Peritos residentes en eje Sur / Ruta PY01",
     coords: { x: 238, y: 342 },
   },
 ];
@@ -63,161 +62,86 @@ export function ParaguayOperationalMap() {
   const hqCoords = ZONAS_OPERATIVAS[0].coords;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.45 }}
-      className="rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl"
-    >
-      {/* Cabecera compacta */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-overlay0/40 mb-6">
-        <div className="flex items-center gap-2.5">
-          <Radio className="h-4 w-4 text-gold animate-pulse" />
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold block">
-              COBERTURA GEORREFERENCIADA
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
-              Red Operativa en Paraguay
-            </h2>
-          </div>
+    <div className="rounded-2xl sm:rounded-3xl border border-overlay0/60 bg-surface0/90 backdrop-blur-xl p-5 sm:p-8 shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-overlay0/50 mb-6">
+        <div>
+          <span className="text-xs font-semibold text-gold">
+            Alcance Territorial
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight mt-0.5">
+            Cobertura Operativa y Plazos de Respuesta
+          </h2>
         </div>
-        <span className="text-xs font-mono text-green bg-green/10 border border-green/30 px-3 py-1 rounded-full flex items-center gap-2 font-bold">
-          <span className="h-2 w-2 rounded-full bg-green animate-ping" />
-          10 PERITOS EN TERRITORIO
+        <span className="text-xs font-semibold text-subtext0">
+          10 peritos acreditados en 4 cabeceras departamentales
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* Mapa SVG con enlaces animados desde Asunción HQ */}
-        <div className="lg:col-span-6 flex items-center justify-center">
-          <div className="relative w-full max-w-[380px] aspect-[4/4.6] bg-mantle/80 rounded-3xl p-4 border border-overlay0/50 flex items-center justify-center overflow-hidden shadow-inner">
-            <svg viewBox="0 0 400 440" className="w-full h-full">
-              {/* Región Occidental (Chaco) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+        {/* Mapa Vectorial Sobrio */}
+        <div className="lg:col-span-5 flex items-center justify-center">
+          <div className="relative w-full max-w-[340px] aspect-[4/4.5] bg-surface1/60 rounded-2xl p-4 border border-overlay0/60 flex items-center justify-center">
+            <svg viewBox="0 0 400 440" className="w-full h-full" aria-label="Mapa de cobertura en Paraguay">
               <path
                 d="M 110 35 L 210 45 L 230 135 L 195 245 L 115 215 L 65 155 Z"
                 fill="currentColor"
-                className="text-surface2/40"
-                stroke="rgba(148, 163, 184, 0.25)"
-                strokeWidth="1.5"
+                className="text-surface2/50"
+                stroke="currentColor"
+                strokeWidth="1"
               />
-              <text
-                x="115"
-                y="135"
-                fill="currentColor"
-                className="text-[9px] text-subtext0/60 font-mono font-bold tracking-widest select-none"
-              >
-                REGIÓN OCCIDENTAL
-              </text>
-
-              {/* Río Paraguay */}
-              <path
-                d="M 210 45 Q 225 145 195 245 T 175 320 T 190 380"
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="2"
-                strokeDasharray="4 3"
-                opacity="0.7"
-              />
-
-              {/* Región Oriental */}
               <path
                 d="M 210 45 L 290 75 L 330 155 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 245 Q 225 145 210 45 Z"
                 fill="currentColor"
-                className="text-surface2/80"
-                stroke="rgba(229, 192, 123, 0.45)"
-                strokeWidth="2"
+                className="text-surface2"
+                stroke="rgba(212, 175, 55, 0.45)"
+                strokeWidth="1.5"
               />
 
-              {/* Líneas de enlace de telemetría desde Asunción HQ hacia los nodos */}
               {ZONAS_OPERATIVAS.slice(1).map((zone) => (
-                <g key={`link-${zone.id}`}>
-                  <line
-                    x1={hqCoords.x}
-                    y1={hqCoords.y}
-                    x2={zone.coords.x}
-                    y2={zone.coords.y}
-                    stroke="rgba(229, 192, 123, 0.28)"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-                  <motion.circle
-                    r="3"
-                    fill="#E5C07B"
-                    animate={{
-                      cx: [hqCoords.x, zone.coords.x],
-                      cy: [hqCoords.y, zone.coords.y],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{
-                      duration: 2.4,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  />
-                </g>
+                <line
+                  key={`line-${zone.id}`}
+                  x1={hqCoords.x}
+                  y1={hqCoords.y}
+                  x2={zone.coords.x}
+                  y2={zone.coords.y}
+                  stroke="rgba(212, 175, 55, 0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 4"
+                />
               ))}
 
-              {/* Nodos Interactivos */}
               {ZONAS_OPERATIVAS.map((zone) => {
                 const isSelected = selectedZone.id === zone.id;
                 return (
                   <g
                     key={zone.id}
                     onClick={() => setSelectedZone(zone)}
-                    onMouseEnter={() => setSelectedZone(zone)}
                     className="cursor-pointer"
                   >
-                    {isSelected && (
-                      <circle
-                        cx={zone.coords.x}
-                        cy={zone.coords.y}
-                        r="20"
-                        fill="none"
-                        stroke="#E5C07B"
-                        strokeWidth="1.5"
-                        className="animate-ping opacity-40 origin-center"
-                      />
-                    )}
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
                       r={isSelected ? "12" : "8"}
-                      fill={isSelected ? "rgba(229, 192, 123, 0.35)" : "rgba(16, 185, 129, 0.25)"}
-                      stroke={isSelected ? "#E5C07B" : "#10b981"}
+                      fill={isSelected ? "rgba(212, 175, 55, 0.3)" : "rgba(16, 185, 129, 0.2)"}
+                      stroke={isSelected ? "#d4af37" : "#10b981"}
                       strokeWidth="2"
                     />
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
-                      r="4.5"
-                      fill={isSelected ? "#E5C07B" : "#10b981"}
+                      r="4"
+                      fill={isSelected ? "#d4af37" : "#10b981"}
                     />
-                    <text
-                      x={zone.coords.x + 14}
-                      y={zone.coords.y + 4}
-                      fill={isSelected ? "#E5C07B" : "#94a3b8"}
-                      className="text-[10px] font-mono font-bold select-none"
-                    >
-                      {zone.shortName}
-                    </text>
                   </g>
                 );
               })}
             </svg>
-
-            <div className="absolute bottom-3 left-4 text-[10px] font-mono text-subtext0 flex items-center gap-1.5">
-              <Navigation className="h-3 w-3 text-gold" />
-              <span>Pasa el cursor o haz clic sobre un nodo</span>
-            </div>
           </div>
         </div>
 
-        {/* Panel Derecho de Telemetría Regional */}
-        <div className="lg:col-span-6 space-y-5">
-          {/* Selector rápido por botones */}
-          <div className="flex flex-wrap gap-2">
+        {/* Selector y Detalle de Zona */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {ZONAS_OPERATIVAS.map((z) => {
               const active = selectedZone.id === z.id;
               return (
@@ -225,10 +149,10 @@ export function ParaguayOperationalMap() {
                   key={z.id}
                   type="button"
                   onClick={() => setSelectedZone(z)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer border ${
+                  className={`min-h-[42px] px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer border ${
                     active
-                      ? "bg-gold text-black border-gold shadow-md shadow-gold/20"
-                      : "bg-surface1 text-subtext0 border-overlay0/50 hover:text-text"
+                      ? "bg-gold text-black border-gold font-bold"
+                      : "bg-surface1 text-subtext0 border-overlay0/60 hover:text-text"
                   }`}
                 >
                   {z.shortName}
@@ -237,72 +161,60 @@ export function ParaguayOperationalMap() {
             })}
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedZone.id}
-              initial={{ opacity: 0, x: 14 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -14 }}
-              transition={{ duration: 0.22 }}
-              className="rounded-2xl border border-overlay0/60 bg-surface1/60 p-6 space-y-5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
-                    NODO OPERATIVO SELECCIONADO
-                  </span>
-                  <h3 className="text-xl font-black text-text mt-0.5">{selectedZone.name}</h3>
-                </div>
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-green/15 text-green border border-green/30 shrink-0">
-                  {selectedZone.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-2xl bg-surface0 border border-overlay0/50">
-                  <div className="flex items-center gap-1.5 text-gold text-xs font-bold mb-1">
-                    <Clock className="h-4 w-4" />
-                    <span>SLA de Entrega</span>
-                  </div>
-                  <p className="text-2xl font-black text-text font-mono">{selectedZone.sla}</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-surface0 border border-overlay0/50">
-                  <div className="flex items-center gap-1.5 text-blue text-xs font-bold mb-1">
-                    <Users className="h-4 w-4" />
-                    <span>Capacidad Local</span>
-                  </div>
-                  <p className="text-2xl font-black text-text font-mono">{selectedZone.peritos} Peritos</p>
-                </div>
-              </div>
-
+          <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-2 border-b border-overlay0/50 pb-3">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-wider text-subtext0 font-bold mb-2">
-                  MUNICIPIOS CUBIERTOS SIN COSTO EXTRA DE RUTA
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedZone.ciudades.map((ciudad) => (
-                    <span
-                      key={ciudad}
-                      className="px-2.5 py-1 rounded-lg bg-surface0 border border-overlay0/50 text-xs font-semibold text-text"
-                    >
-                      {ciudad}
-                    </span>
-                  ))}
-                </div>
+                <h3 className="text-lg font-bold text-text">{selectedZone.name}</h3>
+                <p className="text-xs text-subtext0 mt-0.5">{selectedZone.modalidad}</p>
+              </div>
+              <span className="text-xs font-semibold text-green bg-green/10 border border-green/30 px-2.5 py-1 rounded-md">
+                Operativo
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50 flex items-center justify-between">
+                <span className="text-xs text-subtext0 flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 text-gold" /> Tiempo de Entrega
+                </span>
+                <span className="text-sm font-bold text-text font-mono tabular-nums">{selectedZone.sla}</span>
               </div>
 
-              <div className="pt-3 border-t border-overlay0/40 flex items-center justify-between text-xs text-subtext0">
-                <span className="flex items-center gap-1.5 text-green font-bold">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span>Georreferenciación GPS Obligatoria</span>
+              <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50 flex items-center justify-between">
+                <span className="text-xs text-subtext0 flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-gold" /> Equipo Asignado
                 </span>
-                <span className="font-mono text-gold font-bold">Ley N° 6534/20</span>
+                <span className="text-sm font-bold text-text font-mono tabular-nums">{selectedZone.peritos} peritos</span>
               </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+
+            <div>
+              <span className="text-xs font-semibold text-subtext1 block mb-2">
+                Localidades con cobertura directa:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedZone.ciudades.map((ciudad) => (
+                  <span
+                    key={ciudad}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface0 border border-overlay0/50 text-xs text-text font-medium"
+                  >
+                    <MapPin className="h-3 w-3 text-gold" />
+                    {ciudad}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-overlay0/40 flex items-center justify-between text-xs text-subtext0">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-gold" />
+                Inspecciones con coordenadas GPS auditables
+              </span>
+              <span className="font-mono">Reg. N° 4.819</span>
+            </div>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

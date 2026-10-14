@@ -2,18 +2,19 @@
 
 import { useEffect, useRef } from "react";
 
-interface Particle {
+interface GridPoint {
+  originX: number;
+  originY: number;
   x: number;
   y: number;
   vx: number;
   vy: number;
-  baseVx: number;
-  baseVy: number;
-  size: number;
-  alpha: number;
-  isGold: boolean;
 }
 
+/**
+ * Matriz arquitectónica interactiva: una grilla de precisión que reacciona
+ * con física elástica suave al paso del cursor sin ruido visual.
+ */
 export function AntigravityBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -28,36 +29,45 @@ export function AntigravityBackground() {
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
+    const spacing = width < 768 ? 44 : 36;
+    let points: GridPoint[] = [];
+
+    function initGrid() {
+      points = [];
+      const cols = Math.ceil(width / spacing) + 1;
+      const rows = Math.ceil(height / spacing) + 1;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const ox = c * spacing;
+          const oy = r * spacing;
+          points.push({
+            originX: ox,
+            originY: oy,
+            x: ox,
+            y: oy,
+            vx: 0,
+            vy: 0,
+          });
+        }
+      }
+    }
+
+    initGrid();
+
     const mouse = {
       x: -1000,
       y: -1000,
       targetX: -1000,
       targetY: -1000,
-      radius: 190,
+      radius: 170,
       active: false,
     };
-
-    const particleCount = prefersReducedMotion ? 25 : Math.min(85, Math.floor((width * height) / 16000));
-    const particles: Particle[] = Array.from({ length: particleCount }, () => {
-      const baseVx = (Math.random() - 0.5) * 0.35;
-      const baseVy = -Math.random() * 0.45 - 0.15; // Flotación antigravedad hacia arriba
-      return {
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: baseVx,
-        vy: baseVy,
-        baseVx,
-        baseVy,
-        size: Math.random() * 2 + 1,
-        alpha: Math.random() * 0.55 + 0.2,
-        isGold: Math.random() > 0.32,
-      };
-    });
 
     function handleResize() {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      initGrid();
     }
 
     function handleMouseMove(e: MouseEvent) {
@@ -76,102 +86,76 @@ export function AntigravityBackground() {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("mouseleave", handleMouseLeave);
 
-    function animate() {
+    function render() {
       if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const goldRgb = isDark ? "229, 192, 123" : "146, 108, 21";
-      const slateRgb = isDark ? "148, 163, 184" : "71, 85, 105";
+      const goldRgb = isDark ? "212, 175, 55" : "138, 100, 18";
+      const baseRgb = isDark ? "148, 163, 184" : "100, 116, 139";
 
-      // Interpolación suave del cursor
-      mouse.x += (mouse.targetX - mouse.x) * 0.12;
-      mouse.y += (mouse.targetY - mouse.y) * 0.12;
+      mouse.x += (mouse.targetX - mouse.x) * 0.14;
+      mouse.y += (mouse.targetY - mouse.y) * 0.14;
 
-      // Halo ambiental reactivo al cursor
       if (mouse.active && mouse.x > 0) {
-        const grad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 360);
-        grad.addColorStop(0, `rgba(${goldRgb}, ${isDark ? 0.11 : 0.07})`);
-        grad.addColorStop(0.5, `rgba(${goldRgb}, ${isDark ? 0.03 : 0.02})`);
-        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = grad;
+        const halo = ctx.createRadialGradient(mouse.x, mouse.y, 8, mouse.x, mouse.y, 320);
+        halo.addColorStop(0, `rgba(${goldRgb}, ${isDark ? 0.08 : 0.05})`);
+        halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = halo;
         ctx.fillRect(0, 0, width, height);
       }
 
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
+      const maxDist = mouse.radius;
+      const maxDistSq = maxDist * maxDist;
 
-        if (!prefersReducedMotion) {
-          // Física de repulsión / órbita antigravedad frente al cursor
-          const dx = p.x - mouse.x;
-          const dy = p.y - mouse.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
 
-          if (dist < mouse.radius && dist > 0) {
-            const force = (mouse.radius - dist) / mouse.radius;
-            const angle = Math.atan2(dy, dx);
-            // Empuje radial + leve rotación tangencial
-            p.vx += Math.cos(angle) * force * 0.55 + Math.cos(angle + Math.PI / 2) * force * 0.15;
-            p.vy += Math.sin(angle) * force * 0.55 + Math.sin(angle + Math.PI / 2) * force * 0.15;
-          }
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const distSq = dx * dx + dy * dy;
 
-          // Retorno elástico a su velocidad base antigravedad
-          p.vx += (p.baseVx - p.vx) * 0.04;
-          p.vy += (p.baseVy - p.vy) * 0.04;
+        let proximity = 0;
 
-          p.x += p.vx;
-          p.y += p.vy;
-
-          // Envolvimiento de bordes
-          if (p.y < -10) p.y = height + 10;
-          if (p.y > height + 10) p.y = -10;
-          if (p.x < -10) p.x = width + 10;
-          if (p.x > width + 10) p.x = -10;
+        if (!prefersReducedMotion && distSq < maxDistSq && distSq > 0.01) {
+          const dist = Math.sqrt(distSq);
+          proximity = 1 - dist / maxDist;
+          const push = proximity * proximity * 14;
+          const targetX = p.originX + (dx / dist) * push;
+          const targetY = p.originY + (dy / dist) * push;
+          p.vx += (targetX - p.x) * 0.18;
+          p.vy += (targetY - p.y) * 0.18;
+        } else {
+          p.vx += (p.originX - p.x) * 0.12;
+          p.vy += (p.originY - p.y) * 0.12;
         }
 
-        // Dibujar nodo
+        p.vx *= 0.78;
+        p.vy *= 0.78;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const radius = proximity > 0.05 ? 1.1 + proximity * 1.4 : 1.05;
+        const alpha =
+          proximity > 0.05
+            ? (isDark ? 0.25 : 0.2) + proximity * 0.55
+            : isDark
+            ? 0.12
+            : 0.14;
+
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.isGold ? goldRgb : slateRgb}, ${p.alpha})`;
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle =
+          proximity > 0.12
+            ? `rgba(${goldRgb}, ${alpha})`
+            : `rgba(${baseRgb}, ${alpha})`;
         ctx.fill();
-
-        // Filamentos entre nodos cercanos
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const ldx = p.x - p2.x;
-          const ldy = p.y - p2.y;
-          const ldist = Math.sqrt(ldx * ldx + ldy * ldy);
-
-          if (ldist < 125) {
-            const lineAlpha = (1 - ldist / 125) * (isDark ? 0.16 : 0.11);
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(${p.isGold ? goldRgb : slateRgb}, ${lineAlpha})`;
-            ctx.lineWidth = 0.7;
-            ctx.stroke();
-          }
-        }
-
-        // Filamento magnético directo al cursor
-        const cdx = p.x - mouse.x;
-        const cdy = p.y - mouse.y;
-        const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
-        if (cdist < mouse.radius) {
-          const cursorLineAlpha = (1 - cdist / mouse.radius) * 0.35;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(mouse.x, mouse.y);
-          ctx.strokeStyle = `rgba(${goldRgb}, ${cursorLineAlpha})`;
-          ctx.lineWidth = 0.9;
-          ctx.stroke();
-        }
       }
 
-      animationFrameId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(render);
     }
 
-    animate();
+    render();
 
     return () => {
       cancelAnimationFrame(animationFrameId);

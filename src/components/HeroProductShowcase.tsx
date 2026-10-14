@@ -1,312 +1,292 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
-  Sparkles,
   FileSpreadsheet,
   CheckCircle2,
   ShieldCheck,
-  Navigation,
-  Cpu,
-  AlertTriangle,
-  Download,
+  Building2,
+  Scale,
+  FileCheck,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
-type TabKey = "gps" | "ia" | "pptx";
+type ViewTab = "terreno" | "patrimonio" | "laminas";
 
 export function HeroProductShowcase() {
-  const [activeTab, setActiveTab] = useState<TabKey>("gps");
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glowX: 50, glowY: 50 });
+  const [activeTab, setActiveTab] = useState<ViewTab>("terreno");
 
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    setTilt({
-      rotateX: ((y - centerY) / centerY) * -3.5,
-      rotateY: ((x - centerX) / centerX) * 3.5,
-      glowX: (x / rect.width) * 100,
-      glowY: (y / rect.height) * 100,
-    });
-  }
-
-  function handleMouseLeave() {
-    setTilt({ rotateX: 0, rotateY: 0, glowX: 50, glowY: 50 });
-  }
-
-  const tabs: { id: TabKey; label: string; metric: string; icon: React.ElementType }[] = [
-    { id: "gps", label: "Telemetría GPS In Situ", metric: "±3m precisión", icon: MapPin },
-    { id: "ia", label: "Auditoría Multimodal IA", metric: "Gemini 2.5", icon: Sparkles },
-    { id: "pptx", label: "Dossier Comité 5 Láminas", metric: "Exportación 1-Click", icon: FileSpreadsheet },
+  const tabs: { id: ViewTab; label: string; shortLabel: string; icon: React.ElementType }[] = [
+    { id: "terreno", label: "1. Verificación In Situ & ANDE", shortLabel: "In Situ", icon: MapPin },
+    { id: "patrimonio", label: "2. Cruce Socioeconómico", shortLabel: "Solvencia", icon: Scale },
+    { id: "laminas", label: "3. Entregable Comité (5 Láminas)", shortLabel: "5 Láminas", icon: FileSpreadsheet },
   ];
 
   return (
-    <div className="relative perspective-[1400px]">
-      <motion.div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        animate={{
-          rotateX: tilt.rotateX,
-          rotateY: tilt.rotateY,
-        }}
-        transition={{ type: "spring", stiffness: 220, damping: 24, mass: 0.6 }}
-        style={{
-          transformStyle: "preserve-3d",
-          backgroundImage: `radial-gradient(650px circle at ${tilt.glowX}% ${tilt.glowY}%, rgba(229,192,123,0.10), transparent 45%)`,
-        }}
-        className="rounded-3xl border border-overlay1/60 bg-surface0/85 backdrop-blur-2xl shadow-2xl overflow-hidden"
-      >
-        {/* Barra superior de ventana ejecutiva */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-overlay0/50 bg-mantle/70">
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-red/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-yellow/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-green/70" />
-            <span className="ml-2 text-[11px] font-mono text-subtext0">
-              JEROVIA-CORE // EXP-2026-8841
-            </span>
-          </div>
-
-          {/* Selector interactivo de vista */}
-          <div className="flex items-center gap-1.5 bg-surface1 p-1 rounded-xl border border-overlay0/50">
-            {tabs.map((t) => {
-              const Icon = t.icon;
-              const active = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setActiveTab(t.id)}
-                  className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    active ? "text-black" : "text-subtext0 hover:text-text"
-                  }`}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="showcase-active-pill"
-                      className="absolute inset-0 rounded-lg bg-gold shadow-sm"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <Icon className="h-3.5 w-3.5 relative z-10" />
-                  <span className="relative z-10 hidden sm:inline">{t.label}</span>
-                </button>
-              );
-            })}
+    <div className="rounded-2xl sm:rounded-3xl border border-overlay1/60 bg-surface0/90 backdrop-blur-xl shadow-2xl overflow-hidden">
+      {/* Cabecera Institucional del Expediente */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-overlay0/60 bg-mantle/80">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green/10 border border-green/30 text-green text-xs font-semibold">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Dictamen Favorable
+          </span>
+          <div className="text-xs text-subtext0">
+            <span className="font-semibold text-text">Expediente #2026-0419</span>
+            <span className="mx-2 text-overlay2">|</span>
+            <span>Solicitante: <strong className="text-text">Banca Corporativa &amp; Riesgos</strong></span>
           </div>
         </div>
 
-        {/* Contenido dinámico con poco texto y alto impacto visual */}
-        <div className="p-6 sm:p-8 min-h-[340px] flex flex-col justify-between">
-          <AnimatePresence mode="wait">
-            {activeTab === "gps" && (
-              <motion.div
-                key="gps"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center"
+        {/* Selector de vistas adaptable a celular y PC */}
+        <div
+          role="tablist"
+          aria-label="Vistas del expediente pericial"
+          className="grid grid-cols-3 sm:flex items-center gap-1 bg-surface1 p-1 rounded-xl border border-overlay0/60"
+        >
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={active}
+                type="button"
+                onClick={() => setActiveTab(t.id)}
+                className={`relative min-h-[38px] flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  active ? "text-black font-bold" : "text-subtext0 hover:text-text"
+                }`}
               >
-                {/* Visualizador de Radar Activo */}
-                <div className="lg:col-span-7 relative h-64 rounded-2xl border border-overlay0/60 bg-crust/70 overflow-hidden flex items-center justify-center">
-                  {/* Cuadrícula cartográfica */}
-                  <div
-                    className="absolute inset-0 opacity-25"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(to right, rgba(229,192,123,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(229,192,123,0.18) 1px, transparent 1px)",
-                      backgroundSize: "32px 32px",
-                    }}
+                {active && (
+                  <motion.span
+                    layoutId="active-dossier-tab"
+                    className="absolute inset-0 rounded-lg bg-gold shadow-xs"
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
-                  {/* Ondas de radar animadas */}
-                  {[1, 2, 3].map((ring) => (
-                    <motion.div
-                      key={ring}
-                      initial={{ scale: 0.4, opacity: 0.7 }}
-                      animate={{ scale: 2.4, opacity: 0 }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        delay: ring * 0.9,
-                        ease: "easeOut",
-                      }}
-                      className="absolute h-28 w-28 rounded-full border border-gold/50"
-                    />
-                  ))}
+                )}
+                <Icon className="h-3.5 w-3.5 relative z-10 shrink-0" />
+                <span className="relative z-10 sm:hidden">{t.shortLabel}</span>
+                <span className="relative z-10 hidden sm:inline">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <div className="h-12 w-12 rounded-2xl bg-gold text-black flex items-center justify-center shadow-xl shadow-gold/30">
-                      <Navigation className="h-6 w-6" />
-                    </div>
-                    <div className="rounded-xl bg-mantle/90 border border-gold/40 px-3.5 py-1.5 text-center backdrop-blur-md">
-                      <p className="text-xs font-black text-text">-25.2867° S, -57.6470° O</p>
-                      <p className="text-[10px] font-mono text-green">
-                        ✓ SEÑAL SATELITAL VERIFICADA • ASUNCIÓN
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* KPIs directos sin relleno */}
-                <div className="lg:col-span-5 space-y-3">
-                  <div className="rounded-2xl border border-overlay0/50 bg-surface1/60 p-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-mono uppercase text-subtext0">Estado de Ubicación</p>
-                      <p className="text-base font-black text-text mt-0.5">Match Domiciliario 100%</p>
-                    </div>
-                    <CheckCircle2 className="h-6 w-6 text-green shrink-0" />
-                  </div>
-
-                  <div className="rounded-2xl border border-overlay0/50 bg-surface1/60 p-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-mono uppercase text-subtext0">Sello Temporal</p>
-                      <p className="text-base font-black text-gold font-mono mt-0.5">Inmutable (EXIF + GPS)</p>
-                    </div>
-                    <ShieldCheck className="h-6 w-6 text-gold shrink-0" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-overlay0/40 bg-surface1/40 p-3.5">
-                      <p className="text-[10px] font-mono text-subtext0 uppercase">Desviación</p>
-                      <p className="text-xl font-black text-text mt-0.5">2.4 m</p>
-                    </div>
-                    <div className="rounded-2xl border border-overlay0/40 bg-surface1/40 p-3.5">
-                      <p className="text-[10px] font-mono text-subtext0 uppercase">Tiempo en Sitio</p>
-                      <p className="text-xl font-black text-green mt-0.5">24 min</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === "ia" && (
-              <motion.div
-                key="ia"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-4"
-              >
-                <div className="rounded-2xl border border-gold/30 bg-surface1/60 p-5 space-y-3 relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono uppercase text-gold font-bold">Visión Artificial</span>
-                    <Cpu className="h-4 w-4 text-gold" />
-                  </div>
-                  <p className="text-lg font-black text-text">Peritaje de Fachada</p>
-                  <div className="space-y-2 pt-1 text-xs">
-                    <div className="flex justify-between py-1 border-b border-overlay0/30">
-                      <span className="text-subtext0">Estructura</span>
-                      <span className="font-bold text-text">Mampostería Óptima</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-overlay0/30">
-                      <span className="text-subtext0">Nivel Socioeconómico</span>
-                      <span className="font-bold text-gold">Medio-Alto (B1)</span>
-                    </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-subtext0">Riesgo Ambiental</span>
-                      <span className="font-bold text-green">Bajo (96/100)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-overlay0/50 bg-surface1/60 p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono uppercase text-blue font-bold">Cruce Patrimonial</span>
-                    <AlertTriangle className="h-4 w-4 text-green" />
-                  </div>
-                  <p className="text-lg font-black text-text">0 Inconsistencias</p>
-                  <div className="space-y-2 pt-1 text-xs">
-                    <div className="flex justify-between py-1 border-b border-overlay0/30">
-                      <span className="text-subtext0">Ingresos vs. Egresos</span>
-                      <span className="font-bold text-green">Superávit +38%</span>
-                    </div>
-                    <div className="flex justify-between py-1 border-b border-overlay0/30">
-                      <span className="text-subtext0">Arraigo Laboral</span>
-                      <span className="font-bold text-text">4.5 años verificados</span>
-                    </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-subtext0">Referencias Vecinales</span>
-                      <span className="font-bold text-green">3/3 Positivas</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-overlay0/50 bg-surface1/60 p-5 flex flex-col justify-between">
+      {/* Cuerpo del Expediente */}
+      <div className="p-4 sm:p-8">
+        <AnimatePresence mode="wait">
+          {activeTab === "terreno" && (
+            <motion.div
+              key="terreno"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
+            >
+              {/* Ficha Técnica de Constatación */}
+              <div className="lg:col-span-7 rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 flex flex-col justify-between space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-overlay0/50 pb-4">
                   <div>
-                    <span className="text-[11px] font-mono uppercase text-green font-bold">Dictamen IA</span>
-                    <p className="text-lg font-black text-text mt-1">Solvencia Confirmada</p>
-                    <p className="text-xs text-subtext0 mt-2 leading-relaxed">
-                      Síntesis forense generada automáticamente a partir de audio en campo, fotos y flujo financiero.
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-subtext0">
+                      Constatación Domiciliaria Presencial
                     </p>
+                    <h3 className="text-lg font-bold text-text mt-0.5">
+                      Barrio Villa Morra, Asunción
+                    </h3>
                   </div>
-                  <div className="mt-4 rounded-xl bg-green/10 border border-green/30 px-3.5 py-2.5 flex items-center justify-between">
-                    <span className="text-xs font-bold text-green">Score Confiabilidad</span>
-                    <span className="text-lg font-black font-mono text-green">94 / 100</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === "pptx" && (
-              <motion.div
-                key="pptx"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-                className="space-y-5"
-              >
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {[
-                    { slide: "01", title: "Carátula & Score", desc: "Dictamen ejecutivo" },
-                    { slide: "02", title: "Grupo Familiar", desc: "Arraigo y entorno" },
-                    { slide: "03", title: "Balance Financiero", desc: "Liquidez y ratios" },
-                    { slide: "04", title: "Inspección Visual", desc: "Fotos + Mapa GPS" },
-                    { slide: "05", title: "Conclusión Pericial", desc: "Firma y matrícula" },
-                  ].map((item, idx) => (
-                    <motion.div
-                      key={item.slide}
-                      initial={{ opacity: 0, scale: 0.94 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.06 }}
-                      className="rounded-2xl border border-overlay0/60 bg-surface1/70 p-4 flex flex-col justify-between h-36 hover:border-gold transition-colors"
-                    >
-                      <span className="text-xs font-mono font-bold text-gold">LÁMINA {item.slide}</span>
-                      <div>
-                        <p className="text-sm font-black text-text">{item.title}</p>
-                        <p className="text-[11px] text-subtext0 mt-0.5">{item.desc}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <Download className="h-5 w-5 text-gold shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-text">
-                      Exportación nativa lista para Comité de Crédito en formato .PPTX y PDF
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-gold uppercase">
-                    Tiempo de emisión: 1.8s
+                  <span className="font-mono text-xs font-semibold text-gold bg-gold/10 border border-gold/30 px-2.5 py-1 rounded-md tabular-nums">
+                    -25.2914° S, -57.5804° O
                   </span>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50">
+                    <span className="text-subtext0 block mb-1">Titularidad de Suministro (ANDE)</span>
+                    <span className="font-bold text-text font-mono tabular-nums">NIS #3849102 • Activo</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50">
+                    <span className="text-subtext0 block mb-1">Arraigo Vecinal Confirmado</span>
+                    <span className="font-bold text-text">6 años en el domicilio actual</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50">
+                    <span className="text-subtext0 block mb-1">Tipología Constructiva</span>
+                    <span className="font-bold text-text">Residencial consolidado (Propio)</span>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-surface0 border border-overlay0/50">
+                    <span className="text-subtext0 block mb-1">Precisión GPS Registrada</span>
+                    <span className="font-bold text-green tabular-nums">Desviación ±2.1 metros</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-subtext0">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-gold" />
+                    Perito actuante: <strong className="text-text">Lic. Michelle Romero (Mat. 4.819)</strong>
+                  </span>
+                  <span className="font-mono text-[11px] tabular-nums">14/10/2026 • 10:42 hs</span>
+                </div>
+              </div>
+
+              {/* Resumen de Validación de Campo */}
+              <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 space-y-4">
+                <div className="space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-subtext0">
+                    Controles de Integridad Superados
+                  </p>
+                  {[
+                    { label: "Fotografía de fachada y acceso principal", state: "Verificado" },
+                    { label: "Contraste de medidor ANDE con factura", state: "Coincidente" },
+                    { label: "Entrevista presencial con el titular", state: "Completada" },
+                    { label: "Referencias vecinales en cuadra (2)", state: "Favorables" },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-center justify-between gap-2 py-2 border-b border-overlay0/40 text-xs"
+                    >
+                      <span className="text-text font-medium">{row.label}</span>
+                      <span className="text-green font-semibold shrink-0 flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {row.state}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/entrevista/demo"
+                  className="min-h-[44px] w-full rounded-xl bg-gold text-black font-bold text-xs flex items-center justify-center gap-2 hover:bg-gold-light transition-colors shadow-sm"
+                >
+                  <span>Abrir Formulario de Campo (Demo)</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "patrimonio" && (
+            <motion.div
+              key="patrimonio"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+              <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 space-y-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-subtext0">
+                  Flujo de Caja Mensual
+                </span>
+                <p className="text-2xl font-bold text-text tabular-nums">
+                  Gs. 14.500.000
+                </p>
+                <div className="space-y-2 pt-2 border-t border-overlay0/40 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-subtext0">Ingresos Verificados</span>
+                    <span className="font-semibold text-text tabular-nums">Gs. 14.500.000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-subtext0">Egresos Operativos/Hogar</span>
+                    <span className="font-semibold text-text tabular-nums">Gs. 8.200.000</span>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-overlay0/30">
+                    <span className="text-subtext0 font-medium">Capacidad Neta</span>
+                    <span className="font-bold text-green tabular-nums">Gs. 6.300.000 (43%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 space-y-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-subtext0">
+                  Estabilidad Laboral y Comercial
+                </span>
+                <p className="text-2xl font-bold text-text">
+                  4 años, 8 meses
+                </p>
+                <div className="space-y-2 pt-2 border-t border-overlay0/40 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-subtext0">Aporte IPS / RUC</span>
+                    <span className="font-semibold text-green">Activo al día</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-subtext0">Coherencia Nivel de Vida</span>
+                    <span className="font-semibold text-text">Consistente</span>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-overlay0/30">
+                    <span className="text-subtext0 font-medium">Alertas Detectadas</span>
+                    <span className="font-bold text-green">0 discrepancias</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-overlay0/60 bg-surface1/40 p-5 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-subtext0">
+                    Conclusión Técnica para Comité
+                  </span>
+                  <p className="text-lg font-bold text-text">
+                    Riesgo Domiciliario Bajo
+                  </p>
+                  <p className="text-xs text-subtext0 leading-relaxed">
+                    El postulante habita efectivamente la propiedad declarada. Los ingresos guardan relación directa con el equipamiento y mantenimiento del inmueble.
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-overlay0/40 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-subtext1">Índice de Confiabilidad</span>
+                  <span className="font-mono font-bold text-base text-gold tabular-nums">94 / 100</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "laminas" && (
+            <motion.div
+              key="laminas"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                  { num: "Lámina 1", title: "Carátula Ejecutiva", detail: "Datos filiatorios, score global y dictamen resumido." },
+                  { num: "Lámina 2", title: "Composición Familiar", detail: "Dependientes, entorno psicosocial y referencias." },
+                  { num: "Lámina 3", title: "Situación Patrimonial", detail: "Balance de ingresos, egresos y endeudamiento." },
+                  { num: "Lámina 4", title: "Inspección de Vivienda", detail: "Registro fotográfico in situ, croquis y NIS ANDE." },
+                  { num: "Lámina 5", title: "Dictamen Pericial", detail: "Conclusión fundada y firma con matrícula oficial." },
+                ].map((slide) => (
+                  <div
+                    key={slide.num}
+                    className="rounded-2xl border border-overlay0/60 bg-surface1/50 p-4 flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono font-bold text-gold">{slide.num}</span>
+                      <FileCheck className="h-4 w-4 text-subtext0" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-text">{slide.title}</p>
+                      <p className="text-xs text-subtext0 mt-1 leading-relaxed">{slide.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-overlay0/60 bg-surface1/30 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <span className="text-subtext1">
+                  El comité recibe el archivo editable <strong>.PPTX</strong> junto al informe <strong>PDF</strong> listo para archivar en el legajo crediticio.
+                </span>
+                <span className="font-mono font-semibold text-gold shrink-0">
+                  Generación automática desde el panel
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

@@ -1,114 +1,87 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { MapPin, Mic, Camera, FileCheck2 } from "lucide-react";
+import { MapPin, FileText, Camera, ShieldCheck } from "lucide-react";
 
-interface BentoItem {
-  tag: string;
+interface Pillar {
+  category: string;
   title: string;
-  metric: string;
-  desc: string;
+  stat: string;
+  description: string;
   icon: React.ElementType;
-  span: string;
 }
 
-const FEATURES: BentoItem[] = [
+const PILLARS: Pillar[] = [
   {
-    tag: "GEOLOCALIZACIÓN",
-    title: "Coordenadas Inviolables",
-    metric: "100% In Situ",
-    desc: "Captura satelital obligatoria desde el domicilio del postulante.",
+    category: "Constatación Presencial",
+    title: "Georreferenciación en Fachada",
+    stat: "Precisión GPS ±3m",
+    description:
+      "Cada visita registra coordenadas satelitales in situ, fotografía del inmueble y validación del medidor ANDE (NIS) para descartar domicilios ficticios.",
     icon: MapPin,
-    span: "md:col-span-7",
   },
   {
-    tag: "TRANSCRIPCIÓN IA",
-    title: "Voz a Datos Estructurados",
-    metric: "-70% Tiempo",
-    desc: "El perito dicta la entrevista y Gemini completa los campos.",
-    icon: Mic,
-    span: "md:col-span-5",
+    category: "Estandarización Bancaria",
+    title: "Dossier Ejecutivo en 5 Láminas",
+    stat: "Formato .PPTX y PDF",
+    description:
+      "Estructurado específicamente para agilizar la lectura en comités de crédito de bancos, financieras y cooperativas sin páginas de relleno.",
+    icon: FileText,
   },
   {
-    tag: "VISIÓN COMPUTACIONAL",
-    title: "Peritaje Fotográfico",
-    metric: "Auto-Scoring",
-    desc: "Evaluación automática de fachada, materiales y entorno.",
+    category: "Asistencia en Campo",
+    title: "Relevamiento Ágil en 9 Módulos",
+    stat: "Autoguardado Continuo",
+    description:
+      "Interfaz adaptable a celulares y tablets para que el perito registre datos filiatorios, flujo financiero, salud, vivienda y fotografías en una sola sesión.",
     icon: Camera,
-    span: "md:col-span-5",
   },
   {
-    tag: "ENTREGABLE EJECUTIVO",
-    title: "5 Láminas Corporativas",
-    metric: ".PPTX + PDF",
-    desc: "Dossier estandarizado para bancos, financieras y cooperativas.",
-    icon: FileCheck2,
-    span: "md:col-span-7",
+    category: "Marco Regulatorio",
+    title: "Resguardo y Secreto Profesional",
+    stat: "Leyes 6534/20 y 1682/01",
+    description:
+      "Control de acceso estricto por rol (Administrador / Perito Evaluador), trazabilidad de auditoría en bitácora y sesiones cifradas.",
+    icon: ShieldCheck,
   },
 ];
 
-function SpotlightBentoCard({ item, index }: { item: BentoItem; index: number }) {
-  const Icon = item.icon;
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--x", `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty("--y", `${e.clientY - rect.top}px`);
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      onMouseMove={handleMouseMove}
-      className={`group relative rounded-3xl border border-overlay0/60 bg-surface0/80 backdrop-blur-xl p-6 sm:p-8 overflow-hidden transition-all duration-300 hover:border-gold/50 hover:-translate-y-1 ${item.span}`}
-    >
-      {/* Luz radial que persigue al cursor */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          background:
-            "radial-gradient(420px circle at var(--x, 50%) var(--y, 50%), rgba(229, 192, 123, 0.14), transparent 45%)",
-        }}
-      />
-
-      <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold px-2.5 py-1 rounded-full border border-gold/30 bg-gold/10">
-            {item.tag}
-          </span>
-          <div className="h-10 w-10 rounded-2xl bg-surface1 border border-overlay0/50 flex items-center justify-center text-gold group-hover:scale-110 transition-transform">
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-baseline justify-between gap-2 flex-wrap">
-            <h3 className="text-xl sm:text-2xl font-black text-text tracking-tight">
-              {item.title}
-            </h3>
-            <span className="text-sm font-mono font-extrabold text-gold">
-              {item.metric}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-subtext0 leading-relaxed max-w-md">
-            {item.desc}
-          </p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export function BentoFeatures() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-      {FEATURES.map((item, idx) => (
-        <SpotlightBentoCard key={item.title} item={item} index={idx} />
-      ))}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      {PILLARS.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div
+            key={item.title}
+            className="group rounded-2xl sm:rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 hover:border-gold/50 shadow-sm"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-gold">
+                  {item.category}
+                </span>
+                <div className="h-9 w-9 rounded-xl bg-surface1 border border-overlay0/60 flex items-center justify-center text-gold">
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                  <h3 className="text-lg sm:text-xl font-bold text-text tracking-tight">
+                    {item.title}
+                  </h3>
+                  <span className="text-xs font-mono font-semibold text-subtext1 bg-surface1 px-2.5 py-1 rounded-md border border-overlay0/50 tabular-nums">
+                    {item.stat}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-subtext0 leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

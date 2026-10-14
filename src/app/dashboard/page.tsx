@@ -33,6 +33,7 @@ import {
   Key,
   MapPin,
   Download,
+  Share2,
 } from "lucide-react";
 
 interface EntrevistaItem {
@@ -155,6 +156,20 @@ function DashboardContent() {
     setTimeout(() => setCopiadoToken(null), 2500);
   }
 
+  function buildWhatsAppUrl(item: EntrevistaItem): string {
+    const url = typeof window !== "undefined" ? `${window.location.origin}/entrevista/${item.token}` : "";
+    const msg = `Estimado/a ${item.candidatoNombre || "postulante"}, le saluda Jerovia Consultora. Para el estudio socioambiental solicitado por ${item.entidadSolicitante}, acceda a su enlace: ${url}`;
+    const rawTel = (item.telefono || "").replace(/\D/g, "");
+    const cleanTel = rawTel
+      ? rawTel.startsWith("595")
+        ? rawTel
+        : `595${rawTel.replace(/^0/, "")}`
+      : "";
+    return cleanTel
+      ? `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  }
+
   function handleOpenEdit(item: EntrevistaItem) {
     setEditModal(item);
     setEditNombre(item.candidatoNombre || "");
@@ -200,7 +215,7 @@ function DashboardContent() {
         throw new Error(err.error || "No se pudo actualizar el registro.");
       }
 
-      setFeedbackMsg({ tipo: "success", text: "Visita actualizada correctamente." });
+      setFeedbackMsg({ tipo: "success", text: "Expediente actualizado correctamente." });
       setEditModal(null);
       await loadInitial();
     } catch (err: unknown) {
@@ -225,7 +240,7 @@ function DashboardContent() {
         const err = await res.json();
         throw new Error(err.error || "No se pudo eliminar el registro.");
       }
-      setFeedbackMsg({ tipo: "success", text: "Expediente de visita eliminado con éxito." });
+      setFeedbackMsg({ tipo: "success", text: "Expediente eliminado con éxito." });
       setDeleteModal(null);
       await loadInitial();
     } catch (err: unknown) {
@@ -346,61 +361,59 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-base text-text">
-      <nav aria-label="Navegación del panel pericial" className="border-b border-overlay0/40 bg-mantle sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-5">
+      {/* Barra Superior Responsiva (Acceso completo en Celular y PC) */}
+      <nav aria-label="Navegación del panel pericial" className="border-b border-overlay0/50 bg-mantle sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 sm:gap-5">
             <Link href="/" aria-label="Volver a inicio">
               <Logo size="sm" />
             </Link>
-            <div className="hidden sm:block h-4 w-px bg-overlay0/50" />
-            <span className="hidden sm:block text-xs text-subtext0 uppercase tracking-wider font-semibold">
-              Panel Pericial y de Auditoría
+            <div className="hidden md:block h-4 w-px bg-overlay0/60" />
+            <span className="hidden md:block text-xs text-subtext0 font-semibold">
+              Gestión de Expedientes
             </span>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             <ThemeToggle />
-            <div className="h-4 w-px bg-overlay0/50 hidden sm:block" />
+
             <button
               type="button"
               onClick={() => setPasswordModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-overlay0/60 bg-surface1 px-3 py-2 text-xs font-semibold text-text hover:border-gold transition-colors"
+              className="min-h-[38px] flex items-center gap-1.5 rounded-xl border border-overlay0/60 bg-surface1 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-text hover:border-gold transition-colors"
               title="Cambiar mi contraseña"
             >
               <Key className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-              <span className="hidden sm:inline">Seguridad</span>
+              <span className="hidden lg:inline">Clave</span>
             </button>
 
             {esAdmin && (
               <Link
                 href="/dashboard/usuarios"
-                className="hidden sm:flex items-center gap-1.5 rounded-xl border border-overlay0/60 bg-surface1 px-3 py-2 text-xs font-semibold text-text hover:border-gold transition-colors"
+                className="min-h-[38px] flex items-center gap-1.5 rounded-xl border border-overlay0/60 bg-surface1 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-text hover:border-gold transition-colors"
+                title="Administrar personal y bitácora"
               >
                 <Users className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-                <span>Usuarios</span>
+                <span className="hidden sm:inline">Personal</span>
               </Link>
             )}
 
             <LogoutButton />
 
-            {esAdmin ? (
+            {esAdmin && (
               <Link
                 href="/dashboard/nueva"
-                className="flex items-center gap-1.5 rounded-xl bg-gold px-3.5 py-2 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-md shadow-gold/20"
+                className="min-h-[38px] flex items-center gap-1.5 rounded-xl bg-gold px-3 sm:px-3.5 py-1.5 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-xs"
               >
                 <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Nueva visita</span>
+                <span>Nueva</span>
               </Link>
-            ) : (
-              <span className="text-[11px] font-semibold text-subtext0 bg-surface1 px-3 py-1.5 rounded-xl border border-overlay0/40 hidden sm:inline-flex items-center gap-1">
-                <UserCheck className="h-3.5 w-3.5 text-blue" aria-hidden="true" />
-                Evaluador de Campo
-              </span>
             )}
           </div>
         </div>
       </nav>
 
-      <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 py-8 outline-none space-y-8">
+      <main id="main-content" tabIndex={-1} className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8 outline-none space-y-6 sm:space-y-8">
         {feedbackMsg && (
           <div
             role="status"
@@ -425,56 +438,50 @@ function DashboardContent() {
           <div role="alert" className="p-4 rounded-2xl bg-red/10 border border-red/30 text-xs text-red font-semibold flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 shrink-0" />
-              <span>Acceso Restringido: Únicamente los administradores pueden emitir nuevos enlaces de evaluación o gestionar personal.</span>
+              <span>Acceso restringido: solo los administradores pueden emitir enlaces o administrar personal.</span>
             </div>
             <Link href="/dashboard" className="underline font-bold text-red hover:opacity-80">
-              Cerrar aviso
+              Cerrar
             </Link>
           </div>
         )}
 
-        <div className="rounded-3xl border border-gold/30 bg-gold/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+        {/* Cabecera de Sesión y Acciones Rápidas */}
+        <div className="rounded-2xl sm:rounded-3xl border border-overlay0/60 bg-surface0 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-gold/15 flex items-center justify-center text-gold shadow-sm">
+            <div className="h-10 w-10 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shrink-0">
               {esAdmin ? <ShieldCheck className="h-5 w-5" /> : <UserCheck className="h-5 w-5" />}
             </div>
             <div>
               <p className="text-sm font-bold text-text">
-                Sesión Activa:{" "}
-                <span className="text-gold font-black">{currentUser?.name || "Cargando..."}</span>{" "}
+                {currentUser?.name || "Cargando sesión..."}{" "}
                 <span className="text-subtext0 font-medium text-xs">
-                  ({esAdmin ? "Administrador General" : "Perito de Campo"})
+                  • {esAdmin ? "Administrador General" : "Perito Evaluador"}
                 </span>
               </p>
               <p className="text-xs text-subtext0 mt-0.5">
                 {esAdmin
-                  ? "Permisos totales: emisión, edición, auditoría de legajos y asignación de peritos"
-                  : "Permisos de campo: recolección in situ, geolocalización y carga pericial"}
+                  ? "Control de cartera, emisión de enlaces y auditoría de legajos"
+                  : "Relevamiento en campo y actualización de expedientes asignados"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleExportCarteraCsv}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors flex items-center gap-1.5"
+              className="min-h-[38px] text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-overlay0/80 bg-surface1 hover:border-gold text-text transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Exportar CSV</span>
+              <Download className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+              <span>Exportar Cartera CSV</span>
             </button>
           </div>
         </div>
 
+        {/* Tarjetas de Indicadores con Números Tabulares */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-gold" />
-              <h2 className="text-base font-bold text-text">Rendimiento Operativo y Cobertura</h2>
-            </div>
-            <span className="text-xs text-subtext0 font-medium">Indicadores en vivo</span>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" aria-busy={loading}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-busy={loading}>
             {loading ? (
               <>
                 <MetricCardSkeleton />
@@ -484,17 +491,19 @@ function DashboardContent() {
               </>
             ) : (
               [
-                { label: "Total Expedientes", value: stats.total, sub: "Visitas registradas", icon: FileText, color: "text-gold", border: "border-gold/30" },
-                { label: "Dictámenes Emitidos", value: stats.completadas, sub: `${stats.tasaEfectividad}% efectividad`, icon: CheckCircle, color: "text-green", border: "border-green/30" },
-                { label: "En Relevamiento", value: stats.enProgreso, sub: "Visitas en campo", icon: Clock, color: "text-yellow", border: "border-yellow/30" },
-                { label: "Pendientes", value: stats.pendientes, sub: "Por coordinar", icon: AlertCircle, color: "text-subtext0", border: "border-overlay0/40" },
+                { label: "Total Cartera", value: stats.total, sub: "Expedientes activos", icon: FileText, color: "text-text" },
+                { label: "Dictámenes Emitidos", value: stats.completadas, sub: `${stats.tasaEfectividad}% completado`, icon: CheckCircle, color: "text-green" },
+                { label: "En Relevamiento", value: stats.enProgreso, sub: "Inspección en curso", icon: Clock, color: "text-yellow" },
+                { label: "Pendientes", value: stats.pendientes, sub: "Por iniciar", icon: AlertCircle, color: "text-subtext0" },
               ].map((stat) => (
-                <div key={stat.label} className={`rounded-2xl border p-5 bg-surface0 ${stat.border} shadow-sm`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-subtext0 uppercase tracking-wider">{stat.label}</p>
+                <div key={stat.label} className="rounded-2xl border border-overlay0/60 p-4 sm:p-5 bg-surface0 shadow-2xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold text-subtext0">{stat.label}</p>
                     <stat.icon className={`h-4 w-4 ${stat.color}`} aria-hidden="true" />
                   </div>
-                  <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+                  <p className={`text-2xl sm:text-3xl font-bold font-mono tabular-nums ${stat.color}`}>
+                    {stat.value}
+                  </p>
                   <p className="text-[11px] text-subtext0 mt-1">{stat.sub}</p>
                 </div>
               ))
@@ -502,34 +511,35 @@ function DashboardContent() {
           </div>
 
           {!loading && (
-            <div className="pt-2">
+            <div className="pt-1">
               <MetricsCharts totalExpedientes={stats.total} completadas={stats.completadas} />
             </div>
           )}
         </div>
 
-        <div className="rounded-3xl border border-overlay0/40 bg-surface0 overflow-hidden shadow-sm space-y-4 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0/30">
+        {/* Listado de Expedientes */}
+        <div className="rounded-2xl sm:rounded-3xl border border-overlay0/60 bg-surface0 overflow-hidden shadow-xs space-y-4 p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-overlay0/40">
             <div>
-              <h2 className="text-lg font-black text-text">Registro de Visitas y Expedientes</h2>
-              <p className="text-xs text-subtext0 mt-0.5">
-                {filteredAndSorted.length} expediente{filteredAndSorted.length !== 1 ? "s" : ""} disponible{filteredAndSorted.length !== 1 ? "s" : ""}
+              <h2 className="text-base sm:text-lg font-bold text-text">Expedientes de Visita</h2>
+              <p className="text-xs text-subtext0 mt-0.5 tabular-nums">
+                Mostrando {filteredAndSorted.length} expediente{filteredAndSorted.length !== 1 ? "s" : ""}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="flex items-center gap-2 rounded-xl border border-overlay0/60 bg-surface1 px-3 py-1.5 w-full sm:w-60 focus-within:border-gold">
-                <Search className="h-3.5 w-3.5 text-subtext0" aria-hidden="true" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full lg:w-auto">
+              <div className="flex items-center gap-2 rounded-xl border border-overlay0/70 bg-surface1 px-3 min-h-[40px] focus-within:border-gold">
+                <Search className="h-3.5 w-3.5 text-subtext0 shrink-0" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Buscar postulante, CI o zona..."
+                  placeholder="Buscar nombre, CI o ciudad..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="bg-transparent text-xs text-text outline-none w-full font-medium"
                 />
                 {search && (
                   <button onClick={() => setSearch("")} className="text-subtext0 hover:text-text" aria-label="Limpiar búsqueda">
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -538,7 +548,7 @@ function DashboardContent() {
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value as "todos" | "completado" | "en_progreso" | "pendiente")}
                 aria-label="Filtrar por estado"
-                className="text-xs font-semibold bg-surface1 border border-overlay0/60 rounded-xl px-3 py-1.5 text-text outline-none cursor-pointer"
+                className="min-h-[40px] text-xs font-semibold bg-surface1 border border-overlay0/70 rounded-xl px-3 text-text outline-none cursor-pointer"
               >
                 <option value="todos">Todos los estados</option>
                 <option value="completado">Completados</option>
@@ -546,18 +556,18 @@ function DashboardContent() {
                 <option value="pendiente">Pendientes</option>
               </select>
 
-              <div className="flex items-center gap-1 bg-surface1 border border-overlay0/60 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-text">
-                <ArrowUpDown className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+              <div className="min-h-[40px] flex items-center gap-1.5 bg-surface1 border border-overlay0/70 rounded-xl px-3 text-xs font-semibold text-text">
+                <ArrowUpDown className="h-3.5 w-3.5 text-gold shrink-0" aria-hidden="true" />
                 <select
                   value={orden}
                   onChange={(e) => setOrden(e.target.value as SortField)}
                   aria-label="Ordenar expedientes"
-                  className="bg-transparent outline-none cursor-pointer text-xs"
+                  className="bg-transparent outline-none cursor-pointer text-xs w-full"
                 >
-                  <option value="fecha">Recientes primero</option>
-                  <option value="nombre">Por Nombre (A-Z)</option>
-                  <option value="entidad">Por Entidad</option>
-                  <option value="progreso">Mayor Progreso</option>
+                  <option value="fecha">Más recientes</option>
+                  <option value="nombre">Nombre (A-Z)</option>
+                  <option value="entidad">Entidad</option>
+                  <option value="progreso">Mayor avance</option>
                 </select>
               </div>
             </div>
@@ -570,45 +580,50 @@ function DashboardContent() {
               <InterviewRowSkeleton />
             </div>
           ) : filteredAndSorted.length === 0 ? (
-            <div className="py-16 text-center space-y-3">
-              <FileText className="h-10 w-10 text-subtext0 mx-auto" />
-              <h3 className="font-bold text-text text-sm">Sin visitas encontradas</h3>
+            <div className="py-14 text-center space-y-3">
+              <FileText className="h-9 w-9 text-subtext0 mx-auto" />
+              <h3 className="font-bold text-text text-sm">Sin expedientes coincidentes</h3>
               <p className="text-xs text-subtext0 max-w-sm mx-auto">
-                {search ? "No hay registros coincidentes con los filtros aplicados." : "Comienza emitiendo una nueva asignación de peritaje."}
+                {search ? "Pruebe con otro término de búsqueda o cambie el filtro de estado." : "Aún no se han registrado visitas."}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-overlay0/20" role="list">
+            <div className="divide-y divide-overlay0/30" role="list">
               {filteredAndSorted.map((e) => (
                 <div
                   key={e.token}
                   role="listitem"
-                  className="py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-surface1/40 rounded-2xl px-3 transition-colors"
+                  className="py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 hover:bg-surface1/40 rounded-xl px-2 sm:px-3 transition-colors"
                 >
-                  <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                    <div className="h-10 w-10 rounded-2xl bg-surface1 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0/50 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                       {estadoIcon(e.estado)}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="font-black text-text text-sm truncate">
-                          {e.candidatoNombre || "Postulante sin nombre registrado"}
+                        <h3 className="font-bold text-text text-sm truncate">
+                          {e.candidatoNombre || "Postulante sin nombre"}
                         </h3>
                         {estadoBadge(e.estado)}
+                        {e.cedula && (
+                          <span className="text-[11px] font-mono text-subtext0 tabular-nums">
+                            CI: {e.cedula}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-subtext0">
-                        <span className="font-medium text-subtext1">{e.entidadSolicitante}</span>
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-subtext0 tabular-nums">
+                        <span className="font-semibold text-subtext1">{e.entidadSolicitante}</span>
                         <span>•</span>
-                        <span className="flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1">
                           <MapPin className="h-3 w-3 text-gold" aria-hidden="true" />
                           {e.ciudad || "Gran Asunción"}
                         </span>
                         <span>•</span>
-                        <span>Módulo {e.pasoActual} de 9</span>
+                        <span>Módulo {e.pasoActual}/9</span>
                         {e.evaluadorAsignado && (
                           <>
                             <span>•</span>
-                            <span className="text-gold font-semibold">{e.evaluadorAsignado}</span>
+                            <span className="text-gold font-medium">{e.evaluadorAsignado}</span>
                           </>
                         )}
                         <span>•</span>
@@ -617,24 +632,45 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0 self-end lg:self-center">
+                  {/* Barra de Acciones Táctil */}
+                  <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-overlay0/20">
                     <button
                       type="button"
                       onClick={() => handleCopyLink(e.token)}
-                      className="p-2 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext0 hover:text-text"
-                      title="Copiar enlace directo de la entrevista"
-                      aria-label="Copiar enlace directo"
+                      className="min-h-[38px] px-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext1 hover:text-text flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                      title="Copiar enlace de la entrevista"
                     >
-                      {copiadoToken === e.token ? <Check className="h-3.5 w-3.5 text-green" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copiadoToken === e.token ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-green" />
+                          <span className="sm:hidden">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          <span className="sm:hidden">Enlace</span>
+                        </>
+                      )}
                     </button>
+
+                    <a
+                      href={buildWhatsAppUrl(e)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-h-[38px] px-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-green/50 transition-colors text-subtext1 hover:text-green flex items-center gap-1.5 text-xs font-medium"
+                      title="Enviar enlace por WhatsApp"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      <span className="sm:hidden">WhatsApp</span>
+                    </a>
 
                     {esAdmin && (
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(e)}
-                        className="p-2 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext0 hover:text-text"
-                        title="Editar datos de la visita"
-                        aria-label="Editar visita"
+                        className="min-h-[38px] min-w-[38px] rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext1 hover:text-text flex items-center justify-center cursor-pointer"
+                        title="Editar expediente"
+                        aria-label="Editar expediente"
                       >
                         <Edit3 className="h-3.5 w-3.5" />
                       </button>
@@ -644,9 +680,9 @@ function DashboardContent() {
                       <button
                         type="button"
                         onClick={() => setDeleteModal(e)}
-                        className="p-2 rounded-xl border border-overlay0/60 hover:bg-red/10 hover:border-red/40 hover:text-red transition-colors text-subtext0"
-                        title="Eliminar visita"
-                        aria-label="Eliminar visita"
+                        className="min-h-[38px] min-w-[38px] rounded-xl border border-overlay0/60 hover:bg-red/10 hover:border-red/40 hover:text-red transition-colors text-subtext0 flex items-center justify-center cursor-pointer"
+                        title="Eliminar expediente"
+                        aria-label="Eliminar expediente"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -654,9 +690,9 @@ function DashboardContent() {
 
                     <Link
                       href={`/entrevista/${e.token}`}
-                      className="flex items-center gap-1.5 rounded-xl bg-gold text-black hover:bg-gold-light px-3.5 py-2 text-xs font-bold shadow-md shadow-gold/15 transition-all"
+                      className="min-h-[38px] flex items-center gap-1.5 rounded-xl bg-gold text-black hover:bg-gold-light px-3.5 py-1.5 text-xs font-bold transition-all"
                     >
-                      <span>{e.estado === "completado" ? "Ver informe" : "Continuar"}</span>
+                      <span>{e.estado === "completado" ? "Ver informe" : "Abrir"}</span>
                       <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </Link>
                   </div>
@@ -666,15 +702,16 @@ function DashboardContent() {
           )}
         </div>
 
+        {/* Modal Editar */}
         {editModal && (
-          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-lg rounded-3xl border border-overlay0/60 bg-surface0 p-6 sm:p-8 shadow-2xl space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-overlay0/30">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="w-full max-w-lg rounded-2xl sm:rounded-3xl border border-overlay0/80 bg-surface0 p-5 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-overlay0/40">
                 <div className="flex items-center gap-2">
-                  <Edit3 className="h-5 w-5 text-gold" />
-                  <h3 className="font-bold text-base text-text">Editar Expediente de Visita</h3>
+                  <Edit3 className="h-4 w-4 text-gold" />
+                  <h3 className="font-bold text-base text-text">Editar Expediente</h3>
                 </div>
-                <button onClick={() => setEditModal(null)} className="text-subtext0 hover:text-text" aria-label="Cerrar modal">
+                <button onClick={() => setEditModal(null)} className="text-subtext0 hover:text-text p-1" aria-label="Cerrar modal">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -691,7 +728,7 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input label="Perito Asignado" value={editEvaluador} onChange={(e) => setEditEvaluador(e.target.value)} required />
                   <Select
-                    label="Estado de la Visita"
+                    label="Estado"
                     value={editEstado}
                     onChange={(e) => setEditEstado(e.target.value as "pendiente" | "en_progreso" | "completado")}
                     options={[
@@ -701,18 +738,19 @@ function DashboardContent() {
                     ]}
                   />
                 </div>
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-overlay0/30">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-overlay0/40">
                   <Button type="button" variant="secondary" onClick={() => setEditModal(null)}>Cancelar</Button>
-                  <Button type="submit" loading={actionLoading} className="bg-gold text-black font-bold">Guardar Cambios</Button>
+                  <Button type="submit" loading={actionLoading}>Guardar Cambios</Button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
+        {/* Modal Eliminar */}
         {deleteModal && (
-          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-red/40 bg-surface0 p-6 sm:p-8 shadow-2xl text-center space-y-4">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-red/40 bg-surface0 p-6 shadow-2xl text-center space-y-4">
               <div className="h-12 w-12 rounded-2xl bg-red/10 text-red flex items-center justify-center mx-auto">
                 <Trash2 className="h-6 w-6" />
               </div>
@@ -722,7 +760,7 @@ function DashboardContent() {
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
                 <Button type="button" variant="secondary" onClick={() => setDeleteModal(null)}>Cancelar</Button>
-                <Button type="button" loading={actionLoading} onClick={handleConfirmDelete} className="bg-red hover:bg-red/90 text-white font-bold">
+                <Button type="button" variant="danger" loading={actionLoading} onClick={handleConfirmDelete}>
                   Sí, Eliminar
                 </Button>
               </div>
@@ -730,15 +768,16 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* Modal Cambiar Contraseña */}
         {passwordModalOpen && (
-          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl border border-overlay0/60 bg-surface0 p-6 sm:p-8 shadow-2xl space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-overlay0/30">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl sm:rounded-3xl border border-overlay0/80 bg-surface0 p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-overlay0/40">
                 <div className="flex items-center gap-2">
-                  <Key className="h-5 w-5 text-gold" />
-                  <h3 className="font-bold text-base text-text">Cambiar mi Contraseña</h3>
+                  <Key className="h-4 w-4 text-gold" />
+                  <h3 className="font-bold text-base text-text">Cambiar Contraseña</h3>
                 </div>
-                <button onClick={() => setPasswordModalOpen(false)} className="text-subtext0 hover:text-text" aria-label="Cerrar modal">
+                <button onClick={() => setPasswordModalOpen(false)} className="text-subtext0 hover:text-text p-1" aria-label="Cerrar modal">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -746,9 +785,9 @@ function DashboardContent() {
                 <Input label="Contraseña Actual" type="password" value={passActual} onChange={(e) => setPassActual(e.target.value)} required />
                 <Input label="Nueva Contraseña" type="password" value={passNueva} onChange={(e) => setPassNueva(e.target.value)} placeholder="Mínimo 6 caracteres" required />
                 <Input label="Confirmar Nueva Contraseña" type="password" value={passConfirm} onChange={(e) => setPassConfirm(e.target.value)} required />
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-overlay0/30">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-overlay0/40">
                   <Button type="button" variant="secondary" onClick={() => setPasswordModalOpen(false)}>Cancelar</Button>
-                  <Button type="submit" loading={actionLoading} className="bg-gold text-black font-bold">Actualizar Contraseña</Button>
+                  <Button type="submit" loading={actionLoading}>Actualizar</Button>
                 </div>
               </form>
             </div>

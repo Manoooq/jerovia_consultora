@@ -1,42 +1,62 @@
-import { cn } from "@/lib/utils";
-import { ButtonHTMLAttributes, forwardRef } from "react";
+"use client";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+import React from "react";
+import { Loader2 } from "lucide-react";
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary" | "danger" | "ghost" | "outline";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
-    const base = "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold disabled:opacity-50 disabled:cursor-not-allowed active:scale-95";
-    const variants = {
-      primary: "bg-gold text-black hover:bg-gold-light shadow-lg shadow-gold/20",
-      secondary: "bg-surface1 text-text border border-overlay0 hover:bg-surface2 hover:border-overlay1",
-      ghost: "text-subtext1 hover:text-text hover:bg-surface1",
-      danger: "bg-red/10 text-red border border-red/30 hover:bg-red/20",
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className = "",
+      variant = "primary",
+      size = "md",
+      loading = false,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const baseStyles =
+      "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99]";
+
+    const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
+      primary:
+        "bg-gold text-black hover:bg-gold-light shadow-sm font-bold",
+      secondary:
+        "border border-overlay0/80 bg-surface1 text-text hover:bg-surface2 hover:border-overlay1",
+      outline:
+        "border border-gold/40 bg-transparent text-text hover:border-gold hover:bg-gold/10",
+      danger:
+        "bg-red text-white hover:opacity-90 shadow-sm font-bold",
+      ghost:
+        "bg-transparent text-subtext1 hover:bg-surface1 hover:text-text",
     };
-    const sizes = {
-      sm: "px-3 py-1.5 text-sm",
-      md: "px-5 py-2.5 text-sm",
-      lg: "px-7 py-3.5 text-base",
+
+    const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
+      sm: "min-h-[38px] px-3.5 py-1.5 text-xs",
+      md: "min-h-[44px] px-4 py-2.5 text-xs sm:text-sm",
+      lg: "min-h-[48px] px-6 py-3 text-sm",
     };
+
     return (
       <button
         ref={ref}
-        className={cn(base, variants[variant], sizes[size], className)}
         disabled={disabled || loading}
+        aria-busy={loading}
+        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
         {...props}
       >
-        {loading && (
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        )}
+        {loading && <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden="true" />}
         {children}
       </button>
     );
   }
 );
+
 Button.displayName = "Button";
