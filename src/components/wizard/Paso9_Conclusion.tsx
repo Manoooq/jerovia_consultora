@@ -45,8 +45,7 @@ export function Paso9_Conclusion({ defaultValues, data, onNext, onPrev }: PasoPr
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <form onSubmit={handleSubmit(onNext as any)} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit(onNext)} className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-overlay0/30">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-xl bg-gold/15 text-gold flex items-center justify-center">
