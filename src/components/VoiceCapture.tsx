@@ -64,7 +64,7 @@ export function VoiceCapture({ onExtracted }: VoiceCaptureProps) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const speechRecognizerRef = useRef<any>(null);
+  const speechRecognizerRef = useRef<unknown>(null);
 
   // Inicializar Web Speech Recognition si está disponible para respuesta 0ms
   useEffect(() => {
@@ -76,8 +76,8 @@ export function VoiceCapture({ onExtracted }: VoiceCaptureProps) {
       recognition.interimResults = true;
       recognition.lang = "es-PY";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onresult = (event: any) => {
+
+      recognition.onresult = (event: unknown) => {
         let transcript = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;

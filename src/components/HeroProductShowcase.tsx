@@ -5,542 +5,246 @@ import { DossierInteractiveViewer } from "@/components/DossierInteractiveViewer"
 import { 
   FileText, Tablet, ShieldAlert, BarChart3, 
   Zap, Compass, Mic, CheckCircle2, AlertTriangle, 
-  RefreshCw, Check, ArrowRight, Activity, Radio,
-  Sparkles, Layers, ShieldCheck
+  ShieldCheck, ArrowRight, Sparkles, LayoutDashboard
 } from "lucide-react";
 
 export function HeroProductShowcase() {
   const [activeTab, setActiveTab] = useState<"dossier" | "terminal" | "inconsistencias" | "consola">("dossier");
 
-  // Estados interactivos para Terminal en Campo
-  const [meterScanActive, setMeterScanActive] = useState(false);
-  const [gpsLocked, setGpsLocked] = useState(true);
-  const [recordingAudio, setRecordingAudio] = useState(false);
-
-  // Estados interactivos para Motor Anti-Fraude
-  const [scenario, setScenario] = useState<"clean" | "risk">("risk");
-  const [isAuditing, setIsAuditing] = useState(false);
-  const [auditProgress, setAuditProgress] = useState(100);
-
-  const handleRunAudit = (targetScenario: "clean" | "risk") => {
-    setScenario(targetScenario);
-    setIsAuditing(true);
-    setAuditProgress(15);
-    setTimeout(() => setAuditProgress(60), 400);
-    setTimeout(() => {
-      setAuditProgress(100);
-      setIsAuditing(false);
-    }, 900);
-  };
-
   return (
-    <div className="rounded-3xl border border-overlay0/60 bg-surface0 overflow-hidden shadow-2xl">
-      {/* ══ BARRA SUPERIOR DE WORKSTATION TIPO MACOS/LINUX ENTERPRISE ══ */}
-      <div className="bg-mantle px-4 sm:px-6 py-3 border-b border-overlay0/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="rounded-2xl border border-overlay0 bg-surface0 overflow-hidden shadow-lg">
+      <div className="bg-surface1 px-4 sm:px-6 py-4 border-b border-overlay0 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5" aria-hidden="true">
-            <div className="h-3 w-3 rounded-full bg-red/80 border border-red/40" />
-            <div className="h-3 w-3 rounded-full bg-yellow/80 border border-yellow/40" />
-            <div className="h-3 w-3 rounded-full bg-green/80 border border-green/40" />
-          </div>
-          <div className="h-4 w-px bg-overlay0/40 hidden sm:block" />
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-text">
-              Consola Pericial Unificada · EXP-2026-0841
+            <div className="h-3 w-3 rounded-full bg-red border border-red/40" />
+            <div className="h-3 w-3 rounded-full bg-yellow border border-yellow/40" />
+            <div className="h-3 w-3 rounded-full bg-green border border-green/40" />
+          </div>
+          <div className="h-4 w-px bg-overlay1 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-text">
+              Consola Pericial
             </span>
           </div>
         </div>
 
-        {/* SELECTOR DE MODO INTERACTIVO */}
-        <div className="flex items-center gap-1 bg-surface1 p-1 rounded-2xl border border-overlay0/40 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-surface2/50 p-1 rounded-lg border border-overlay0 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("dossier")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all shrink-0 ${
               activeTab === "dossier"
-                ? "bg-surface0 text-gold shadow-sm border border-gold/40 font-bold"
+                ? "bg-surface0 text-text shadow-sm border border-overlay1"
                 : "text-subtext0 hover:text-text"
             }`}
           >
-            <FileText className="h-3.5 w-3.5" />
-            <span>1. Legajo 5 Láminas</span>
+            <FileText className="h-4 w-4" />
+            <span>Legajo</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("terminal")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all shrink-0 ${
               activeTab === "terminal"
-                ? "bg-surface0 text-gold shadow-sm border border-gold/40 font-bold"
+                ? "bg-surface0 text-text shadow-sm border border-overlay1"
                 : "text-subtext0 hover:text-text"
             }`}
           >
-            <Tablet className="h-3.5 w-3.5" />
-            <span>2. Telemetría de Campo</span>
+            <Tablet className="h-4 w-4" />
+            <span>Telemetría</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("inconsistencias")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all shrink-0 ${
               activeTab === "inconsistencias"
-                ? "bg-surface0 text-gold shadow-sm border border-gold/40 font-bold"
+                ? "bg-surface0 text-text shadow-sm border border-overlay1"
                 : "text-subtext0 hover:text-text"
             }`}
           >
-            <ShieldAlert className="h-3.5 w-3.5" />
-            <span>3. Motor Anti-Fraude IA</span>
+            <ShieldAlert className="h-4 w-4" />
+            <span>Anti-Fraude</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("consola")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-all shrink-0 ${
               activeTab === "consola"
-                ? "bg-surface0 text-gold shadow-sm border border-gold/40 font-bold"
+                ? "bg-surface0 text-text shadow-sm border border-overlay1"
                 : "text-subtext0 hover:text-text"
             }`}
           >
-            <BarChart3 className="h-3.5 w-3.5" />
-            <span>4. Consola Comité</span>
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Métricas</span>
           </button>
         </div>
       </div>
 
-      {/* ══ CONTENIDO SEGÚN LA PESTAÑA SELECCIONADA ══ */}
       <div>
-        {/* PESTAÑA 1: LEGAJO OFICIAL EN 5 LÁMINAS */}
         {activeTab === "dossier" && (
           <div className="animate-in fade-in duration-200">
             <DossierInteractiveViewer />
           </div>
         )}
 
-        {/* PESTAÑA 2: TELEMETRÍA EN CAMPO EN VIVO */}
         {activeTab === "terminal" && (
-          <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-overlay0/30">
+          <div className="p-6 sm:p-8 space-y-8 animate-in fade-in duration-200">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0">
               <div>
-                <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-wider">
-                  Relevamiento Presencial en Terreno
-                </span>
-                <h3 className="text-xl font-black text-text mt-0.5">
+                <h3 className="text-xl sm:text-2xl font-bold text-text">
                   Instrumental de Inspección In Situ
                 </h3>
+                <p className="text-sm text-subtext0 mt-1">Relevamiento presencial en terreno</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-green/15 text-green border border-green/30 font-mono self-start sm:self-auto flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-green animate-ping" />
-                CONEXIÓN ENCRIPTADA
-              </span>
-            </div>
+            </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* WIDGET 1: MEDIDOR ANDE CON ESCANER OCR */}
-              <div className="p-5 rounded-2xl bg-surface1 border border-overlay0/40 flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-lg bg-gold/15 text-gold flex items-center justify-center">
-                        <Zap className="h-4 w-4" />
-                      </div>
-                      <span className="text-xs font-bold text-text">Medidor ANDE (NIS)</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-green bg-green/10 border border-green/30 px-2 py-0.5 rounded-full">
-                      ACTIVO
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-overlay1/50">
+                  <div className="h-10 w-10 rounded-lg bg-surface2 flex items-center justify-center text-text">
+                    <Zap className="h-5 w-5" />
                   </div>
-
-                  <div className="mt-3 p-3 rounded-xl bg-surface0 border border-white/[0.06] font-mono space-y-1.5 text-xs">
-                    <div className="text-[10px] text-subtext0 uppercase">Lectura Digital Odómetro</div>
-                    <div className="text-xl font-black text-text tracking-widest text-center py-1.5 bg-surface2/60 rounded-lg border border-white/[0.04] relative overflow-hidden">
-                      {meterScanActive && (
-                        <div className="absolute inset-0 bg-gold/20 animate-pulse flex items-center justify-center text-xs font-sans text-gold font-bold">
-                          Escaner OCR activo...
-                        </div>
-                      )}
-                      0 4 8 9 1 2 <span className="text-[10px] font-sans text-gold">kWh</span>
-                    </div>
-                    <div className="flex justify-between text-[11px] pt-1 text-subtext0">
-                      <span>NIS cotejado:</span>
-                      <strong className="text-text font-bold">2489102</strong>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-subtext0">
-                      <span>Suministro:</span>
-                      <span className="text-green font-bold">Residencial B-01</span>
-                    </div>
-                  </div>
+                  <h4 className="text-sm font-semibold text-text">Cotejo de Suministro</h4>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMeterScanActive(true);
-                    setTimeout(() => setMeterScanActive(false), 1500);
-                  }}
-                  className="w-full py-2.5 rounded-xl border border-overlay0/60 bg-surface0 hover:border-gold text-xs font-bold text-text flex items-center justify-center gap-1.5 transition-all"
-                >
-                  {meterScanActive ? (
-                    <span className="text-gold flex items-center gap-1.5">
-                      <RefreshCw className="h-3 w-3 animate-spin" /> Procesando OCR...
-                    </span>
-                  ) : (
-                    <span>Probar Escaneo OCR</span>
-                  )}
-                </button>
-              </div>
-
-              {/* WIDGET 2: GPS SATELITAL & PLUS CODE */}
-              <div className="p-5 rounded-2xl bg-surface1 border border-overlay0/40 flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-lg bg-blue/15 text-blue flex items-center justify-center">
-                        <Compass className="h-4 w-4" />
-                      </div>
-                      <span className="text-xs font-bold text-text">Geolocalización GPS</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-blue bg-blue/10 border border-blue/30 px-2 py-0.5 rounded-full">
-                      ± 3.8m
-                    </span>
-                  </div>
-
-                  <div className="mt-3 p-3 rounded-xl bg-surface0 border border-white/[0.06] font-mono space-y-1.5 text-xs">
-                    <div className="text-[10px] text-subtext0 uppercase">Coordenadas en Fachada</div>
-                    <div className="text-xs font-bold text-text bg-surface2/60 p-2 rounded-lg border border-white/[0.04]">
-                      -25.269932, -57.489012
-                    </div>
-                    <div className="flex justify-between text-[11px] text-subtext0 pt-1">
-                      <span>Plus Code:</span>
-                      <strong className="text-gold font-bold">6867+XQ Luque</strong>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-subtext0">
-                      <span>Vía de Acceso:</span>
-                      <span className="text-text">Asfalto / Calle empedrada</span>
-                    </div>
-                  </div>
+                <p className="text-sm text-subtext0 flex-1">
+                  Verificación física del medidor ANDE (NIS) para descartar conexiones clandestinas y confirmar titularidad in situ.
+                </p>
+                <div className="p-3 bg-surface0 rounded-lg border border-overlay0 text-sm font-mono text-center">
+                  NIS: 2489102 <span className="text-green text-xs ml-2">✓ Activo</span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setGpsLocked((prev) => !prev)}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                    gpsLocked
-                      ? "bg-green/10 text-green border-green/30"
-                      : "bg-surface0 hover:border-gold text-text border-overlay0/60"
-                  }`}
-                >
-                  {gpsLocked ? "✓ Coordenada Certificada" : "Fijar Coordenada"}
-                </button>
               </div>
 
-              {/* WIDGET 3: DICTADO Y TRANSCRIPCIÓN DE VOZ */}
-              <div className="p-5 rounded-2xl bg-surface1 border border-overlay0/40 flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-lg bg-mauve/15 text-mauve flex items-center justify-center">
-                        <Mic className="h-4 w-4" />
-                      </div>
-                      <span className="text-xs font-bold text-text">Audio Dictado Pericial</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-mauve bg-mauve/10 border border-mauve/30 px-2 py-0.5 rounded-full">
-                      WEB SPEECH
-                    </span>
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-overlay1/50">
+                  <div className="h-10 w-10 rounded-lg bg-surface2 flex items-center justify-center text-text">
+                    <Compass className="h-5 w-5" />
                   </div>
-
-                  <div className="mt-3 p-3 rounded-xl bg-surface0 border border-white/[0.06] space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-[10px] text-subtext0 uppercase font-mono">
-                      <span>Espectro de Frecuencia</span>
-                      <span>0ms Latencia</span>
-                    </div>
-                    <div className="flex items-end justify-center gap-1 h-8 py-1">
-                      {[40, 70, 95, 45, 80, 100, 60, 85, 30, 90, 65, 45].map((h, i) => (
-                        <div
-                          key={i}
-                          className={`w-1.5 rounded-full transition-all ${
-                            recordingAudio ? "bg-mauve animate-pulse" : "bg-overlay0"
-                          }`}
-                          style={{ height: recordingAudio ? `${h}%` : "30%" }}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-subtext0 italic bg-surface1/60 p-1.5 rounded-lg border border-white/[0.04]">
-                      {recordingAudio
-                        ? "“Residencia sólida de mampostería, medidor ANDE operativo sin derivaciones clandestinas...”"
-                        : "Dictado listo para transcribir observaciones de campo en tiempo real."}
-                    </p>
-                  </div>
+                  <h4 className="text-sm font-semibold text-text">Geolocalización GPS</h4>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setRecordingAudio((prev) => !prev)}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                    recordingAudio
-                      ? "bg-red/10 text-red border-red/40"
-                      : "bg-surface0 hover:border-gold text-text border-overlay0/60"
-                  }`}
-                >
-                  {recordingAudio ? "■ Detener Transcripción" : "▶ Iniciar Dictado de Voz"}
-                </button>
+                <p className="text-sm text-subtext0 flex-1">
+                  Fijación satelital precisa para certificar la ubicación exacta de la fachada y registrar el entorno habitacional.
+                </p>
+                <div className="p-3 bg-surface0 rounded-lg border border-overlay0 text-sm font-mono text-center">
+                  -25.269932, -57.489012
+                </div>
               </div>
 
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-overlay1/50">
+                  <div className="h-10 w-10 rounded-lg bg-surface2 flex items-center justify-center text-text">
+                    <Mic className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-text">Registro de Entrevista</h4>
+                </div>
+                <p className="text-sm text-subtext0 flex-1">
+                  Recopilación de observaciones y entrevistas vecinales durante la visita domiciliaria para el informe social.
+                </p>
+                <div className="p-3 bg-surface0 rounded-lg border border-overlay0 text-sm font-mono text-center text-subtext0 italic">
+                  "Residencia sólida de mampostería..."
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* PESTAÑA 3: MOTOR IA ANTI-FRAUDE E INCONSISTENCIAS (KILLER FEATURE) */}
         {activeTab === "inconsistencias" && (
-          <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-overlay0/30">
+          <div className="p-6 sm:p-8 space-y-8 animate-in fade-in duration-200">
+             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0">
               <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-gold" />
-                  <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-wider">
-                    Auditoría Algorítmica de Riesgo Crediticio
-                  </span>
-                </div>
-                <h3 className="text-xl font-black text-text mt-0.5">
-                  Detección de Contradicciones y Señales de Alerta
+                <h3 className="text-xl sm:text-2xl font-bold text-text flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-gold" />
+                  Auditoría de Riesgo Crediticio
                 </h3>
+                <p className="text-sm text-subtext0 mt-1">Detección de contradicciones y señales de alerta</p>
               </div>
+            </header>
 
-              {/* Botones de Escenarios */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleRunAudit("risk")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                    scenario === "risk"
-                      ? "bg-red/15 text-red border-red/40 shadow-sm"
-                      : "bg-surface1 text-subtext0 border-overlay0/40 hover:text-text"
-                  }`}
-                >
-                  Escenario A: Riesgo Crítico
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRunAudit("clean")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                    scenario === "clean"
-                      ? "bg-green/15 text-green border-green/40 shadow-sm"
-                      : "bg-surface1 text-subtext0 border-overlay0/40 hover:text-text"
-                  }`}
-                >
-                  Escenario B: Coherente
-                </button>
-              </div>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-text border-b border-overlay0 pb-2">Señales de Alerta (Ejemplo)</h4>
 
-            {/* BARRA DE PROGRESO DE AUDITORÍA */}
-            {isAuditing && (
-              <div className="p-3 rounded-2xl bg-surface1 border border-gold/30 space-y-2">
-                <div className="flex justify-between text-xs font-mono text-gold font-bold">
-                  <span>Auditando cruce de 68 variables periciales...</span>
-                  <span>{auditProgress}%</span>
-                </div>
-                <div className="w-full bg-surface2 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-gold h-full transition-all duration-300"
-                    style={{ width: `${auditProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* RESULTADOS DE LA AUDITORÍA HEURÍSTICA */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              
-              {/* Tarjetas de Inconsistencias (8 cols) */}
-              <div className="lg:col-span-8 space-y-3">
-                {scenario === "risk" ? (
-                  <>
-                    <div className="p-4 rounded-2xl bg-red/10 border border-red/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-red flex items-center gap-1.5">
-                          <AlertTriangle className="h-4 w-4" /> Alerta de Capacidad de Pago (Ratio 56%)
-                        </span>
-                        <span className="text-[10px] font-mono bg-red/20 text-red px-2 py-0.5 rounded-full font-bold">
-                          ALTO RIESGO
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        El costo de alquiler declarado in situ (4.200.000 Gs.) insume el 56% del salario demostrado (7.500.000 Gs.), sobrepasando ampliamente el límite prudencial reglamentario del 30%.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-yellow/10 border border-yellow/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-yellow flex items-center gap-1.5">
-                          <AlertTriangle className="h-4 w-4" /> Titularidad del Suministro Eléctrico
-                        </span>
-                        <span className="text-[10px] font-mono bg-yellow/20 text-yellow px-2 py-0.5 rounded-full font-bold">
-                          OBSERVACIÓN
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        Medidor ANDE NIS N° 2489102 se encuentra registrado a nombre de un tercero sin parentesco consanguíneo ni contrato de subalquiler protocolizado presentado.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-green/10 border border-green/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-green flex items-center gap-1.5">
-                          <CheckCircle2 className="h-4 w-4" /> Coincidencia Geográfica In Situ
-                        </span>
-                        <span className="text-[10px] font-mono bg-green/20 text-green px-2 py-0.5 rounded-full font-bold">
-                          RATIFICADO
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        Fijación satelital GPS coincide en un 100% con la fachada domiciliaria fotografiada y los registros de la manzana catastral en Luque.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="p-4 rounded-2xl bg-green/10 border border-green/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-green flex items-center gap-1.5">
-                          <CheckCircle2 className="h-4 w-4" /> Coherencia Económica Plena (Ratio 21%)
-                        </span>
-                        <span className="text-[10px] font-mono bg-green/20 text-green px-2 py-0.5 rounded-full font-bold">
-                          ÓPTIMO
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        Ingresos familiares demostrados (11.000.000 Gs.) cubren holgadamente los compromisos declarados con un nivel de endeudamiento del 21%.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-green/10 border border-green/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-green flex items-center gap-1.5">
-                          <CheckCircle2 className="h-4 w-4" /> NIS ANDE y Servicios al Día
-                        </span>
-                        <span className="text-[10px] font-mono bg-green/20 text-green px-2 py-0.5 rounded-full font-bold">
-                          VERIFICADO
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        Suministro activo sin cortes ni moras registradas. Titularidad del medidor coincide con el postulante verificado.
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-green/10 border border-green/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-green flex items-center gap-1.5">
-                          <CheckCircle2 className="h-4 w-4" /> Arraigo Domiciliario Demostrado
-                        </span>
-                        <span className="text-[10px] font-mono bg-green/20 text-green px-2 py-0.5 rounded-full font-bold">
-                          SÓLIDO
-                        </span>
-                      </div>
-                      <p className="text-xs text-text">
-                        Vivienda propia con más de 6 años de ocupación continua, entorno barrial consolidado y referencias vecinales ratificadas.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Panel de Veredicto de Crédito (4 cols) */}
-              <div className="lg:col-span-4 p-5 rounded-2xl bg-surface1 border border-overlay0/40 space-y-4">
-                <span className="text-[10px] font-mono uppercase text-subtext0 font-bold block">
-                  Dictamen Automatizado
-                </span>
-
-                <div className="text-center py-3 bg-surface0 rounded-xl border border-white/[0.06]">
-                  <span className="text-xs text-subtext0 block font-mono">Índice de Confiabilidad</span>
-                  <div
-                    className={`text-3xl font-black font-mono mt-1 ${
-                      scenario === "risk" ? "text-red" : "text-green"
-                    }`}
-                  >
-                    {scenario === "risk" ? "48.2 / 100" : "94.6 / 100"}
+                <div className="p-4 rounded-xl bg-red/10 border border-red/20 space-y-2">
+                  <div className="flex items-center gap-2 text-red font-semibold text-sm">
+                    <AlertTriangle className="h-4 w-4" /> Ratio de Endeudamiento
                   </div>
-                  <span
-                    className={`text-[11px] font-bold uppercase mt-1 inline-block px-2.5 py-0.5 rounded-full ${
-                      scenario === "risk"
-                        ? "bg-red/15 text-red"
-                        : "bg-green/15 text-green"
-                    }`}
-                  >
-                    {scenario === "risk" ? "Observado / Requiere Aval" : "Favorable Recomendado"}
-                  </span>
+                  <p className="text-sm text-text">
+                    El alquiler declarado (4.2M Gs) insume el 56% del salario demostrado (7.5M Gs), superando el límite prudencial del 30%.
+                  </p>
                 </div>
 
-                <div className="text-xs text-subtext0 space-y-1.5 font-mono pt-1 border-t border-overlay0/20">
-                  <div className="flex justify-between">
-                    <span>Cruce Catastral:</span>
-                    <strong className="text-text">{scenario === "risk" ? "Observado" : "Conforme"}</strong>
+                <div className="p-4 rounded-xl bg-yellow/10 border border-yellow/20 space-y-2">
+                  <div className="flex items-center gap-2 text-yellow font-semibold text-sm">
+                    <AlertTriangle className="h-4 w-4" /> Titularidad de Servicios
                   </div>
-                  <div className="flex justify-between">
-                    <span>Aporte IPS:</span>
-                    <strong className="text-text">3a 8m continuos</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sello Pericial:</span>
-                    <strong className="text-gold font-bold">Reg. N° 4.819</strong>
-                  </div>
+                  <p className="text-sm text-text">
+                    Medidor ANDE registrado a nombre de un tercero sin contrato de subalquiler presentado.
+                  </p>
                 </div>
               </div>
 
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-text border-b border-overlay0 pb-2">Validaciones Exitosas (Ejemplo)</h4>
+
+                <div className="p-4 rounded-xl bg-green/10 border border-green/20 space-y-2">
+                  <div className="flex items-center gap-2 text-green font-semibold text-sm">
+                    <CheckCircle2 className="h-4 w-4" /> Coherencia Económica
+                  </div>
+                  <p className="text-sm text-text">
+                    Ingresos familiares (11M Gs) cubren compromisos con un nivel de endeudamiento del 21%.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-green/10 border border-green/20 space-y-2">
+                  <div className="flex items-center gap-2 text-green font-semibold text-sm">
+                    <CheckCircle2 className="h-4 w-4" /> Arraigo Domiciliario
+                  </div>
+                  <p className="text-sm text-text">
+                    Vivienda con más de 6 años de ocupación, entorno barrial consolidado y referencias positivas.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* PESTAÑA 4: CONSOLA DE COMITÉ (PORTFOLIO KPIS) */}
         {activeTab === "consola" && (
-          <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-overlay0/30">
+          <div className="p-6 sm:p-8 space-y-8 animate-in fade-in duration-200">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-overlay0">
               <div>
-                <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-wider">
-                  Métricas de Operación para Comités
-                </span>
-                <h3 className="text-xl font-black text-text mt-0.5">
-                  Rendimiento y Cumplimiento de Acuerdos de Nivel de Servicio (SLA)
+                <h3 className="text-xl sm:text-2xl font-bold text-text">
+                  Métricas Operativas
                 </h3>
+                <p className="text-sm text-subtext0 mt-1">Rendimiento y cumplimiento de SLA</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-green/15 text-green border border-green/30 font-mono self-start sm:self-auto">
-                SLA 99.4% A TIEMPO
-              </span>
-            </div>
+            </header>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-surface1 border border-overlay0/40 space-y-1">
-                <span className="text-[10px] text-subtext0 uppercase font-bold font-mono">Expedientes Mes</span>
-                <div className="text-3xl font-black font-mono text-text">124</div>
-                <span className="text-[11px] text-green font-bold">100% Auditados</span>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-2">
+                <span className="text-sm font-medium text-subtext0">Expedientes Mes</span>
+                <span className="text-3xl font-bold text-text">124</span>
+                <span className="text-xs text-green font-medium">100% Auditados</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface1 border border-overlay0/40 space-y-1">
-                <span className="text-[10px] text-subtext0 uppercase font-bold font-mono">Dictámenes Favorables</span>
-                <div className="text-3xl font-black font-mono text-green">78%</div>
-                <span className="text-[11px] text-subtext0">Apto Directo</span>
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-2">
+                <span className="text-sm font-medium text-subtext0">Dictámenes Favorables</span>
+                <span className="text-3xl font-bold text-green">78%</span>
+                <span className="text-xs text-subtext1">Apto Directo</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface1 border border-overlay0/40 space-y-1">
-                <span className="text-[10px] text-subtext0 uppercase font-bold font-mono">Con Observación</span>
-                <div className="text-3xl font-black font-mono text-yellow">16%</div>
-                <span className="text-[11px] text-subtext0">Garantía / Codeudor</span>
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-2">
+                <span className="text-sm font-medium text-subtext0">Con Observación</span>
+                <span className="text-3xl font-bold text-yellow">16%</span>
+                <span className="text-xs text-subtext1">Requiere Aval</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface1 border border-overlay0/40 space-y-1">
-                <span className="text-[10px] text-subtext0 uppercase font-bold font-mono">Tiempo Medio Entrega</span>
-                <div className="text-3xl font-black font-mono text-gold">14.8h</div>
-                <span className="text-[11px] text-green font-bold">Compromiso &lt; 24h</span>
+              <div className="p-6 rounded-xl bg-surface1 border border-overlay0 flex flex-col gap-2">
+                <span className="text-sm font-medium text-subtext0">Tiempo Medio</span>
+                <span className="text-3xl font-bold text-gold">14.8h</span>
+                <span className="text-xs text-green font-medium">Cumple SLA &lt; 24h</span>
               </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-surface1/60 border border-overlay0/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext0">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-gold shrink-0" />
-                <span>Auditoría de visitas domiciliarias conforme a normativas de prevención de fraude del BCP.</span>
-              </div>
-              <span className="font-mono text-text font-bold">Actualizado: Octubre 2026</span>
             </div>
           </div>
         )}

@@ -43,14 +43,14 @@ export function CommandPalette() {
   const commands: CommandItem[] = [
     {
       id: "demo",
-      title: "Explorar Formulario Pericial (Demo 9 Pasos)",
+      title: "Explorar Formulario Pericial (Demo)",
       category: "Navegación",
       icon: FileText,
       action: () => router.push("/entrevista/demo"),
     },
     {
       id: "login",
-      title: "Acceso al Portal de Peritos y Evaluadores",
+      title: "Acceso al Portal Pericial",
       category: "Navegación",
       shortcut: "L",
       icon: Key,
@@ -58,7 +58,7 @@ export function CommandPalette() {
     },
     {
       id: "dashboard",
-      title: "Panel General de Expedientes",
+      title: "Panel General",
       category: "Navegación",
       shortcut: "D",
       icon: Building2,
@@ -66,18 +66,18 @@ export function CommandPalette() {
     },
     {
       id: "dossier",
-      title: "Ver Estructura del Informe Oficial (5 Láminas)",
+      title: "Estructura del Informe",
       category: "Herramientas",
       icon: FileText,
       action: () => {
-        const el = document.getElementById("dossier");
+        const el = document.getElementById("showcase");
         if (el) el.scrollIntoView({ behavior: "smooth" });
         setIsOpen(false);
       },
     },
     {
       id: "simulador",
-      title: "Simulador de Aranceles y Plazos de Peritaje",
+      title: "Cotizador de Aranceles",
       category: "Herramientas",
       icon: Calculator,
       action: () => {
@@ -88,7 +88,7 @@ export function CommandPalette() {
     },
     {
       id: "mapa",
-      title: "Mapa de Cobertura Territorial en Paraguay",
+      title: "Mapa de Cobertura",
       category: "Herramientas",
       icon: MapPin,
       action: () => {
@@ -99,11 +99,11 @@ export function CommandPalette() {
     },
     {
       id: "ley1682",
-      title: "Normativa: Ley N° 1682/01 de Protección de Datos",
+      title: "Ley N° 1682/01 de Protección de Datos",
       category: "Normativa",
       icon: Shield,
       action: () => {
-        alert("Ley N° 1682/01: Reglamenta la recopilación y tratamiento de datos crediticios y personales en la República del Paraguay.");
+        alert("Ley N° 1682/01: Reglamenta la recopilación y tratamiento de datos crediticios y personales.");
       },
     },
     {
@@ -121,7 +121,6 @@ export function CommandPalette() {
     c.category.toLowerCase().includes(query.toLowerCase())
   );
 
-  // Escuchar tecla Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -137,7 +136,6 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Manejo de flechas de teclado
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -160,55 +158,51 @@ export function CommandPalette() {
 
   return (
     <>
-      {/* Botón trigger para la barra de navegación */}
       <button
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-2 rounded-xl border border-overlay0/60 bg-surface1/80 px-3 py-1.5 text-xs text-subtext0 hover:border-gold hover:text-text transition-all"
-        title="Buscar comandos o acciones (Ctrl+K)"
+        className="flex items-center gap-2 rounded-lg border border-overlay0 bg-surface1 px-3 py-1.5 text-sm text-subtext0 hover:border-overlay1 hover:text-text transition-all shadow-sm"
+        title="Buscar (Ctrl+K)"
       >
-        <Search className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Buscar...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded bg-surface2 px-1.5 py-0.5 font-mono text-[10px] text-subtext1 border border-overlay0/40">
+        <Search className="h-4 w-4" />
+        <span className="hidden sm:inline font-medium">Buscar...</span>
+        <kbd className="hidden sm:inline-flex items-center gap-1 rounded bg-surface2 px-1.5 py-0.5 text-xs text-subtext1 border border-overlay0 font-sans">
           ⌘K
         </kbd>
       </button>
 
-      {/* Modal flotante estilo Linear / Stripe */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 bg-base/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div
-            className="w-full max-w-xl rounded-2xl border border-overlay0/80 bg-surface0 shadow-2xl overflow-hidden flex flex-col"
+            className="w-full max-w-xl rounded-xl border border-overlay0 bg-surface0 shadow-2xl overflow-hidden flex flex-col"
             onKeyDown={handleKeyDown}
           >
-            {/* Input de Búsqueda */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-overlay0/30 bg-surface1/40">
-              <Search className="h-4 w-4 text-gold shrink-0" />
+            <div className="flex items-center gap-3 px-4 py-4 border-b border-overlay0 bg-surface0">
+              <Search className="h-5 w-5 text-subtext0 shrink-0" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Escribe un comando o busca una sección..."
+                placeholder="Busca herramientas, secciones o comandos..."
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setSelectedIndex(0);
                 }}
-                className="w-full bg-transparent text-sm text-text placeholder-subtext0 outline-none font-medium"
+                className="w-full bg-transparent text-base text-text placeholder-subtext0 outline-none"
               />
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-subtext0 hover:text-text p-1"
+                className="text-subtext0 hover:text-text p-1 rounded-md hover:bg-surface1 transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Lista de Resultados */}
-            <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+            <div className="max-h-[60vh] overflow-y-auto p-2">
               {filteredCommands.length === 0 ? (
-                <div className="p-6 text-center text-xs text-subtext0">
-                  No se encontraron comandos para &quot;{query}&quot;.
+                <div className="p-8 text-center text-sm text-subtext0">
+                  No se encontraron resultados para &quot;{query}&quot;.
                 </div>
               ) : (
                 filteredCommands.map((item, index) => {
@@ -222,22 +216,22 @@ export function CommandPalette() {
                         setIsOpen(false);
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-colors text-xs ${
+                      className={`w-full text-left px-4 py-3 rounded-lg flex items-center justify-between transition-colors text-sm ${
                         isSelected
-                          ? "bg-gold/10 text-text font-semibold border border-gold/30"
-                          : "text-subtext1 hover:bg-surface1"
+                          ? "bg-surface1 text-text font-medium"
+                          : "text-subtext0 hover:bg-surface1/50"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon className={`h-4 w-4 ${isSelected ? "text-gold" : "text-subtext0"}`} />
+                        <item.icon className={`h-4 w-4 ${isSelected ? "text-text" : "text-subtext1"}`} />
                         <span>{item.title}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-subtext0 bg-surface1 px-2 py-0.5 rounded-md border border-overlay0/20">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-subtext1 bg-surface2 px-2 py-1 rounded-md">
                           {item.category}
                         </span>
                         {item.shortcut && (
-                          <kbd className="font-mono text-[10px] text-gold bg-surface2 px-1.5 py-0.5 rounded border border-overlay0/40">
+                          <kbd className="text-xs text-subtext0 bg-surface2 px-2 py-1 rounded-md border border-overlay0">
                             {item.shortcut}
                           </kbd>
                         )}
@@ -248,14 +242,10 @@ export function CommandPalette() {
               )}
             </div>
 
-            {/* Pie de Ayuda del Command Menu */}
-            <div className="px-4 py-2.5 border-t border-overlay0/30 bg-mantle text-[11px] text-subtext0 flex items-center justify-between">
-              <div className="flex items-center gap-3 font-mono">
-                <span>↑↓ Navegar</span>
-                <span>↵ Seleccionar</span>
-                <span>ESC Cerrar</span>
-              </div>
-              <span className="font-mono text-gold font-bold">Jerovia OS · v2.6</span>
+            <div className="px-4 py-3 border-t border-overlay0 bg-surface1 text-xs text-subtext0 flex items-center gap-4">
+               <span><kbd className="bg-surface2 px-1 py-0.5 rounded border border-overlay0">↑</kbd> <kbd className="bg-surface2 px-1 py-0.5 rounded border border-overlay0">↓</kbd> Navegar</span>
+               <span><kbd className="bg-surface2 px-1 py-0.5 rounded border border-overlay0">↵</kbd> Seleccionar</span>
+               <span><kbd className="bg-surface2 px-1 py-0.5 rounded border border-overlay0">esc</kbd> Cerrar</span>
             </div>
           </div>
         </div>
