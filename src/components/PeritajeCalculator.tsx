@@ -2,20 +2,32 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { 
-  Calculator, CheckCircle2, Clock, 
-  MapPin, Copy, Check, ArrowRight
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CheckCircle2,
+  Clock,
+  Copy,
+  Check,
+  ArrowRight,
+  Zap,
+  Building2,
+  Home,
+  Briefcase,
+  UserCheck,
 } from "lucide-react";
 
 interface TipoPeritaje {
   id: string;
   name: string;
+  tag: string;
   basePrice: number;
+  icon: React.ElementType;
 }
 
 interface ZonaRecargo {
   id: string;
   name: string;
+  sub: string;
   recargo: number;
   slaBase: number;
 }
@@ -23,29 +35,30 @@ interface ZonaRecargo {
 interface Urgencia {
   id: string;
   name: string;
+  slaLabel: string;
   factor: number;
   slaFactor: number;
 }
 
 const TIPOS_PERITAJE: TipoPeritaje[] = [
-  { id: "consumo", name: "Crédito de Consumo / Personal", basePrice: 280000 },
-  { id: "hipotecario", name: "Crédito Hipotecario / Inmueble", basePrice: 420000 },
-  { id: "comercial", name: "Comercial / PYMES", basePrice: 550000 },
-  { id: "rrhh", name: "Auditoría de Confianza (RRHH)", basePrice: 320000 },
+  { id: "consumo", name: "Crédito Consumo", tag: "Banca Personas", basePrice: 280000, icon: UserCheck },
+  { id: "hipotecario", name: "Hipotecario / Vivienda", tag: "Inmuebles", basePrice: 420000, icon: Home },
+  { id: "comercial", name: "Comercial / PYMES", tag: "Corporativo", basePrice: 550000, icon: Building2 },
+  { id: "rrhh", name: "Ingreso Crítico RRHH", tag: "Alta Dirección", basePrice: 320000, icon: Briefcase },
 ];
 
 const ZONAS: ZonaRecargo[] = [
-  { id: "asuncion", name: "Gran Asunción (Capital, Luque, San Lorenzo)", recargo: 0, slaBase: 24 },
-  { id: "central_ext", name: "Central Exterior (Capiatá, Itauguá, Ypacaraí)", recargo: 45000, slaBase: 28 },
-  { id: "alto_parana", name: "Alto Paraná (CDE, Hernandarias)", recargo: 110000, slaBase: 48 },
-  { id: "itapua", name: "Itapúa (Encarnación, Colonias)", recargo: 135000, slaBase: 48 },
-  { id: "caaguazu", name: "Caaguazú y Cordillera (Oviedo, Caacupé)", recargo: 80000, slaBase: 36 },
+  { id: "asuncion", name: "Asunción & Gran Asunción", sub: "Luque, San Lorenzo, Lambaré", recargo: 0, slaBase: 24 },
+  { id: "central_ext", name: "Central Exterior", sub: "Capiatá, Itauguá, Ñemby", recargo: 45000, slaBase: 28 },
+  { id: "caaguazu", name: "Cordillera & Caaguazú", sub: "Caacupé, Cnel. Oviedo", recargo: 80000, slaBase: 36 },
+  { id: "alto_parana", name: "Alto Paraná", sub: "CDE, Hernandarias, Franco", recargo: 110000, slaBase: 48 },
+  { id: "itapua", name: "Itapúa", sub: "Encarnación, Colonias Unidas", recargo: 135000, slaBase: 48 },
 ];
 
 const URGENCIAS: Urgencia[] = [
-  { id: "estandar", name: "Estándar (24 - 48 hs)", factor: 1.0, slaFactor: 1.0 },
-  { id: "prioritario", name: "Prioritario (< 18 hs)", factor: 1.25, slaFactor: 0.65 },
-  { id: "mismo_dia", name: "Express Mismo Día (< 10 hs)", factor: 1.5, slaFactor: 0.4 },
+  { id: "estandar", name: "Estándar", slaLabel: "24 - 48 hs", factor: 1.0, slaFactor: 1.0 },
+  { id: "prioritario", name: "Prioritario", slaLabel: "< 18 hs", factor: 1.25, slaFactor: 0.65 },
+  { id: "mismo_dia", name: "Express Hoy", slaLabel: "< 10 hs", factor: 1.5, slaFactor: 0.4 },
 ];
 
 export function PeritajeCalculator() {
@@ -64,83 +77,108 @@ export function PeritajeCalculator() {
     const total = subtotal + iva;
     const tiempoHoras = Math.round(z.slaBase * u.slaFactor);
 
-    return {
-      tipoObj: t,
-      zonaObj: z,
-      urgenciaObj: u,
-      subtotal,
-      iva,
-      total,
-      tiempoHoras,
-    };
+    return { tipoObj: t, zonaObj: z, urgenciaObj: u, subtotal, iva, total, tiempoHoras };
   }, [tipo, zona, urgencia]);
 
-  const handleCopyBudget = () => {
-    const texto = `PRESUPUESTO PERICIAL OFICIAL
-Jerovia Consultora · Asunción, Paraguay
---------------------------------------------------
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--x", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--y", `${e.clientY - rect.top}px`);
+  }
+
+  function handleCopyBudget() {
+    const texto = `COTIZACIÓN PERICIAL • JEROVIA CONSULTORA
 Servicio: ${calculo.tipoObj.name}
 Zona: ${calculo.zonaObj.name}
-Plazo: ${calculo.urgenciaObj.name} (< ${calculo.tiempoHoras}hs)
-Total con IVA (10%): ${calculo.total.toLocaleString("es-PY")} Gs.
---------------------------------------------------
-Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictamen firmado.`;
+SLA Garantizado: < ${calculo.tiempoHoras} hs (${calculo.urgenciaObj.name})
+Total IVA incl.: ${calculo.total.toLocaleString("es-PY")} Gs.`;
 
     navigator.clipboard.writeText(texto);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }
 
   return (
-    <div id="simulador" className="rounded-3xl border border-overlay0/40 bg-surface0 p-6 sm:p-8 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-6 border-b border-overlay0/30 mb-6">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45 }}
+      onMouseMove={handleMouseMove}
+      className="group relative rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl overflow-hidden"
+    >
+      {/* Spotlight que sigue al cursor */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background:
+            "radial-gradient(550px circle at var(--x, 50%) var(--y, 50%), rgba(229, 192, 123, 0.10), transparent 45%)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-6 border-b border-overlay0/40 mb-6">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-            Simulador de Aranceles
+          <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
+            TARIFARIO CORPORATIVO TRANSPARENTE
           </span>
-          <h2 className="text-xl sm:text-2xl font-black text-text">
-            Cotización oficial por expediente
+          <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight mt-0.5">
+            Cotizador Instantáneo de Peritajes
           </h2>
         </div>
-        <span className="text-xs text-subtext0 font-mono">Aranceles oficiales con IVA</span>
+        <span className="text-xs text-subtext0 font-mono">Valores expresados en Guaraníes (IVA 10% incl.)</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Parámetros de Selección (7 cols) */}
-        <div className="lg:col-span-7 space-y-5">
-          
-          {/* 1. Tipo */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        {/* Selectores interactivos (7 cols) */}
+        <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
+          {/* 1. Categoría */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              1. Tipo de Evaluación
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext0 mb-2.5 block">
+              01 // Modalidad de Riesgo
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {TIPOS_PERITAJE.map((item) => {
+                const Icon = item.icon;
                 const isSelected = tipo === item.id;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => setTipo(item.id)}
-                    className={`p-3 rounded-xl text-left border transition-all text-xs ${
+                    className={`relative p-3.5 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/60 hover:bg-surface1 text-subtext0 hover:text-text"
+                        ? "border-gold bg-gold/10 text-text shadow-sm"
+                        : "border-overlay0/40 bg-surface1/50 hover:border-overlay1 text-subtext0 hover:text-text"
                     }`}
                   >
-                    <span className="text-text">{item.name}</span>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-9 w-9 rounded-xl flex items-center justify-center transition-colors ${
+                          isSelected ? "bg-gold text-black" : "bg-surface2 text-subtext0"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-text">{item.name}</p>
+                        <p className="text-[10px] font-mono text-subtext0">{item.tag}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-gold">
+                      {(item.basePrice / 1000).toFixed(0)}k
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 2. Zona */}
+          {/* 2. Cobertura */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              2. Zona Geográfica
-            </label>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext0 mb-2.5 block">
+              02 // Despliegue Territorial
+            </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ZONAS.map((item) => {
                 const isSelected = zona === item.id;
@@ -149,15 +187,18 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
                     key={item.id}
                     type="button"
                     onClick={() => setZona(item.id)}
-                    className={`p-2.5 rounded-xl text-left border transition-all flex items-center justify-between text-xs ${
+                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between text-xs ${
                       isSelected
                         ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
+                        : "border-overlay0/40 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
                     }`}
                   >
-                    <span className="truncate pr-1">{item.name.split("(")[0]}</span>
-                    <span className="font-mono text-[10px] text-subtext0 shrink-0">
-                      {item.recargo === 0 ? "Sin viático" : `+${item.recargo.toLocaleString("es-PY")}`}
+                    <div className="truncate pr-2">
+                      <p className="text-xs font-bold text-text truncate">{item.name}</p>
+                      <p className="text-[10px] text-subtext0 truncate">{item.sub}</p>
+                    </div>
+                    <span className="font-mono text-[10px] font-bold text-gold shrink-0">
+                      {item.recargo === 0 ? "SIN VIÁTICO" : `+${(item.recargo / 1000).toFixed(0)}k`}
                     </span>
                   </button>
                 );
@@ -165,12 +206,12 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
             </div>
           </div>
 
-          {/* 3. Modalidad de Urgencia */}
+          {/* 3. SLA */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-subtext0 mb-2 block">
-              3. Plazo de Entrega
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext0 mb-2.5 block">
+              03 // Velocidad de Despacho (SLA)
+            </span>
+            <div className="grid grid-cols-3 gap-2.5">
               {URGENCIAS.map((item) => {
                 const isSelected = urgencia === item.id;
                 return (
@@ -178,89 +219,97 @@ Incluye: Legajo 5 láminas (.pptx/PDF), GPS satelital, ANDE verificado y dictame
                     key={item.id}
                     type="button"
                     onClick={() => setUrgencia(item.id)}
-                    className={`p-2.5 rounded-xl text-center border transition-all text-xs ${
+                    className={`relative p-3 rounded-xl text-center border transition-all cursor-pointer ${
                       isSelected
-                        ? "border-gold bg-gold/10 text-text font-bold"
-                        : "border-overlay0/30 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
+                        ? "border-gold bg-gold/15 text-text font-bold shadow-sm"
+                        : "border-overlay0/40 bg-surface1/40 hover:bg-surface1 text-subtext0 hover:text-text"
                     }`}
                   >
-                    <div className="font-bold text-[11px] text-text">{item.name.split("(")[0]}</div>
-                    <div className="text-[10px] text-subtext0 mt-0.5 font-mono">{item.name.includes("(") ? item.name.split("(")[1].replace(")", "") : ""}</div>
+                    <div className="font-black text-xs text-text">{item.name}</div>
+                    <div className="text-[10px] text-gold font-mono font-bold mt-0.5">{item.slaLabel}</div>
                   </button>
                 );
               })}
             </div>
           </div>
-
         </div>
 
-        {/* Resumen de Liquidación (5 cols) */}
-        <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-overlay0/60 bg-surface1 p-5 space-y-4 shadow-sm">
-            
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-                Total Estimado
-              </span>
-              <div className="text-3xl font-black text-text font-mono tracking-tight mt-0.5">
-                {calculo.total.toLocaleString("es-PY")}{" "}
-                <span className="text-xs font-sans text-subtext0 font-semibold">Gs.</span>
+        {/* Tarjeta de Liquidación Reactiva (5 cols) */}
+        <div className="lg:col-span-5 flex">
+          <div className="w-full rounded-3xl border border-gold/40 bg-mantle/90 p-6 sm:p-7 flex flex-col justify-between shadow-xl relative overflow-hidden">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30">
+                  ARANCEL FINAL
+                </span>
+                <span className="flex items-center gap-1 text-xs font-mono font-bold text-green">
+                  <Zap className="h-3.5 w-3.5" /> &lt; {calculo.tiempoHoras}h hábiles
+                </span>
               </div>
-              <div className="flex items-center gap-1.5 text-green text-xs font-mono font-bold mt-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Entrega en &lt; {calculo.tiempoHoras} horas hábiles</span>
+
+              {/* Precio con transición animada */}
+              <div className="pt-2">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={calculo.total}
+                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                    transition={{ duration: 0.18 }}
+                    className="text-4xl sm:text-5xl font-black text-text font-mono tracking-tight"
+                  >
+                    {calculo.total.toLocaleString("es-PY")}
+                    <span className="text-sm font-sans text-gold font-bold ml-1.5">Gs.</span>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <div className="space-y-2 text-xs font-mono pt-3 border-t border-overlay0/40 text-subtext0">
+                <div className="flex justify-between">
+                  <span>Arancel Neto</span>
+                  <span className="text-text font-bold">{calculo.subtotal.toLocaleString("es-PY")} Gs.</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>IVA Crédito (10%)</span>
+                  <span className="text-text font-bold">{calculo.iva.toLocaleString("es-PY")} Gs.</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-overlay0/40 space-y-2 text-xs">
+                {[
+                  "Dossier Comité 5 Láminas (.PPTX + PDF)",
+                  "Telemetría GPS + Verificación NIS ANDE",
+                  "Firma Pericial Matrícula N° 4.819",
+                ].map((inc) => (
+                  <div key={inc} className="flex items-center gap-2 text-text font-medium">
+                    <CheckCircle2 className="h-4 w-4 text-green shrink-0" />
+                    <span>{inc}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="space-y-1.5 text-xs font-mono pt-2 border-t border-overlay0/20 text-subtext0">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span className="text-text">{calculo.subtotal.toLocaleString("es-PY")} Gs.</span>
-              </div>
-              <div className="flex justify-between">
-                <span>IVA (10%):</span>
-                <span className="text-text">{calculo.iva.toLocaleString("es-PY")} Gs.</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-overlay0/20 space-y-1.5 text-[11px] text-subtext0">
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>Legajo 5 láminas (.pptx + PDF)</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>GPS satelital + Medidor ANDE verificado</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-text font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green shrink-0" />
-                <span>Dictamen firmado (Matrícula N° 4.819)</span>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
+            <div className="pt-6 space-y-2.5">
               <button
                 type="button"
                 onClick={handleCopyBudget}
-                className="w-full py-2 rounded-xl border border-overlay0/60 bg-surface0 hover:border-gold text-xs font-bold text-text flex items-center justify-center gap-1.5 transition-all"
+                className="w-full py-2.5 rounded-xl border border-overlay0/70 bg-surface1 hover:border-gold text-xs font-bold text-text flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-green" /> : <Copy className="h-3.5 w-3.5 text-gold" />}
-                <span>{copied ? "¡Copiado!" : "Copiar Presupuesto"}</span>
+                {copied ? <Check className="h-4 w-4 text-green" /> : <Copy className="h-4 w-4 text-gold" />}
+                <span>{copied ? "Presupuesto Copiado" : "Copiar Cotización para Comité"}</span>
               </button>
 
               <Link
                 href="/entrevista/demo"
-                className="w-full py-2.5 rounded-xl bg-gold text-black font-bold text-xs hover:bg-gold-light flex items-center justify-center gap-1.5 transition-all text-center"
+                className="w-full py-3 rounded-xl bg-gold text-black font-bold text-xs hover:bg-gold-light flex items-center justify-center gap-2 transition-all shadow-lg shadow-gold/20"
               >
-                <span>Probar Formulario</span>
-                <ArrowRight className="h-3 w-3" />
+                <span>Ejecutar Simulación Demo</span>
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-
           </div>
         </div>
-
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -13,7 +13,7 @@ import { FaqSection } from "@/components/FaqSection";
 import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
 import { ShieldCheck, MapPin, ChevronRight, Lock, Clock, EyeOff } from "lucide-react";
 
-constKPIS = [
+const KPIS = [
   { value: "< 24h", label: "SLA de Emisión" },
   { value: "100%", label: "Verificación GPS" },
   { value: "9 Módulos", label: "Protocolo Pericial" },
@@ -114,7 +114,7 @@ export default function LandingPage() {
               transition={{ duration: 0.45, delay: 0.24 }}
               className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto"
             >
-              {constKPIS.map((kpi) => (
+              {KPIS.map((kpi) => (
                 <div
                   key={kpi.label}
                   className="rounded-2xl border border-overlay0/50 bg-surface0/70 backdrop-blur-md px-4 py-3 text-center hover:border-gold/40 transition-colors"

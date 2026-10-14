@@ -1,90 +1,89 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ShieldCheck, HelpCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, ShieldCheck } from "lucide-react";
 
 interface FaqItem {
+  badge: string;
   question: string;
   answer: string;
-  category: string;
 }
 
 const FAQS: FaqItem[] = [
   {
-    category: "Validez Normativa",
-    question: "¿Qué valor legal y probatorio tienen los peritajes ante el BCP y SEPRELAD?",
-    answer: "Todos los peritajes de Jerovia Consultora son elaborados y suscriptos por profesionales con Matrícula Pericial Oficial (Reg. N° 4.819). Cumplen estrictamente con los requerimientos de debida diligencia del Banco Central del Paraguay (BCP) y los manuales de prevención de lavado de dinero de SEPRELAD, constituyendo plena prueba documental de constatación presencial.",
+    badge: "BCP & SEPRELAD",
+    question: "¿Qué validez tienen los dictámenes ante auditorías bancarias?",
+    answer:
+      "Cada legajo lleva firma profesional con Matrícula Pericial N° 4.819, coordenadas GPS inmutables y respaldo fotográfico para debida diligencia.",
   },
   {
-    category: "Tiempos de Respuesta",
-    question: "¿Cuál es el tiempo de entrega garantizado (SLA) para Asunción y el interior?",
-    answer: "Para Asunción y Gran Asunción (Luque, San Lorenzo, Lambaré, Fernando de la Mora, Capiatá), el plazo estándar es inferior a 24 horas hábiles, con opción de relevamiento Express en el mismo día (< 10 horas). Para Alto Paraná (CDE) e Itapúa (Encarnación), la entrega se garantiza en un plazo de 24 a 48 horas.",
+    badge: "SLA < 24 HS",
+    question: "¿En cuánto tiempo se entrega el informe al comité de crédito?",
+    answer:
+      "En Asunción y Central entregamos en menos de 24 horas hábiles (opción Express en el día < 10 hs). En CDE y Encarnación, entre 24 y 48 horas.",
   },
   {
-    category: "Privacidad y Cumplimiento",
-    question: "¿Cómo se protege la información sensible bajo la Ley N° 1682/01?",
-    answer: "Operamos bajo estricto consentimiento informado y secreto profesional conforme a la Ley N° 1682/01 'Que reglamenta la información de carácter privado'. Los datos recabados se custodian en servidores protegidos con cifrado de grado militar (AES-256 en reposo y TLS 1.3 en tránsito), con estricta prohibición de divulgación a terceros ajenos a la entidad contratante.",
+    badge: "LEY N° 6534/20",
+    question: "¿Cómo garantizan la confidencialidad de los datos crediticios?",
+    answer:
+      "Operamos bajo consentimiento informado conforme a las Leyes N° 6534/20 y 1682/01, con sesiones cifradas TLS 1.3 y acceso restringido por rol.",
   },
   {
-    category: "Entregables del Comité",
-    question: "¿En qué formatos se entrega el legajo pericial para el comité de crédito?",
-    answer: "Se entrega el Legajo Ejecutivo de 5 Láminas en formato editable (.pptx) para su proyección directa en la reunión del comité de aprobación, junto con el dictamen pericial consolidado en PDF firmado digitalmente con metadatos de georreferenciación GPS y sellos temporales.",
-  },
-  {
-    category: "Auditoría en Terreno",
-    question: "¿Cómo se auditan los medidores ANDE y las condiciones de la vivienda?",
-    answer: "Nuestros peritos realizan una inspección física directa en fachada, fotografían el medidor y su odómetro digital, y registran el Número de Identificación de Suministro (NIS) para verificar que el servicio esté activo y a nombre correspondiente, descartando conexiones clandestinas o irregularidades.",
+    badge: "5 LÁMINAS .PPTX",
+    question: "¿En qué formato recibe el comité el resultado de la visita?",
+    answer:
+      "En una presentación ejecutiva de 5 láminas (.PPTX y PDF) lista para proyectar en directorio, con score de arraigo, flujo de caja y fotos.",
   },
 ];
 
 export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const toggleIndex = (idx: number) => {
-    setOpenIndex(openIndex === idx ? null : idx);
-  };
-
   return (
-    <div className="rounded-3xl glass-panel p-6 sm:p-10 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-white/[0.08] mb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45 }}
+      className="rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-5 border-b border-overlay0/40 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4 text-gold" />
-            <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-wider">
-              Consultas Institucionales
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black text-text mt-0.5">
-            Preguntas Frecuentes para Comités de Riesgo
+          <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-widest">
+            NORMATIVA Y CUMPLIMIENTO
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight mt-0.5">
+            Respaldo Institucional
           </h2>
         </div>
-        <span className="text-xs text-subtext0 font-mono">
-          Estándares Bancarios y Cooperativos
+        <span className="text-xs text-subtext0 font-mono flex items-center gap-1.5">
+          <ShieldCheck className="h-4 w-4 text-gold" /> Estándar Bancario y Cooperativo
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {FAQS.map((faq, idx) => {
           const isOpen = openIndex === idx;
           return (
             <div
-              key={idx}
-              className={`rounded-2xl border transition-all overflow-hidden ${
+              key={faq.question}
+              className={`rounded-2xl border transition-all overflow-hidden self-start ${
                 isOpen
-                  ? "border-gold/40 bg-surface1/80 shadow-md"
-                  : "border-white/[0.06] bg-surface1/30 hover:border-white/[0.12]"
+                  ? "border-gold/50 bg-surface1/80 shadow-md"
+                  : "border-overlay0/50 bg-surface1/30 hover:border-overlay1"
               }`}
             >
               <button
                 type="button"
-                onClick={() => toggleIndex(idx)}
-                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 focus:outline-none"
+                onClick={() => setOpenIndex(isOpen ? null : idx)}
+                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 cursor-pointer"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-mono text-gold font-bold uppercase tracking-widest hidden sm:inline px-2 py-0.5 rounded bg-surface0 border border-white/[0.06]">
-                    {faq.category}
+                <div className="space-y-1">
+                  <span className="inline-block text-[10px] font-mono text-gold font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-gold/10 border border-gold/30">
+                    {faq.badge}
                   </span>
-                  <span className="text-sm font-bold text-text">{faq.question}</span>
+                  <p className="text-sm font-black text-text">{faq.question}</p>
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 text-subtext0 transition-transform duration-200 shrink-0 ${
@@ -93,23 +92,25 @@ export function FaqSection() {
                 />
               </button>
 
-              {isOpen && (
-                <div className="px-4 pb-5 sm:px-5 text-xs text-subtext0 leading-relaxed border-t border-white/[0.06] pt-3 animate-in fade-in duration-150">
-                  {faq.answer}
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-5 sm:px-5 pt-2 text-xs text-subtext0 leading-relaxed border-t border-overlay0/30">
+                      {faq.answer}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           );
         })}
       </div>
-
-      <div className="mt-8 pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-subtext0 font-mono">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-gold shrink-0" />
-          <span>Cumplimiento garantizado conforme a normas BCP y SEPRELAD</span>
-        </div>
-        <span className="text-text font-bold">Jerovia Consultora · Asunción, Paraguay</span>
-      </div>
-    </div>
+    </motion.div>
   );
 }

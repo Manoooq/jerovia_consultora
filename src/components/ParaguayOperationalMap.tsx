@@ -1,131 +1,163 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Clock, ShieldCheck, Car, Users, Radio, Navigation } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Clock, ShieldCheck, Users, Radio, Navigation } from "lucide-react";
 
 interface OperationalZone {
   id: string;
   name: string;
-  departamento: string;
+  shortName: string;
   sla: string;
   ciudades: string[];
-  rutas: string;
   peritos: number;
-  status: "Inmediato" | "Programado";
-  detalles: string;
+  status: "Despliegue Inmediato" | "Ruta Programada";
   coords: { x: number; y: number };
 }
 
 const ZONAS_OPERATIVAS: OperationalZone[] = [
   {
     id: "central",
-    name: "Gran Asunción y Central",
-    departamento: "Distrito Capital y Central",
-    sla: "< 24 horas",
-    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Fernando de la Mora", "Capiatá"],
-    rutas: "Avda. Mcal. López, Autopista Silvio Pettirossi, Rutas PY01, PY02 y PY03",
+    name: "Asunción & Área Metropolitana",
+    shortName: "Asunción HQ",
+    sla: "< 24 hs",
+    ciudades: ["Asunción", "Luque", "San Lorenzo", "Lambaré", "Fdo. de la Mora", "Capiatá"],
     peritos: 4,
-    status: "Inmediato",
-    detalles: "Base de peritos con movilidad propia y cobertura en el mismo día hábil.",
+    status: "Despliegue Inmediato",
     coords: { x: 195, y: 245 },
   },
   {
-    id: "este",
-    name: "Alto Paraná (Zona Este)",
-    departamento: "Alto Paraná",
-    sla: "24 - 48 horas",
-    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Presidente Franco"],
-    rutas: "Corredor Nacional Ruta PY02",
+    id: "centro",
+    name: "Corredor Centro (Cordillera / Caaguazú)",
+    shortName: "Cnel. Oviedo",
+    sla: "24 - 36 hs",
+    ciudades: ["Coronel Oviedo", "Caacupé", "Eusebio Ayala", "Itacurubí"],
     peritos: 2,
-    status: "Programado",
-    detalles: "Peritos residentes en Ciudad del Este con despliegue ágil en el área metropolitana este.",
-    coords: { x: 310, y: 250 },
+    status: "Despliegue Inmediato",
+    coords: { x: 248, y: 232 },
+  },
+  {
+    id: "este",
+    name: "Hub Alto Paraná (Triple Frontera)",
+    shortName: "Ciudad del Este",
+    sla: "24 - 48 hs",
+    ciudades: ["Ciudad del Este", "Hernandarias", "Minga Guazú", "Pdte. Franco"],
+    peritos: 2,
+    status: "Ruta Programada",
+    coords: { x: 315, y: 248 },
   },
   {
     id: "sur",
-    name: "Itapúa (Zona Sur)",
-    departamento: "Itapúa",
-    sla: "48 horas",
-    ciudades: ["Encarnación", "Cambyretá", "Fram", "Colonias Unidas"],
-    rutas: "Corredor Nacional Ruta PY01",
-    peritos: 1,
-    status: "Programado",
-    detalles: "Inspecciones en Encarnación y colonias agroindustriales aledañas.",
-    coords: { x: 235, y: 340 },
-  },
-  {
-    id: "centro",
-    name: "Caaguazú y Cordillera",
-    departamento: "Caaguazú / Cordillera",
-    sla: "24 - 36 horas",
-    ciudades: ["Coronel Oviedo", "Caacupé", "Eusebio Ayala"],
-    rutas: "Ruta PY02 y enlace PY08",
+    name: "Hub Sur (Itapúa)",
+    shortName: "Encarnación",
+    sla: "24 - 48 hs",
+    ciudades: ["Encarnación", "Cambyretá", "Colonias Unidas", "Fram"],
     peritos: 2,
-    status: "Inmediato",
-    detalles: "Conexión vial central para verificaciones en ciudades intermedias del interior.",
-    coords: { x: 245, y: 235 },
+    status: "Ruta Programada",
+    coords: { x: 238, y: 342 },
   },
 ];
 
 export function ParaguayOperationalMap() {
   const [selectedZone, setSelectedZone] = useState<OperationalZone>(ZONAS_OPERATIVAS[0]);
+  const hqCoords = ZONAS_OPERATIVAS[0].coords;
 
   return (
-    <div className="rounded-3xl glass-panel p-6 sm:p-8 shadow-2xl">
-      {/* HUD Bar */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-        <div className="flex items-center gap-2">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45 }}
+      className="rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl"
+    >
+      {/* Cabecera compacta */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-overlay0/40 mb-6">
+        <div className="flex items-center gap-2.5">
           <Radio className="h-4 w-4 text-gold animate-pulse" />
-          <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
-            RED NACIONAL DE PERITAJE · PARAGUAY
-          </span>
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold block">
+              COBERTURA GEORREFERENCIADA
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+              Red Operativa en Paraguay
+            </h2>
+          </div>
         </div>
-        <span className="text-xs font-mono text-green bg-green/10 border border-green/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-green animate-ping" />
-          4 NODOS ACTIVOS
+        <span className="text-xs font-mono text-green bg-green/10 border border-green/30 px-3 py-1 rounded-full flex items-center gap-2 font-bold">
+          <span className="h-2 w-2 rounded-full bg-green animate-ping" />
+          10 PERITOS EN TERRITORIO
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        
-        {/* Columna Izquierda: Mapa Vectorial Geográfico */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center">
-          <div className="relative w-full max-w-[360px] aspect-[4/5] bg-surface1/60 rounded-3xl p-4 border border-white/[0.08] flex items-center justify-center overflow-hidden">
-            
-            <svg viewBox="0 0 400 480" className="w-full h-full drop-shadow-2xl">
-              {/* Contorno Chaco (Occidental) */}
+        {/* Mapa SVG con enlaces animados desde Asunción HQ */}
+        <div className="lg:col-span-6 flex items-center justify-center">
+          <div className="relative w-full max-w-[380px] aspect-[4/4.6] bg-mantle/80 rounded-3xl p-4 border border-overlay0/50 flex items-center justify-center overflow-hidden shadow-inner">
+            <svg viewBox="0 0 400 440" className="w-full h-full">
+              {/* Región Occidental (Chaco) */}
               <path
-                d="M 120 40 L 210 50 L 230 140 L 195 240 L 120 220 L 70 160 Z"
+                d="M 110 35 L 210 45 L 230 135 L 195 245 L 115 215 L 65 155 Z"
                 fill="currentColor"
-                className="text-surface2/40 hover:text-surface2/60 transition-colors"
-                stroke="rgba(255, 255, 255, 0.12)"
+                className="text-surface2/40"
+                stroke="rgba(148, 163, 184, 0.25)"
                 strokeWidth="1.5"
               />
-              <text x="110" y="140" fill="currentColor" className="text-[10px] text-subtext0/70 font-mono font-bold tracking-widest select-none">
-                CHACO
+              <text
+                x="115"
+                y="135"
+                fill="currentColor"
+                className="text-[9px] text-subtext0/60 font-mono font-bold tracking-widest select-none"
+              >
+                REGIÓN OCCIDENTAL
               </text>
 
-              {/* Río Paraguay divisor */}
+              {/* Río Paraguay */}
               <path
-                d="M 210 50 Q 225 150 195 240 T 175 320 T 190 380"
+                d="M 210 45 Q 225 145 195 245 T 175 320 T 190 380"
                 fill="none"
                 stroke="#38bdf8"
-                strokeWidth="2.5"
-                strokeDasharray="4 2"
-                opacity="0.85"
+                strokeWidth="2"
+                strokeDasharray="4 3"
+                opacity="0.7"
               />
 
-              {/* Contorno Región Oriental */}
+              {/* Región Oriental */}
               <path
-                d="M 210 50 L 290 80 L 330 160 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 240 Q 225 150 210 50 Z"
+                d="M 210 45 L 290 75 L 330 155 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 245 Q 225 145 210 45 Z"
                 fill="currentColor"
-                className="text-surface2/80 hover:text-surface2 transition-colors"
-                stroke="rgba(229, 192, 123, 0.4)"
+                className="text-surface2/80"
+                stroke="rgba(229, 192, 123, 0.45)"
                 strokeWidth="2"
               />
-              <text x="245" y="160" fill="currentColor" className="text-[10px] text-gold/60 font-mono font-bold tracking-widest select-none">
-                ORIENTAL
-              </text>
+
+              {/* Líneas de enlace de telemetría desde Asunción HQ hacia los nodos */}
+              {ZONAS_OPERATIVAS.slice(1).map((zone) => (
+                <g key={`link-${zone.id}`}>
+                  <line
+                    x1={hqCoords.x}
+                    y1={hqCoords.y}
+                    x2={zone.coords.x}
+                    y2={zone.coords.y}
+                    stroke="rgba(229, 192, 123, 0.28)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
+                  <motion.circle
+                    r="3"
+                    fill="#E5C07B"
+                    animate={{
+                      cx: [hqCoords.x, zone.coords.x],
+                      cy: [hqCoords.y, zone.coords.y],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 2.4,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                </g>
+              ))}
 
               {/* Nodos Interactivos */}
               {ZONAS_OPERATIVAS.map((zone) => {
@@ -134,13 +166,14 @@ export function ParaguayOperationalMap() {
                   <g
                     key={zone.id}
                     onClick={() => setSelectedZone(zone)}
-                    className="cursor-pointer group"
+                    onMouseEnter={() => setSelectedZone(zone)}
+                    className="cursor-pointer"
                   >
                     {isSelected && (
                       <circle
                         cx={zone.coords.x}
                         cy={zone.coords.y}
-                        r="18"
+                        r="20"
                         fill="none"
                         stroke="#E5C07B"
                         strokeWidth="1.5"
@@ -150,96 +183,126 @@ export function ParaguayOperationalMap() {
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
-                      r={isSelected ? "11" : "7"}
+                      r={isSelected ? "12" : "8"}
                       fill={isSelected ? "rgba(229, 192, 123, 0.35)" : "rgba(16, 185, 129, 0.25)"}
                       stroke={isSelected ? "#E5C07B" : "#10b981"}
                       strokeWidth="2"
-                      className="transition-all duration-200"
                     />
                     <circle
                       cx={zone.coords.x}
                       cy={zone.coords.y}
-                      r="4"
+                      r="4.5"
                       fill={isSelected ? "#E5C07B" : "#10b981"}
                     />
                     <text
                       x={zone.coords.x + 14}
                       y={zone.coords.y + 4}
-                      fill={isSelected ? "#E5C07B" : "#cbd5e1"}
-                      className={`text-[11px] font-mono font-bold select-none ${isSelected ? "text-gold font-black" : ""}`}
+                      fill={isSelected ? "#E5C07B" : "#94a3b8"}
+                      className="text-[10px] font-mono font-bold select-none"
                     >
-                      {zone.name.split(" ")[0]}
+                      {zone.shortName}
                     </text>
                   </g>
                 );
               })}
             </svg>
 
-            <div className="absolute bottom-3 left-4 text-[9px] font-mono text-subtext0 flex items-center gap-1">
+            <div className="absolute bottom-3 left-4 text-[10px] font-mono text-subtext0 flex items-center gap-1.5">
               <Navigation className="h-3 w-3 text-gold" />
-              <span>Clic para consultar tiempos de respuesta</span>
+              <span>Pasa el cursor o haz clic sobre un nodo</span>
             </div>
           </div>
         </div>
 
-        {/* Columna Derecha: Tarjeta de Zona Seleccionada */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
-                Cabecera Seleccionada
-              </span>
-              <h3 className="text-xl font-black text-text mt-0.5">{selectedZone.name}</h3>
-              <p className="text-xs text-subtext0">{selectedZone.departamento}</p>
-            </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green/15 text-green border border-green/30">
-              {selectedZone.status}
-            </span>
+        {/* Panel Derecho de Telemetría Regional */}
+        <div className="lg:col-span-6 space-y-5">
+          {/* Selector rápido por botones */}
+          <div className="flex flex-wrap gap-2">
+            {ZONAS_OPERATIVAS.map((z) => {
+              const active = selectedZone.id === z.id;
+              return (
+                <button
+                  key={z.id}
+                  type="button"
+                  onClick={() => setSelectedZone(z)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer border ${
+                    active
+                      ? "bg-gold text-black border-gold shadow-md shadow-gold/20"
+                      : "bg-surface1 text-subtext0 border-overlay0/50 hover:text-text"
+                  }`}
+                >
+                  {z.shortName}
+                </button>
+              );
+            })}
           </div>
 
-          <p className="text-xs text-subtext0 leading-relaxed font-normal">
-            {selectedZone.detalles}
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-surface1 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-gold font-semibold mb-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Tiempo de Respuesta</span>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedZone.id}
+              initial={{ opacity: 0, x: 14 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -14 }}
+              transition={{ duration: 0.22 }}
+              className="rounded-2xl border border-overlay0/60 bg-surface1/60 p-6 space-y-5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-gold font-bold">
+                    NODO OPERATIVO SELECCIONADO
+                  </span>
+                  <h3 className="text-xl font-black text-text mt-0.5">{selectedZone.name}</h3>
+                </div>
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-green/15 text-green border border-green/30 shrink-0">
+                  {selectedZone.status}
+                </span>
               </div>
-              <p className="text-sm font-black text-text font-mono">{selectedZone.sla}</p>
-            </div>
 
-            <div className="p-3.5 rounded-2xl bg-surface1 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-blue font-semibold mb-1">
-                <Users className="h-3.5 w-3.5" />
-                <span>Peritos en Zona</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-surface0 border border-overlay0/50">
+                  <div className="flex items-center gap-1.5 text-gold text-xs font-bold mb-1">
+                    <Clock className="h-4 w-4" />
+                    <span>SLA de Entrega</span>
+                  </div>
+                  <p className="text-2xl font-black text-text font-mono">{selectedZone.sla}</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface0 border border-overlay0/50">
+                  <div className="flex items-center gap-1.5 text-blue text-xs font-bold mb-1">
+                    <Users className="h-4 w-4" />
+                    <span>Capacidad Local</span>
+                  </div>
+                  <p className="text-2xl font-black text-text font-mono">{selectedZone.peritos} Peritos</p>
+                </div>
               </div>
-              <p className="text-sm font-black text-text font-mono">{selectedZone.peritos} evaluadores</p>
-            </div>
-          </div>
 
-          <div className="space-y-1.5 text-xs text-subtext0 font-mono text-[11px]">
-            <div>
-              <strong className="text-text">Cobertura: </strong>
-              <span>{selectedZone.ciudades.join(", ")}.</span>
-            </div>
-            <div>
-              <strong className="text-text">Rutas: </strong>
-              <span>{selectedZone.rutas}.</span>
-            </div>
-          </div>
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-wider text-subtext0 font-bold mb-2">
+                  MUNICIPIOS CUBIERTOS SIN COSTO EXTRA DE RUTA
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedZone.ciudades.map((ciudad) => (
+                    <span
+                      key={ciudad}
+                      className="px-2.5 py-1 rounded-lg bg-surface0 border border-overlay0/50 text-xs font-semibold text-text"
+                    >
+                      {ciudad}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-          <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs text-subtext0">
-            <span className="flex items-center gap-1.5 text-green font-semibold">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Certificación in situ GPS</span>
-            </span>
-            <span className="font-mono text-gold font-bold">100% Cobertura</span>
-          </div>
+              <div className="pt-3 border-t border-overlay0/40 flex items-center justify-between text-xs text-subtext0">
+                <span className="flex items-center gap-1.5 text-green font-bold">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Georreferenciación GPS Obligatoria</span>
+                </span>
+                <span className="font-mono text-gold font-bold">Ley N° 6534/20</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
-
       </div>
-    </div>
+    </motion.div>
   );
 }
