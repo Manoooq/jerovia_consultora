@@ -197,8 +197,7 @@ export default function UsuariosPage() {
       setPassword("");
       setRole("evaluador");
       setCreateModalOpen(false);
-      await loadUsuarios();
-      await loadAudit();
+      await Promise.all([loadUsuarios(), loadAudit()]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al registrar usuario.");
     } finally {
@@ -238,8 +237,7 @@ export default function UsuariosPage() {
 
       setSuccess(`Registro de ${data.name} actualizado.`);
       setEditModal(null);
-      await loadUsuarios();
-      await loadAudit();
+      await Promise.all([loadUsuarios(), loadAudit()]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al guardar cambios.");
     } finally {
@@ -286,8 +284,7 @@ export default function UsuariosPage() {
         throw new Error(d.error || "No se pudo cambiar el estado.");
       }
       setSuccess(`Estado de ${u.name} modificado a ${!u.activo ? "Activo" : "Bloqueado"}.`);
-      await loadUsuarios();
-      await loadAudit();
+      await Promise.all([loadUsuarios(), loadAudit()]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al cambiar estado.");
     }
@@ -306,8 +303,7 @@ export default function UsuariosPage() {
       }
       setSuccess(`Usuario ${deleteModal.name} eliminado.`);
       setDeleteModal(null);
-      await loadUsuarios();
-      await loadAudit();
+      await Promise.all([loadUsuarios(), loadAudit()]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al eliminar.");
     } finally {
