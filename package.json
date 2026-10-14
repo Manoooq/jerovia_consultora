@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.9.1",
     "@types/leaflet": "^1.9.22",
+    "@vercel/functions": "^3.10.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.6",
@@ -30,7 +31,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^9.39.5",
     "eslint-config-next": "16.3.7",
     "tailwindcss": "^4",
     "typescript": "^5"

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { verificarCredenciales } from "@/lib/users";
 import { createSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { ipAddress } from "@vercel/functions";
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "localhost";
+    const ip = ipAddress(req) ?? "127.0.0.1";
     const rateCheck = checkRateLimit(`login_${ip}`, 8, 60 * 1000);
 
     if (!rateCheck.allowed) {
