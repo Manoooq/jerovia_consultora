@@ -9,6 +9,18 @@ interface VoiceCaptureProps {
   onExtracted: (data: Record<string, unknown>) => void;
 }
 
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
 // Extractor local instantáneo en 0ms mediante expresiones regulares
 function extraerCamposLocales(texto: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -76,8 +88,7 @@ export function VoiceCapture({ onExtracted }: VoiceCaptureProps) {
       recognition.interimResults = true;
       recognition.lang = "es-PY";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let transcript = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
