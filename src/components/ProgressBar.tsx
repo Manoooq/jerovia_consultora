@@ -1,84 +1,117 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Circle, ChevronRight } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const PASOS = [
-  { id: 1, label: "Personal", short: "Datos personales" },
-  { id: 2, label: "Académico", short: "Formación" },
-  { id: 3, label: "Laboral", short: "Trayectoria" },
-  { id: 4, label: "Perfil", short: "Psicolaboral" },
-  { id: 5, label: "Familia", short: "Entorno familiar" },
-  { id: 6, label: "Salud", short: "Estado de salud" },
-  { id: 7, label: "Economía", short: "Situación económica" },
-  { id: 8, label: "Vivienda", short: "Condiciones habitacionales" },
-  { id: 9, label: "Revisión", short: "Conclusiones" },
+export const PASOS_CONFIG = [
+  { id: 1, label: "Personal", desc: "Identificación y contacto" },
+  { id: 2, label: "Académico", desc: "Formación y estudios" },
+  { id: 3, label: "Laboral", desc: "Trayectoria y referencias" },
+  { id: 4, label: "Perfil", desc: "Evaluación psicosocial" },
+  { id: 5, label: "Familia", desc: "Composición del hogar" },
+  { id: 6, label: "Salud", desc: "Antecedentes médicos" },
+  { id: 7, label: "Economía", desc: "Ingresos, egresos y deudas" },
+  { id: 8, label: "Vivienda", desc: "Inspección in situ y GPS" },
+  { id: 9, label: "Dictamen", desc: "Conclusión pericial" },
 ];
 
 interface ProgressBarProps {
   pasoActual: number;
+  maxPasoAlcanzado?: number;
+  onStepSelect?: (paso: number) => void;
   className?: string;
 }
 
-export function ProgressBar({ pasoActual, className }: ProgressBarProps) {
-  const progreso = ((pasoActual - 1) / (PASOS.length - 1)) * 100;
+export function ProgressBar({
+  pasoActual,
+  maxPasoAlcanzado = pasoActual,
+  onStepSelect,
+  className,
+}: ProgressBarProps) {
+  const progreso = Math.round(((pasoActual - 1) / (PASOS_CONFIG.length - 1)) * 100);
+  const currentStepObj = PASOS_CONFIG[pasoActual - 1] || PASOS_CONFIG[0];
 
   return (
-    <div className={cn("w-full select-none", className)}>
-      {/* Barra lineal */}
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-xs font-semibold text-subtext0 uppercase tracking-wider">
-          Módulo {pasoActual} de {PASOS.length}
-        </span>
-        <span className="text-xs font-bold text-gold">
-          {Math.round(progreso)}% completado
+    <div className={cn("w-full select-none space-y-3", className)}>
+      {/* Cabecera de progreso con números tabulares */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold text-xs font-mono font-bold tabular-nums shrink-0">
+            {pasoActual} / {PASOS_CONFIG.length}
+          </span>
+          <span className="text-xs sm:text-sm font-bold text-text truncate">
+            {currentStepObj.label}
+          </span>
+          <span className="hidden sm:inline text-xs text-subtext0 truncate">
+            • {currentStepObj.desc}
+          </span>
+        </div>
+
+        <span className="text-xs font-mono font-bold text-gold tabular-nums shrink-0">
+          {progreso}%
         </span>
       </div>
-      <div className="relative h-2 w-full rounded-full bg-surface2 overflow-hidden">
+
+      {/* Barra lineal continua */}
+      <div
+        role="progressbar"
+        aria-valuenow={progreso}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Progreso del relevamiento: módulo ${pasoActual} de ${PASOS_CONFIG.length}`}
+        className="relative h-1.5 w-full rounded-full bg-surface2 overflow-hidden"
+      >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-gold to-gold-light transition-all duration-300 ease-out"
+          className="h-full rounded-full bg-gold transition-all duration-300 ease-out"
           style={{ width: `${progreso}%` }}
         />
       </div>
 
-      {/* Pasos en móvil: solo el paso actual y los adyacentes */}
-      <div className="hidden sm:flex items-center gap-1 mt-4 overflow-x-auto pb-1 scrollbar-none">
-        {PASOS.map((paso, idx) => {
+      {/* Selector horizontal deslizable (Funciona en Celular y en PC) */}
+      <nav
+        aria-label="Módulos del cuestionario"
+        className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar"
+      >
+        {PASOS_CONFIG.map((paso) => {
           const completado = paso.id < pasoActual;
           const activo = paso.id === pasoActual;
-          const futuro = paso.id > pasoActual;
+          const desbloqueado = paso.id <= Math.max(pasoActual, maxPasoAlcanzado);
 
           return (
-            <div key={paso.id} className="flex items-center gap-1 shrink-0">
-              <div className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                activo && "bg-gold text-black shadow-sm font-bold",
-                completado && "bg-green/15 text-green",
-                futuro && "text-subtext0/70"
-              )}>
-                {completado ? (
-                  <CheckCircle className="h-3 w-3" />
-                ) : (
-                  <Circle className={cn("h-3 w-3", activo ? "text-black fill-black/20" : "text-subtext0/50")} />
-                )}
-                <span className={futuro ? "hidden md:inline" : ""}>{paso.label}</span>
-              </div>
-              {idx < PASOS.length - 1 && (
-                <ChevronRight className={cn("h-3 w-3 shrink-0", completado ? "text-green" : "text-overlay0/40")} />
+            <button
+              key={paso.id}
+              type="button"
+              disabled={!desbloqueado || !onStepSelect}
+              onClick={() => desbloqueado && onStepSelect?.(paso.id)}
+              aria-current={activo ? "step" : undefined}
+              title={`${paso.id}. ${paso.label}: ${paso.desc}`}
+              className={cn(
+                "min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 border transition-all",
+                activo &&
+                  "bg-gold text-black border-gold font-bold shadow-2xs cursor-default",
+                !activo &&
+                  completado &&
+                  "bg-green/10 text-green border-green/30 hover:bg-green/20 cursor-pointer",
+                !activo &&
+                  !completado &&
+                  desbloqueado &&
+                  "bg-surface1 text-text border-overlay0/70 hover:border-gold/50 cursor-pointer",
+                !desbloqueado &&
+                  "bg-surface1/40 text-subtext0/50 border-overlay0/30 cursor-not-allowed"
               )}
-            </div>
+            >
+              {completado ? (
+                <Check className="h-3 w-3 shrink-0" aria-hidden="true" />
+              ) : !desbloqueado ? (
+                <Lock className="h-2.5 w-2.5 shrink-0 opacity-60" aria-hidden="true" />
+              ) : (
+                <span className="font-mono text-[11px] tabular-nums">{paso.id}.</span>
+              )}
+              <span>{paso.label}</span>
+            </button>
           );
         })}
-      </div>
-
-      {/* Móvil: solo nombre del paso actual */}
-      <div className="sm:hidden mt-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-gold">{PASOS[pasoActual - 1]?.label}</span>
-          <span className="text-xs text-subtext0 font-medium">— {PASOS[pasoActual - 1]?.short}</span>
-        </div>
-      </div>
+      </nav>
     </div>
   );
 }
