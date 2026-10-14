@@ -16,6 +16,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const AUDIT_FILE = path.join(DATA_DIR, "auditoria.json");
 
 let auditCache: AuditEntry[] = [];
+let writePromise: Promise<void> = Promise.resolve();
 
 function initAudit() {
   try {
@@ -70,16 +71,19 @@ function initAudit() {
 }
 
 function persistAudit() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  const trimmed = auditCache.slice(-300);
+  const data = JSON.stringify(trimmed, null, 2);
+
+  writePromise = writePromise.then(async () => {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        await fs.promises.mkdir(DATA_DIR, { recursive: true });
+      }
+      await fs.promises.writeFile(AUDIT_FILE, data, "utf-8");
+    } catch (err) {
+      console.warn("[persistAudit warn]:", err);
     }
-    // Mantener los últimos 300 eventos de auditoría
-    const trimmed = auditCache.slice(-300);
-    fs.writeFileSync(AUDIT_FILE, JSON.stringify(trimmed, null, 2), "utf-8");
-  } catch (err) {
-    console.warn("[persistAudit warn]:", err);
-  }
+  });
 }
 
 initAudit();
