@@ -100,15 +100,31 @@ function initUsers() {
   persistUsers();
 }
 
-function persistUsers() {
+let isWriting = false;
+let writePending = false;
+
+async function persistUsers() {
+  if (isWriting) {
+    writePending = true;
+    return;
+  }
+
+  isWriting = true;
+  writePending = false;
+
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     const list = Array.from(usersStore.values());
-    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    await fs.promises.writeFile(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
     console.warn("[persistUsers warn]:", err);
+  } finally {
+    isWriting = false;
+    if (writePending) {
+      persistUsers();
+    }
   }
 }
 
