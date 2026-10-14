@@ -21,8 +21,7 @@ export function Paso9_Conclusion({ defaultValues, data, onNext, onPrev }: PasoPr
 
   const {
     register, handleSubmit, setValue, watch, formState: { errors },
-  // @ts-expect-error — known zodResolver/RHF type mismatch with .optional().default()
-  } = useForm<Paso9Data>({ resolver: zodResolver(paso9Schema), defaultValues: { ...defaultValues }, ...({ f: 1 } as unknown) });
+  } = useForm<Paso9Data>({ resolver: zodResolver(paso9Schema), defaultValues: { ...defaultValues } });
 
   const handleSintetizar = async () => {
     setSintetizando(true);
