@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import type { SafeUser, UserRole } from "@/lib/users";
 
 export const AUTH_COOKIE = "jerovia_session";
-const SECRET = process.env.AUTH_SECRET || "jerovia_secret_key_prod_2026_super_secure";
+const SECRET =
+  process.env.AUTH_SECRET || "jerovia_secret_key_prod_2026_super_secure";
+const MAX_SESSION_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 días máximo
 
 export interface SessionPayload {
   userId: string;
@@ -13,9 +15,6 @@ export interface SessionPayload {
   createdAt: number;
 }
 
-/**
- * Codificación Base64URL portable para Node y Edge
- */
 function toBase64Url(str: string): string {
   if (typeof Buffer !== "undefined") {
     return Buffer.from(str).toString("base64url");
@@ -31,10 +30,9 @@ function fromBase64Url(b64: string): string {
   return atob(clean);
 }
 
-/**
- * Genera un token HMAC firmado usando Web Crypto API (Edge & Node compatible)
- */
-export async function signAuthToken(payload: Record<string, unknown>): Promise<string> {
+export async function signAuthToken(
+  payload: Record<string, unknown>
+): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -55,17 +53,19 @@ export async function signAuthToken(payload: Record<string, unknown>): Promise<s
     for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
-    b64Sig = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    b64Sig = btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
   }
 
   const b64Payload = toBase64Url(jsonStr);
   return `${b64Payload}.${b64Sig}`;
 }
 
-/**
- * Verifica un token firmado usando Web Crypto API
- */
-export async function verifyAuthToken(token: string): Promise<SessionPayload | null> {
+export async function verifyAuthToken(
+  token: string
+): Promise<SessionPayload | null> {
   try {
     const [b64Payload, b64Sig] = token.split(".");
     if (!b64Payload || !b64Sig) return null;
@@ -99,17 +99,24 @@ export async function verifyAuthToken(token: string): Promise<SessionPayload | n
     );
 
     if (!valid) return null;
-    return JSON.parse(payloadStr) as SessionPayload;
+    const parsed = JSON.parse(payloadStr) as SessionPayload;
+
+    // Verificar expiración temporal del token
+    if (
+      !parsed.createdAt ||
+      Date.now() - parsed.createdAt > MAX_SESSION_AGE_MS
+    ) {
+      return null;
+    }
+
+    return parsed;
   } catch {
     return null;
   }
 }
 
-/**
- * Establece la cookie de sesión autenticada con rol (admin o evaluador)
- */
 export async function createSession(user: SafeUser, remember = false) {
-  const maxAge = remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 1; // 30 días o 24 horas
+  const maxAge = remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 1;
   const payload: SessionPayload = {
     userId: user.id,
     username: user.username,
@@ -119,7 +126,9 @@ export async function createSession(user: SafeUser, remember = false) {
     createdAt: Date.now(),
   };
 
-  const token = await signAuthToken(payload as unknown as Record<string, unknown>);
+  const token = await signAuthToken(
+    payload as unknown as Record<string, unknown>
+  );
 
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE, token, {
@@ -131,9 +140,6 @@ export async function createSession(user: SafeUser, remember = false) {
   });
 }
 
-/**
- * Mantenido por retrocompatibilidad
- */
 export async function createAdminSession(email: string, remember = false) {
   return createSession(
     {
@@ -149,9 +155,6 @@ export async function createAdminSession(email: string, remember = false) {
   );
 }
 
-/**
- * Elimina la cookie de sesión
- */
 export async function removeSession() {
   const cookieStore = await cookies();
   cookieStore.delete(AUTH_COOKIE);
@@ -159,9 +162,6 @@ export async function removeSession() {
 
 export const removeAdminSession = removeSession;
 
-/**
- * Obtiene la sesión actual desde el servidor
- */
 export async function getSession(): Promise<SessionPayload | null> {
   try {
     const cookieStore = await cookies();

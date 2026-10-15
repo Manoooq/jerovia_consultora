@@ -20,14 +20,13 @@ export interface User {
 
 export type SafeUser = Omit<User, "passwordHash" | "passwordSalt">;
 
-/**
- * Genera contraseñas aleatorias de alta seguridad para asignación a evaluadores
- */
 export function generarContrasenaSegura(): string {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%*";
+  const randomValues = new Uint32Array(10);
+  crypto.getRandomValues(randomValues);
   let pwd = "Jv-";
-  for (let i = 0; i < 9; i++) {
-    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < randomValues.length; i++) {
+    pwd += chars.charAt(randomValues[i] % chars.length);
   }
   return pwd;
 }
@@ -35,7 +34,10 @@ export function generarContrasenaSegura(): string {
 const DATA_DIR = path.join(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "usuarios.json");
 
-export async function hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
+export async function hashPassword(
+  password: string,
+  salt?: string
+): Promise<{ hash: string; salt: string }> {
   const actualSalt = salt || crypto.randomUUID().replace(/-/g, "");
   const enc = new TextEncoder();
   const data = enc.encode(`${actualSalt}:${password}`);
@@ -45,12 +47,22 @@ export async function hashPassword(password: string, salt?: string): Promise<{ h
   return { hash, salt: actualSalt };
 }
 
-export async function verifyPassword(password: string, hash: string, salt: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string,
+  salt: string
+): Promise<boolean> {
   const computed = await hashPassword(password, salt);
-  return computed.hash === hash;
+  if (computed.hash.length !== hash.length) return false;
+  let diff = 0;
+  for (let i = 0; i < computed.hash.length; i++) {
+    diff |= computed.hash.charCodeAt(i) ^ hash.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 const usersStore = new Map<string, User>();
+let persistUsersTimer: ReturnType<typeof setTimeout> | null = null;
 
 function seedDefaultUsers() {
   usersStore.set("usr_admin_01", {
@@ -59,7 +71,8 @@ function seedDefaultUsers() {
     email: "admin@jerovia.com.py",
     name: "Lic. Michelle Romero",
     role: "admin",
-    passwordHash: "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
+    passwordHash:
+      "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
     passwordSalt: "salt_adm_2026",
     activo: true,
     creadoEn: "2026-09-01T08:00:00.000Z",
@@ -71,7 +84,8 @@ function seedDefaultUsers() {
     email: "evaluador@jerovia.com.py",
     name: "Lic. Carlos Benítez",
     role: "evaluador",
-    passwordHash: "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
+    passwordHash:
+      "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
     passwordSalt: "salt_eval_2026",
     activo: true,
     creadoEn: "2026-09-15T09:30:00.000Z",
@@ -101,15 +115,20 @@ function initUsers() {
 }
 
 function persistUsers() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (persistUsersTimer) clearTimeout(persistUsersTimer);
+  persistUsersTimer = setTimeout(async () => {
+    try {
+      await fs.promises.mkdir(DATA_DIR, { recursive: true });
+      const list = Array.from(usersStore.values());
+      await fs.promises.writeFile(
+        USERS_FILE,
+        JSON.stringify(list, null, 2),
+        "utf-8"
+      );
+    } catch (err) {
+      console.warn("[persistUsers warn]:", err);
     }
-    const list = Array.from(usersStore.values());
-    fs.writeFileSync(USERS_FILE, JSON.stringify(list, null, 2), "utf-8");
-  } catch (err) {
-    console.warn("[persistUsers warn]:", err);
-  }
+  }, 50);
 }
 
 initUsers();
@@ -137,11 +156,16 @@ export function obtenerUsuarioPorId(id: string): User | undefined {
   return usersStore.get(id);
 }
 
-export function obtenerUsuarioPorIdentificador(identifier: string): User | undefined {
+export function obtenerUsuarioPorIdentificador(
+  identifier: string
+): User | undefined {
   if (usersStore.size === 0) initUsers();
   const clean = identifier.toLowerCase().trim();
   for (const user of usersStore.values()) {
-    if (user.username.toLowerCase() === clean || user.email.toLowerCase() === clean) {
+    if (
+      user.username.toLowerCase() === clean ||
+      user.email.toLowerCase() === clean
+    ) {
       return user;
     }
   }
@@ -155,7 +179,9 @@ export async function crearUsuario(datos: {
   role: UserRole;
   password: string;
 }): Promise<SafeUser> {
-  const existing = obtenerUsuarioPorIdentificador(datos.username) || obtenerUsuarioPorIdentificador(datos.email);
+  const existing =
+    obtenerUsuarioPorIdentificador(datos.username) ||
+    obtenerUsuarioPorIdentificador(datos.email);
   if (existing) {
     throw new Error("El nombre de usuario o correo ya se encuentra registrado.");
   }
@@ -192,7 +218,10 @@ export function actualizarUsuario(
   return toSafeUser(updated);
 }
 
-export async function cambiarContrasena(id: string, nuevaContrasena: string): Promise<boolean> {
+export async function cambiarContrasena(
+  id: string,
+  nuevaContrasena: string
+): Promise<boolean> {
   const user = usersStore.get(id);
   if (!user) return false;
   if (nuevaContrasena.length < 6) {
@@ -210,18 +239,27 @@ export function eliminarUsuario(id: string): boolean {
   const user = usersStore.get(id);
   if (!user) return false;
   if (user.username === "admin") {
-    throw new Error("No es posible eliminar la cuenta principal de administración.");
+    throw new Error(
+      "No es posible eliminar la cuenta principal de administración."
+    );
   }
   const deleted = usersStore.delete(id);
   if (deleted) persistUsers();
   return deleted;
 }
 
-export async function verificarCredenciales(identifier: string, password: string): Promise<SafeUser | null> {
+export async function verificarCredenciales(
+  identifier: string,
+  password: string
+): Promise<SafeUser | null> {
   const user = obtenerUsuarioPorIdentificador(identifier);
   if (!user || !user.activo) return null;
 
-  const valid = await verifyPassword(password, user.passwordHash, user.passwordSalt);
+  const valid = await verifyPassword(
+    password,
+    user.passwordHash,
+    user.passwordSalt
+  );
   if (!valid) return null;
 
   user.ultimoAcceso = new Date().toISOString();

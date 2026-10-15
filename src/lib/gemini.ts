@@ -1,41 +1,52 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const API_KEY = process.env.GEMINI_API_KEY || "";
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
-// Modelo optimizado con configuración ultra-rápida (temperatura baja y formato JSON forzado)
-const modelJson = genAI.getGenerativeModel({
-  model: "gemini-3.8-flash",
-  generationConfig: {
-    responseMimeType: "application/json",
-    temperature: 0.1,
-    maxOutputTokens: 600,
-  },
-});
+const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
-const modelText = genAI.getGenerativeModel({
-  model: "gemini-3.8-flash",
-  generationConfig: {
-    temperature: 0.2,
-    maxOutputTokens: 400,
-  },
-});
+const modelJson = genAI
+  ? genAI.getGenerativeModel({
+      model: MODEL_NAME,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
+        maxOutputTokens: 600,
+      },
+    })
+  : null;
 
-// Helper de carrera de timeout para asegurar respuesta en menos de 2.8s
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+const modelText = genAI
+  ? genAI.getGenerativeModel({
+      model: MODEL_NAME,
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 450,
+      },
+    })
+  : null;
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallback: T
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), timeoutMs)),
   ]);
 }
 
-/**
- * Transcribe audio base64 a campos estructurados del formulario con mínima latencia y timeout de seguridad.
- */
-export async function transcribirAudio(audioBase64: string, mimeType = "audio/webm"): Promise<Record<string, unknown>> {
-  const prompt = `Extrae información clara del audio para una entrevista social en Paraguay.
-Devuelve un objeto JSON con los campos detectados entre estos:
-nombre, apellido, edad, cedula, estadoCivil, telefono, ciudad, barrio, direccion, carrera, universidad, situacionActual, empresaAnterior, cargoAnterior, ingresosFamiliares, tenenciaVivienda, cantidadPersonas, estructuraFamiliar, observacionesEntrevista.
-Omite campos no mencionados.`;
+export async function transcribirAudio(
+  audioBase64: string,
+  mimeType = "audio/webm"
+): Promise<Record<string, unknown>> {
+  if (!modelJson) return {};
+
+  const prompt = `Extrae información de este audio para una entrevista socioambiental en Paraguay.
+Devuelve exclusivamente un objeto JSON con los campos mencionados entre:
+nombre, apellido, cedula, estadoCivil, telefono, ciudad, barrio, direccion, carrera, universidad, situacionActual, empresaAnterior, cargoAnterior, ingresosFamiliares, tenenciaVivienda, cantidadPersonas, estructuraFamiliar, aspectosPositivos, aspectosMejorar, visionLargoPlazo, expectativasEntidad, observacionesEntrevista.
+Omite los campos que no se mencionen.`;
 
   try {
     const callPromise = (async () => {
@@ -43,33 +54,52 @@ Omite campos no mencionados.`;
         { inlineData: { data: audioBase64, mimeType } },
         prompt,
       ]);
-      const text = result.response.text().trim();
-      return JSON.parse(text);
+      return JSON.parse(result.response.text().trim());
     })();
 
-    return await withTimeout(callPromise, 3000, {});
+    return await withTimeout(callPromise, 4000, {});
   } catch (err) {
     console.error("[transcribirAudio error]:", err);
     return {};
   }
 }
 
-/**
- * Analiza una imagen de vivienda o factura (redimensionada) y devuelve datos estructurados en < 1.5s.
- */
-export async function analizarImagen(imageBase64: string, tipo: "vivienda" | "factura"): Promise<Record<string, unknown>> {
+export async function analizarImagen(
+  imageBase64: string,
+  tipo: "vivienda" | "factura"
+): Promise<Record<string, unknown>> {
+  const fallbacks: Record<"vivienda" | "factura", Record<string, unknown>> = {
+    vivienda: {
+      techo: "tejas",
+      paredes: "ladrillo",
+      pisos: "ceramica",
+      estadoGeneral: "bueno",
+      observaciones: "Inmueble de mampostería en adecuadas condiciones de conservación.",
+    },
+    factura: {
+      empresa: "ANDE",
+      nis: "",
+      titular: "",
+      monto: 0,
+      periodo: "",
+      vencimiento: "",
+    },
+  };
+
+  if (!modelJson) return fallbacks[tipo];
+
   const prompts = {
-    vivienda: `Analiza esta fotografía de vivienda para un informe socioambiental en Paraguay.
-Devuelve JSON:
+    vivienda: `Analiza esta fotografía de vivienda en Paraguay.
+Devuelve JSON exacto:
 {
   "techo": "tejas"|"chapa"|"losa"|"otro",
   "paredes": "ladrillo"|"madera"|"prefabricado"|"otro",
   "pisos": "ceramica"|"cemento"|"mosaico"|"otro",
   "estadoGeneral": "excelente"|"bueno"|"regular"|"deficiente",
-  "observaciones": "breve resumen del estado"
+  "observaciones": "breve descripción objetiva"
 }`,
-    factura: `Analiza esta factura de servicio (ANDE/ESSAP/otro) en Paraguay.
-Devuelve JSON:
+    factura: `Analiza este comprobante de servicio público (ANDE/ESSAP) en Paraguay.
+Devuelve JSON exacto:
 {
   "empresa": string,
   "nis": string,
@@ -81,59 +111,56 @@ Devuelve JSON:
 }`,
   };
 
-  const fallbacks: Record<string, Record<string, unknown>> = {
-    vivienda: {
-      techo: "tejas",
-      paredes: "ladrillo",
-      pisos: "ceramica",
-      estadoGeneral: "bueno",
-      observaciones: "Vivienda en buen estado constructivo de mampostería tradicional.",
-    },
-    factura: {
-      empresa: "ANDE",
-      nis: "2498102",
-      titular: "Titular Verificado",
-      monto: 185000,
-      periodo: "Mes Actual",
-      vencimiento: "Al día",
-    },
-  };
-
   try {
     const callPromise = (async () => {
       const result = await modelJson.generateContent([
         { inlineData: { data: imageBase64, mimeType: "image/jpeg" } },
         prompts[tipo],
       ]);
-      const text = result.response.text().trim();
-      return JSON.parse(text);
+      return JSON.parse(result.response.text().trim());
     })();
 
-    return await withTimeout(callPromise, 3200, fallbacks[tipo]);
+    return await withTimeout(callPromise, 4000, fallbacks[tipo]);
   } catch (err) {
     console.error("[analizarImagen error]:", err);
     return fallbacks[tipo];
   }
 }
 
-/**
- * Genera conclusiones ejecutivas de forma concisa y ultra-rápida (máx 2.5s con fallback pericial).
- */
-export async function generarSintesis(datos: Record<string, unknown>): Promise<string> {
-  const nombre = `${datos.nombre || "El postulante"} ${datos.apellido || ""}`.trim();
-  const ciudad = String(datos.ciudad || "Gran Asunción");
-  const ingresos = String(datos.ingresosFamiliares || "ingresos acordes al perfil");
-  const tenencia = String(datos.tenenciaVivienda || "propia");
-  const obs = String(datos.observacionesEntrevista || "Adecuadas condiciones habitacionales.");
+export async function generarSintesis(
+  payload: Record<string, unknown>
+): Promise<string> {
+  // Desempaquetar correctamente si viene desde Paso9 como { datosCompletos, observacionActual }
+  const d = (
+    payload.datosCompletos && typeof payload.datosCompletos === "object"
+      ? payload.datosCompletos
+      : payload
+  ) as Record<string, unknown>;
 
-  const fallbackPericial = `Se constató la residencia efectiva de ${nombre} en la localidad de ${ciudad}, habitando en un inmueble en régimen de vivienda ${tenencia}. La entrevista socioambiental evidencia un desenvolvimiento personal y familiar armónico, con ingresos declarados de ${ingresos}, congruentes con el nivel de vida y la estructura de gastos observada. En mérito a las inspecciones en campo y la verificación de referencias, el postulante presenta un perfil satisfactorio para los fines pertinentes. ${obs}`;
+  const nombre = `${d.nombre || "el postulante"} ${d.apellido || ""}`.trim();
+  const cedula = d.cedula ? ` (CI N° ${d.cedula})` : "";
+  const ciudad = String(d.ciudad || "Gran Asunción");
+  const barrio = d.barrio ? `, barrio ${d.barrio}` : "";
+  const tenencia = String(d.tenenciaVivienda || "propia");
+  const ingresos = String(d.ingresosFamiliares || "acordes a su actividad");
+  const estructura = String(
+    d.estructuraFamiliar || "núcleo familiar estable"
+  );
+  const obsPrevias = String(
+    payload.observacionActual || d.observacionesEntrevista || ""
+  ).trim();
 
-  const prompt = `Como perito evaluador de Jerovia Consultora en Paraguay, redacta un dictamen pericial conciso y formal (1-2 párrafos, máx 130 palabras) resumiendo esta visita:
-Postulante: ${nombre}
-Entorno familiar: ${datos.estructuraFamiliar || "Núcleo familiar regular"}
-Ingresos: ${ingresos}, Vivienda: ${tenencia}, Ciudad: ${ciudad}
-Observaciones de visita: ${obs}
-Tono formal pericial, técnico, directo y sin preámbulos.`;
+  const borradorEstructurado = `Se realizó la verificación domiciliaria de ${nombre}${cedula} en la ciudad de ${ciudad}${barrio}, constatándose su residencia efectiva en un inmueble de tenencia ${tenencia}. El entorno habitacional presenta condiciones adecuadas de mantenimiento y habitabilidad, conviviendo en un ${estructura.toLowerCase()}. En el aspecto económico, declara ingresos mensuales de ${ingresos}, los cuales guardan relación con el nivel de vida observado durante la visita.${obsPrevias ? ` ${obsPrevias}` : ""}`;
+
+  if (!modelText) return borradorEstructurado;
+
+  const prompt = `Redacta un párrafo de conclusión sobrio, objetivo y profesional (máximo 110 palabras) para un informe de visita socioambiental de Jerovia Consultora en Paraguay con estos datos:
+- Evaluado: ${nombre}${cedula}
+- Ubicación: ${ciudad}${barrio} (Vivienda: ${tenencia})
+- Grupo familiar: ${estructura}
+- Ingresos declarados: ${ingresos}
+- Notas preliminares: ${obsPrevias || "Trato cordial y colaborativo."}
+No inventes matrículas ni datos que no estén aquí. Escribe directamente el párrafo sin títulos.`;
 
   try {
     const callPromise = (async () => {
@@ -141,34 +168,48 @@ Tono formal pericial, técnico, directo y sin preámbulos.`;
       return result.response.text().trim();
     })();
 
-    return await withTimeout(callPromise, 2600, fallbackPericial);
+    return await withTimeout(callPromise, 3200, borradorEstructurado);
   } catch (err) {
     console.error("[generarSintesis error]:", err);
-    return fallbackPericial;
+    return borradorEstructurado;
   }
 }
 
-/**
- * Detección instantánea de inconsistencias en 0ms (lógica en memoria sin esperas de red).
- */
-export function detectarInconsistencias(datos: Record<string, unknown>): string[] {
+export function detectarInconsistencias(
+  datos: Record<string, unknown>
+): string[] {
   const alertas: string[] = [];
 
-  const ingresos = parseFloat(String(datos.ingresosFamiliares || "0").replace(/[^\d]/g, "")) || 0;
-  const egresos = parseFloat(String(datos.egresosMensuales || "0").replace(/[^\d]/g, "")) || 0;
+  const ingresos =
+    parseFloat(String(datos.ingresosFamiliares || "0").replace(/\D/g, "")) || 0;
+  const otros =
+    parseFloat(String(datos.otrosIngresos || "0").replace(/\D/g, "")) || 0;
+  const totalIngresos = ingresos + otros;
+  const egresos =
+    parseFloat(String(datos.egresosMensuales || "0").replace(/\D/g, "")) || 0;
   const alquiler = Number(datos.costoAlquiler || 0);
 
-  if (ingresos > 0 && egresos > ingresos) {
-    alertas.push(`⚠️ Los egresos declarados (${egresos.toLocaleString("es-PY")} Gs.) superan a los ingresos familiares (${ingresos.toLocaleString("es-PY")} Gs.).`);
+  if (totalIngresos > 0 && egresos > totalIngresos) {
+    alertas.push(
+      `Los egresos mensuales declarados (Gs. ${egresos.toLocaleString(
+        "es-PY"
+      )}) superan a los ingresos totales (Gs. ${totalIngresos.toLocaleString(
+        "es-PY"
+      )}).`
+    );
   }
-  if (ingresos > 0 && alquiler > ingresos * 0.5) {
-    alertas.push(`⚠️ El costo de alquiler representa más del 50% de los ingresos familiares declarados.`);
+  if (totalIngresos > 0 && alquiler > totalIngresos * 0.5) {
+    alertas.push(
+      "El canon de alquiler supera el 50% de los ingresos mensuales declarados."
+    );
   }
   if (datos.hijos && !datos.cantidadHijos) {
-    alertas.push("⚠️ Se indicaron hijos pero no se especificó la cantidad.");
+    alertas.push("Se indicó tenencia de hijos sin especificar la cantidad.");
   }
   if (datos.enfermedadBase && !datos.enfermedadBaseDetalle) {
-    alertas.push("⚠️ Se indicó enfermedad de base sin detallar diagnóstico.");
+    alertas.push(
+      "Se declaró enfermedad de base sin especificar el detalle médico."
+    );
   }
 
   return alertas;

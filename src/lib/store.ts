@@ -23,10 +23,9 @@ export interface EntrevistaRecord {
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "entrevistas.json");
 
-// Memoria caché para máxima velocidad
 const store = new Map<string, EntrevistaRecord>();
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
-// Inicializar y cargar desde disco si existe
 function initStore() {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -46,21 +45,24 @@ function initStore() {
     console.error("[initStore error]:", err);
   }
 
-  // Si no hay datos en disco, cargar semillas con tokens deterministas fijos
   seedInitial();
 }
 
 function persistStore() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(async () => {
+    try {
+      await fs.promises.mkdir(DATA_DIR, { recursive: true });
+      const records = Array.from(store.values());
+      await fs.promises.writeFile(
+        DATA_FILE,
+        JSON.stringify(records, null, 2),
+        "utf-8"
+      );
+    } catch (err) {
+      console.warn("[persistStore warn]:", err);
     }
-    const records = Array.from(store.values());
-    fs.writeFileSync(DATA_FILE, JSON.stringify(records, null, 2), "utf-8");
-  } catch (err) {
-    // Si el entorno es read-only (ej. edge), mantener en memoria
-    console.warn("[persistStore warn]:", err);
-  }
+  }, 50);
 }
 
 function seedInitial() {
@@ -68,23 +70,24 @@ function seedInitial() {
     {
       id: "ent_01",
       token: "tok_visita_01",
-      entidadSolicitante: "Entidad Bancaria de Plaza",
-      candidatoNombre: "Postulante Confidencial #EXP-801",
-      cedula: "5.551.895",
-      telefono: "0982 176890",
+      entidadSolicitante: "Banco Continental",
+      candidatoNombre: "Rodrigo Benítez Martínez",
+      cedula: "4.892.150",
+      telefono: "0981 774890",
       ciudad: "Luque",
       evaluadorAsignado: "Lic. Michelle Romero",
       creadoPor: "admin",
       estado: "completado",
       pasoActual: 9,
       datos: {
-        nombre: "Postulante",
-        apellido: "Confidencial #EXP-801",
-        cedula: "5.551.895",
-        telefono: "0982 176890",
+        nombre: "Rodrigo",
+        apellido: "Benítez Martínez",
+        cedula: "4.892.150",
+        telefono: "0981 774890",
         ciudad: "Luque",
         consultorNombre: "Lic. Michelle Romero",
-        observacionesEntrevista: "Dictamen Favorable. Condiciones habitacionales favorables, entorno vecinal consolidado y coherencia económica verificada.",
+        observacionesEntrevista:
+          "Verificación domiciliaria favorable. Condiciones habitacionales adecuadas y coherencia socioeconómica verificada.",
       },
       alertas: [],
       creadoEn: "2026-09-28T10:00:00.000Z",
@@ -93,9 +96,9 @@ function seedInitial() {
     {
       id: "ent_02",
       token: "tok_visita_02",
-      entidadSolicitante: "Cooperativa de Ahorro y Crédito Tipo A",
-      candidatoNombre: "Postulante Confidencial #EXP-802",
-      cedula: "4.892.110",
+      entidadSolicitante: "Cooperativa Universitaria",
+      candidatoNombre: "Andrea Carolina Gómez",
+      cedula: "5.120.340",
       telefono: "0971 445210",
       ciudad: "San Lorenzo",
       evaluadorAsignado: "Lic. Carlos Benítez",
@@ -103,9 +106,9 @@ function seedInitial() {
       estado: "en_progreso",
       pasoActual: 5,
       datos: {
-        nombre: "Postulante",
-        apellido: "Confidencial #EXP-802",
-        cedula: "4.892.110",
+        nombre: "Andrea Carolina",
+        apellido: "Gómez",
+        cedula: "5.120.340",
         telefono: "0971 445210",
         ciudad: "San Lorenzo",
         consultorNombre: "Lic. Carlos Benítez",
@@ -114,30 +117,6 @@ function seedInitial() {
       creadoEn: "2026-09-29T14:20:00.000Z",
       actualizadoEn: "2026-09-30T18:15:00.000Z",
     },
-    {
-      id: "ent_03",
-      token: "tok_visita_03",
-      entidadSolicitante: "Institución Financiera AAA",
-      candidatoNombre: "Postulante Confidencial #EXP-803",
-      cedula: "3.921.450",
-      telefono: "0981 992341",
-      ciudad: "Asunción",
-      evaluadorAsignado: "Lic. Michelle Romero",
-      creadoPor: "admin",
-      estado: "pendiente",
-      pasoActual: 1,
-      datos: {
-        nombre: "Postulante",
-        apellido: "Confidencial #EXP-803",
-        cedula: "3.921.450",
-        telefono: "0981 992341",
-        ciudad: "Asunción",
-        consultorNombre: "Lic. Michelle Romero",
-      },
-      alertas: [],
-      creadoEn: "2026-09-30T19:00:00.000Z",
-      actualizadoEn: "2026-09-30T19:00:00.000Z",
-    },
   ];
 
   store.clear();
@@ -145,7 +124,6 @@ function seedInitial() {
   persistStore();
 }
 
-// Cargar al inicializar el módulo
 initStore();
 
 export function crearEntrevista(
@@ -177,12 +155,12 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
 
   let record = store.get(token);
 
-  // Si no se encuentra, pero es 'demo' o un token válido, auto-aprovisionar para prevenir 404
+  // Solo auto-aprovisionar el entorno "demo"
   if (!record && token === "demo") {
     record = {
       id: "ent_demo",
       token: "demo",
-      entidadSolicitante: "Banco Continental S.A.E.C.A.",
+      entidadSolicitante: "Banco Continental (Demo)",
       candidatoNombre: "Rodrigo Benítez Martínez",
       cedula: "4.892.150",
       telefono: "0981 774890",
@@ -190,7 +168,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
       evaluadorAsignado: "Lic. Michelle Romero",
       creadoPor: "admin",
       estado: "en_progreso",
-      pasoActual: 8,
+      pasoActual: 1,
       datos: {
         nombre: "Rodrigo",
         apellido: "Benítez Martínez",
@@ -209,37 +187,36 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
         idiomas: [
           { idioma: "Español", nivel: "nativo" },
           { idioma: "Guaraní", nivel: "avanzado" },
-          { idioma: "Inglés", nivel: "intermedio" },
         ],
         situacionActual: "empleado",
         empresaAnterior: "Manufactura de Pilar S.A.",
-        cargoAnterior: "Jefe de Compras y Logística",
-        antiguedad: "4 años 6 meses",
+        cargoAnterior: "Encargado de Logística",
+        antiguedad: "48",
         salarioAnterior: 7500000,
         disponibilidad: "inmediata",
-        pretensionSalarial: "8.500.000 Gs.",
-        aspectosPositivos: "Alto compromiso con metas operativas, liderazgo de equipos y puntualidad.",
-        aspectosMejorar: "Perfeccionamiento continuo en sistemas de reportería BI.",
-        visionLargoPlazo: "Consolidar posición gerencial en el sector financiero y corporativo.",
-        expectativasEntidad: "Estabilidad laboral, proyección de carrera y desarrollo profesional.",
+        pretensionSalarial: "8.500.000",
+        aspectosPositivos: "Compromiso operativo, trabajo en equipo y puntualidad.",
+        aspectosMejorar: "Profundizar herramientas de análisis de datos.",
+        visionLargoPlazo: "Consolidación profesional y patrimonial.",
+        expectativasEntidad: "Estabilidad y desarrollo de carrera.",
         relacionPadres: "casados",
         estructuraFamiliar: "Convive con su cónyuge y un hijo de 4 años.",
         hijos: true,
         cantidadHijos: 1,
         edadesHijos: "4 años",
-        seguroMedico: "ambos",
+        seguroMedico: "ips",
         consumoAlcohol: "social",
         consumoTabaco: false,
-        ingresosFamiliares: "11.000.000 Gs. (titular + cónyuge)",
-        otrosIngresos: "1.500.000 Gs. (asesoría logística externa)",
-        egresosMensuales: "5.800.000 Gs. (alimentación, servicios, colegio)",
+        ingresosFamiliares: "11.000.000",
+        otrosIngresos: "1.500.000",
+        egresosMensuales: "5.800.000",
         prestamos: true,
-        prestamosDetalle: "Préstamo automotriz Itaú al día, saldo 8 cuotas",
+        prestamosDetalle: "Cuota vehicular al día",
         ciudad: "Luque",
         barrio: "Cuarto Barrio",
         direccion: "Dr. Fernando de la Mora c/ Rosario",
         coordenadas: "-25.269932, -57.489012",
-        plusCode: "6867+XQ Luque",
+        plusCode: "6867+XQ PY",
         tipoCamino: "asfalto",
         tenenciaVivienda: "propia",
         costoAlquiler: 0,
@@ -252,22 +229,18 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
         paredes: "ladrillo",
         pisos: "ceramica",
         plantas: 1,
-        observacionesEntrevista: "Verificación in situ favorable. Residencia consolidada de mampostería, medidor ANDE NIS 2489102 activo y sin derivaciones. Coherencia socioeconómica alta.",
-        diccion: "segura",
-        estadoVivienda: "excelente",
-        quienesPresentes: "El solicitante y su cónyuge",
-        fechaVisita: "2026-10-02",
+        observacionesEntrevista:
+          "Residencia verificada en adecuadas condiciones de mantenimiento. Coherencia entre ingresos declarados y calidad de vida observada.",
+        diccion: "fluida",
+        estadoVivienda: "bueno",
+        quienesPresentes: "El titular y su cónyuge",
+        fechaVisita: "2026-10-14",
         consultorNombre: "Lic. Michelle Romero",
       },
       alertas: [],
       creadoEn: "2026-10-01T08:00:00.000Z",
-      actualizadoEn: "2026-10-02T15:30:00.000Z",
+      actualizadoEn: "2026-10-14T15:30:00.000Z",
     };
-    store.set(token, record);
-    persistStore();
-  } else if (!record && token.length >= 4) {
-    record = crearEntrevista("Evaluación Pericial Confidencial", token, "Lic. Michelle Romero", "admin");
-    record.candidatoNombre = "Postulante en Evaluación";
     store.set(token, record);
     persistStore();
   }
@@ -275,7 +248,10 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
   return record;
 }
 
-export function actualizarEntrevista(token: string, patch: Partial<EntrevistaRecord>): EntrevistaRecord | null {
+export function actualizarEntrevista(
+  token: string,
+  patch: Partial<EntrevistaRecord>
+): EntrevistaRecord | null {
   const record = store.get(token);
   if (!record) return null;
   const updated: EntrevistaRecord = {
@@ -303,11 +279,16 @@ export function eliminarEntrevista(token: string): boolean {
 export function listarEntrevistas(): EntrevistaRecord[] {
   if (store.size === 0) initStore();
   return Array.from(store.values()).sort(
-    (a, b) => new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime()
+    (a, b) =>
+      new Date(b.actualizadoEn).getTime() - new Date(a.actualizadoEn).getTime()
   );
 }
 
-export function listarEntrevistasPorEvaluador(evaluadorNombre: string): EntrevistaRecord[] {
+export function listarEntrevistasPorEvaluador(
+  evaluadorNombre: string
+): EntrevistaRecord[] {
   const clean = evaluadorNombre.toLowerCase().trim();
-  return listarEntrevistas().filter((e) => (e.evaluadorAsignado || "").toLowerCase().trim() === clean);
+  return listarEntrevistas().filter(
+    (e) => (e.evaluadorAsignado || "").toLowerCase().trim() === clean
+  );
 }

@@ -10,20 +10,28 @@ export function formatCurrency(amount: number): string {
     style: "currency",
     currency: "PYG",
     minimumFractionDigits: 0,
-  }).format(amount);
+  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 export function formatDate(date: string): string {
   if (!date) return "";
-  const [year, month, day] = date.split("-");
+  const clean = date.slice(0, 10);
+  const parts = clean.split("-");
+  if (parts.length !== 3) return date;
+  const [year, month, day] = parts;
   return `${day}/${month}/${year}`;
 }
 
+/**
+ * Genera tokens seguros con CSPRNG (crypto.getRandomValues)
+ */
 export function generateToken(length = 32): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const randomValues = new Uint32Array(length);
+  crypto.getRandomValues(randomValues);
   let result = "";
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(randomValues[i] % chars.length);
   }
   return result;
 }
