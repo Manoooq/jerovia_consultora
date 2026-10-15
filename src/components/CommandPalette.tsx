@@ -205,6 +205,7 @@ export function CommandPalette() {
                 />
                 <button
                   type="button"
+                  aria-label="Cerrar paleta de comandos"
                   onClick={() => setIsOpen(false)}
                   className="text-subtext0 hover:text-text p-1"
                 >

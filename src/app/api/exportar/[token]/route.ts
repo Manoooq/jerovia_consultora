@@ -249,7 +249,7 @@ export async function GET(
         <div class="field"><div class="label">Aspectos a Mejorar</div><div class="val">${escapeHtml(d.aspectosMejorar || "No especificado")}</div></div>
         <div class="field"><div class="label">Proyección a Largo Plazo</div><div class="val">${escapeHtml(d.visionLargoPlazo || "No especificado")}</div></div>
         <div class="field"><div class="label">Composición Conviviente</div><div class="val">${escapeHtml(d.estructuraFamiliar || "N/A")}</div></div>
-        <div class="field"><div class="label">Hijos / Dependientes</div><div class="val">${d.hijos ? `Sí (${escapeHtml(d.cantidadHijos \vert{}\vert{} 1)} - Edades:${escapeHtml(d.edadesHijos || "N/A")})` : "Sin hijos"}</div></div>
+        <div class="field"><div class="label">Hijos / Dependientes</div><div class="val">${d.hijos ? `Sí (${escapeHtml(d.cantidadHijos || 1)} - Edades:${escapeHtml(d.edadesHijos || "N/A")})` : "Sin hijos"}</div></div>
         <div class="field"><div class="label">Cobertura Médica / Salud</div><div class="val">Seguro: ${escapeHtml((d.seguroMedico || "ninguno").toUpperCase())} | Enf. Base: ${d.enfermedadBase ? escapeHtml(d.enfermedadBaseDetalle || "Sí") : "No refiere"}</div></div>
       </div>
     </div>
