@@ -2,18 +2,22 @@
 
 import { useEffect, useRef } from "react";
 
-interface GridPoint {
-  originX: number;
-  originY: number;
+interface Particle {
   x: number;
   y: number;
   vx: number;
   vy: number;
+  baseVx: number;
+  baseVy: number;
+  size: number;
+  alpha: number;
+  isGold: boolean;
 }
 
 /**
- * Matriz arquitectónica interactiva: una grilla de precisión que reacciona
- * con física elástica suave al paso del cursor sin ruido visual.
+ * Fondo interactivo de partículas y filamentos (estética Antigravity)
+ * optimizado a 60 FPS: usa distancias al cuadrado (sin Math.sqrt en bucles internos),
+ * recorte de área en el gradiente del cursor y pausa automática en pestañas inactivas.
  */
 export function AntigravityBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,53 +25,50 @@ export function AntigravityBackground() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-
-    const spacing = width < 768 ? 44 : 36;
-    let points: GridPoint[] = [];
-
-    function initGrid() {
-      points = [];
-      const cols = Math.ceil(width / spacing) + 1;
-      const rows = Math.ceil(height / spacing) + 1;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const ox = c * spacing;
-          const oy = r * spacing;
-          points.push({
-            originX: ox,
-            originY: oy,
-            x: ox,
-            y: oy,
-            vx: 0,
-            vy: 0,
-          });
-        }
-      }
-    }
-
-    initGrid();
 
     const mouse = {
       x: -1000,
       y: -1000,
       targetX: -1000,
       targetY: -1000,
-      radius: 170,
+      radius: 175,
+      radiusSq: 175 * 175,
       active: false,
     };
+
+    const isMobile = width < 768;
+    const count = prefersReducedMotion ? 18 : isMobile ? 26 : 56;
+
+    const particles: Particle[] = Array.from({ length: count }, () => {
+      const baseVx = (Math.random() - 0.5) * 0.28;
+      const baseVy = -Math.random() * 0.35 - 0.1;
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: baseVx,
+        vy: baseVy,
+        baseVx,
+        baseVy,
+        size: Math.random() * 1.8 + 1,
+        alpha: Math.random() * 0.45 + 0.2,
+        isGold: Math.random() > 0.35,
+      };
+    });
 
     function handleResize() {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      initGrid();
     }
 
     function handleMouseMove(e: MouseEvent) {
@@ -82,80 +83,116 @@ export function AntigravityBackground() {
       mouse.targetY = -1000;
     }
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("mouseleave", handleMouseLeave);
+    window.addEventListener("mouseleave", handleMouseLeave, { passive: true });
 
-    function render() {
+    const maxLinkDist = 118;
+    const maxLinkDistSq = maxLinkDist * maxLinkDist;
+
+    function animate() {
+      if (document.hidden) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+
       if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const goldRgb = isDark ? "212, 175, 55" : "138, 100, 18";
-      const baseRgb = isDark ? "148, 163, 184" : "100, 116, 139";
+      const goldRgb = isDark ? "229, 192, 123" : "146, 108, 21";
+      const slateRgb = isDark ? "148, 163, 184" : "71, 85, 105";
 
-      mouse.x += (mouse.targetX - mouse.x) * 0.14;
-      mouse.y += (mouse.targetY - mouse.y) * 0.14;
+      mouse.x += (mouse.targetX - mouse.x) * 0.15;
+      mouse.y += (mouse.targetY - mouse.y) * 0.15;
 
-      if (mouse.active && mouse.x > 0) {
-        const halo = ctx.createRadialGradient(mouse.x, mouse.y, 8, mouse.x, mouse.y, 320);
-        halo.addColorStop(0, `rgba(${goldRgb}, ${isDark ? 0.08 : 0.05})`);
-        halo.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = halo;
-        ctx.fillRect(0, 0, width, height);
+      // Halo optimizado: solo pinta el cuadro de 480x480 alrededor del cursor, no toda la pantalla
+      if (mouse.active && mouse.x > -200) {
+        const r = 240;
+        const grad = ctx.createRadialGradient(
+          mouse.x,
+          mouse.y,
+          4,
+          mouse.x,
+          mouse.y,
+          r
+        );
+        grad.addColorStop(0, `rgba(${goldRgb}, ${isDark ? 0.1 : 0.06})`);
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(mouse.x - r, mouse.y - r, r * 2, r * 2);
       }
 
-      const maxDist = mouse.radius;
-      const maxDistSq = maxDist * maxDist;
+      for (let i = 0; i < count; i++) {
+        const p = particles[i];
 
-      for (let i = 0; i < points.length; i++) {
-        const p = points[i];
+        if (!prefersReducedMotion) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const distSq = dx * dx + dy * dy;
 
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const distSq = dx * dx + dy * dy;
+          if (distSq < mouse.radiusSq && distSq > 1) {
+            const dist = Math.sqrt(distSq);
+            const force = (mouse.radius - dist) / mouse.radius;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            p.vx += nx * force * 0.45 - ny * force * 0.12;
+            p.vy += ny * force * 0.45 + nx * force * 0.12;
+          }
 
-        let proximity = 0;
+          p.vx += (p.baseVx - p.vx) * 0.04;
+          p.vy += (p.baseVy - p.vy) * 0.04;
+          p.x += p.vx;
+          p.y += p.vy;
 
-        if (!prefersReducedMotion && distSq < maxDistSq && distSq > 0.01) {
-          const dist = Math.sqrt(distSq);
-          proximity = 1 - dist / maxDist;
-          const push = proximity * proximity * 14;
-          const targetX = p.originX + (dx / dist) * push;
-          const targetY = p.originY + (dy / dist) * push;
-          p.vx += (targetX - p.x) * 0.18;
-          p.vy += (targetY - p.y) * 0.18;
-        } else {
-          p.vx += (p.originX - p.x) * 0.12;
-          p.vy += (p.originY - p.y) * 0.12;
+          if (p.y < -10) p.y = height + 10;
+          else if (p.y > height + 10) p.y = -10;
+          if (p.x < -10) p.x = width + 10;
+          else if (p.x > width + 10) p.x = -10;
+
+          // Filamento magnético al cursor
+          if (distSq < mouse.radiusSq) {
+            const cAlpha = (1 - distSq / mouse.radiusSq) * 0.32;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(${goldRgb}, ${cAlpha})`;
+            ctx.lineWidth = 0.85;
+            ctx.stroke();
+          }
         }
 
-        p.vx *= 0.78;
-        p.vy *= 0.78;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        const radius = proximity > 0.05 ? 1.1 + proximity * 1.4 : 1.05;
-        const alpha =
-          proximity > 0.05
-            ? (isDark ? 0.25 : 0.2) + proximity * 0.55
-            : isDark
-            ? 0.12
-            : 0.14;
-
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle =
-          proximity > 0.12
-            ? `rgba(${goldRgb}, ${alpha})`
-            : `rgba(${baseRgb}, ${alpha})`;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.isGold ? goldRgb : slateRgb}, ${p.alpha})`;
         ctx.fill();
+
+        // Conexiones entre nodos cercanos usando distancia al cuadrado (sin Math.sqrt)
+        for (let j = i + 1; j < count; j++) {
+          const p2 = particles[j];
+          const ldx = p.x - p2.x;
+          const ldy = p.y - p2.y;
+          const ldistSq = ldx * ldx + ldy * ldy;
+
+          if (ldistSq < maxLinkDistSq) {
+            const lineAlpha =
+              (1 - ldistSq / maxLinkDistSq) * (isDark ? 0.15 : 0.1);
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(${
+              p.isGold ? goldRgb : slateRgb
+            }, ${lineAlpha})`;
+            ctx.lineWidth = 0.65;
+            ctx.stroke();
+          }
+        }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(animate);
     }
 
-    render();
+    animate();
 
     return () => {
       cancelAnimationFrame(animationFrameId);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { obtenerEntrevista, actualizarEntrevista, eliminarEntrevista } from "@/lib/store";
+import { enforceRateLimit, parseSafeJson } from "@/lib/apiSecurity";
 
 const TokenParamSchema = z.string().trim().min(2).max(128).regex(/^[a-zA-Z0-9_-]+$/);
 
@@ -21,9 +22,12 @@ const AdminPatchSchema = PublicPatchSchema.extend({
 });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const rateErr = enforceRateLimit(req, "entrevista-get", 90, 60_000);
+  if (rateErr) return rateErr;
+
   const { token } = await params;
   if (!TokenParamSchema.safeParse(token).success) {
     return NextResponse.json({ error: "Formato de token inválido." }, { status: 400 });
@@ -40,6 +44,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const rateErr = enforceRateLimit(req, "entrevista-patch", 60, 60_000);
+  if (rateErr) return rateErr;
+
   const { token } = await params;
   if (!TokenParamSchema.safeParse(token).success) {
     return NextResponse.json({ error: "Formato de token inválido." }, { status: 400 });
@@ -50,8 +57,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Visita no encontrada." }, { status: 404 });
   }
 
+  const { data: rawBody, errorResponse } = await parseSafeJson(req, 3_000_000);
+  if (errorResponse) return errorResponse;
+
   try {
-    const rawBody = await req.json();
     const session = await getSession();
     const isAdmin = session?.role === "admin";
 
@@ -61,7 +70,7 @@ export async function PATCH(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message || "Payload de actualización inválido." },
+        { error: parsed.error.issues[0]?.message || "Datos de actualización inválidos." },
         { status: 400 }
       );
     }
@@ -82,9 +91,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const rateErr = enforceRateLimit(req, "entrevista-delete", 20, 60_000);
+  if (rateErr) return rateErr;
+
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json(

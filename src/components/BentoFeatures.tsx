@@ -1,87 +1,103 @@
 "use client";
 
-import { MapPin, FileText, Camera, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { MapPin, Mic, Camera, FileSpreadsheet } from "lucide-react";
 
-interface Pillar {
-  category: string;
+interface BentoItem {
+  tag: string;
   title: string;
-  stat: string;
-  description: string;
+  desc: string;
   icon: React.ElementType;
+  span: string;
 }
 
-const PILLARS: Pillar[] = [
+const FEATURES: BentoItem[] = [
   {
-    category: "Constatación Presencial",
-    title: "Georreferenciación en Fachada",
-    stat: "Precisión GPS ±3m",
-    description:
-      "Cada visita registra coordenadas satelitales in situ, fotografía del inmueble y validación del medidor ANDE (NIS) para descartar domicilios ficticios.",
+    tag: "TERRENO",
+    title: "Ubicación GPS en Domicilio",
+    desc: "Coordenadas y Plus Code registrados directamente desde el lugar de la entrevista.",
     icon: MapPin,
+    span: "md:col-span-7",
   },
   {
-    category: "Estandarización Bancaria",
-    title: "Dossier Ejecutivo en 5 Láminas",
-    stat: "Formato .PPTX y PDF",
-    description:
-      "Estructurado específicamente para agilizar la lectura en comités de crédito de bancos, financieras y cooperativas sin páginas de relleno.",
-    icon: FileText,
+    tag: "AGILIDAD",
+    title: "Dictado por Voz",
+    desc: "Carga rápida de observaciones para agilizar el trabajo del evaluador.",
+    icon: Mic,
+    span: "md:col-span-5",
   },
   {
-    category: "Asistencia en Campo",
-    title: "Relevamiento Ágil en 9 Módulos",
-    stat: "Autoguardado Continuo",
-    description:
-      "Interfaz adaptable a celulares y tablets para que el perito registre datos filiatorios, flujo financiero, salud, vivienda y fotografías en una sola sesión.",
+    tag: "EVIDENCIA",
+    title: "Registro Fotográfico",
+    desc: "Captura de fachada y servicios optimizada para teléfonos móviles.",
     icon: Camera,
+    span: "md:col-span-5",
   },
   {
-    category: "Marco Regulatorio",
-    title: "Resguardo y Secreto Profesional",
-    stat: "Leyes 6534/20 y 1682/01",
-    description:
-      "Control de acceso estricto por rol (Administrador / Perito Evaluador), trazabilidad de auditoría en bitácora y sesiones cifradas.",
-    icon: ShieldCheck,
+    tag: "ENTREGABLE",
+    title: "Presentación en 5 Láminas",
+    desc: "Exportación inmediata en PowerPoint (.PPTX) y PDF con la identidad de Jerovia.",
+    icon: FileSpreadsheet,
+    span: "md:col-span-7",
   },
 ];
 
+function SpotlightBentoCard({ item, index }: { item: BentoItem; index: number }) {
+  const Icon = item.icon;
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--x", `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty("--y", `${e.clientY - rect.top}px`);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.35, delay: index * 0.06 }}
+      onMouseMove={handleMouseMove}
+      className={`group relative rounded-3xl border border-overlay0/60 bg-surface0/80 backdrop-blur-xl p-6 sm:p-7 overflow-hidden transition-all duration-200 hover:border-gold/50 hover:-translate-y-0.5 ${item.span}`}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background:
+            "radial-gradient(380px circle at var(--x, 50%) var(--y, 50%), rgba(212, 175, 55, 0.13), transparent 45%)",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col justify-between h-full space-y-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold px-2.5 py-1 rounded-full border border-gold/30 bg-gold/10">
+            {item.tag}
+          </span>
+          <div className="h-10 w-10 rounded-2xl bg-surface1 border border-overlay0/50 flex items-center justify-center text-gold group-hover:scale-105 transition-transform">
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg sm:text-xl font-black text-text tracking-tight">
+            {item.title}
+          </h3>
+          <p className="text-xs sm:text-sm text-subtext0 mt-1 leading-relaxed">
+            {item.desc}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function BentoFeatures() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-      {PILLARS.map((item) => {
-        const Icon = item.icon;
-        return (
-          <div
-            key={item.title}
-            className="group rounded-2xl sm:rounded-3xl border border-overlay0/60 bg-surface0/85 backdrop-blur-xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 hover:border-gold/50 shadow-sm"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-gold">
-                  {item.category}
-                </span>
-                <div className="h-9 w-9 rounded-xl bg-surface1 border border-overlay0/60 flex items-center justify-center text-gold">
-                  <Icon className="h-4 w-4" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                  <h3 className="text-lg sm:text-xl font-bold text-text tracking-tight">
-                    {item.title}
-                  </h3>
-                  <span className="text-xs font-mono font-semibold text-subtext1 bg-surface1 px-2.5 py-1 rounded-md border border-overlay0/50 tabular-nums">
-                    {item.stat}
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm text-subtext0 leading-relaxed">
-                  {item.description}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      {FEATURES.map((item, idx) => (
+        <SpotlightBentoCard key={item.title} item={item} index={idx} />
+      ))}
     </div>
   );
 }

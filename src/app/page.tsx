@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -11,52 +12,40 @@ import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
 import { FaqSection } from "@/components/FaqSection";
 import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
-import {
-  ShieldCheck,
-  MapPin,
-  ChevronRight,
-  Lock,
-  Menu,
-  X,
-  FileSpreadsheet,
-} from "lucide-react";
+import { ChevronRight, Lock, Menu, X } from "lucide-react";
 
 const KPIS = [
-  { value: "< 24 hs", label: "Entrega en Gran Asunción" },
-  { value: "5 Láminas", label: "Formato Comité (.PPTX y PDF)" },
-  { value: "GPS + ANDE", label: "Constatación Domiciliaria" },
-  { value: "Ley 6534/20", label: "Resguardo Confidencial" },
+  { value: "9 Módulos", label: "Entrevista Estructurada" },
+  { value: "GPS + Fotos", label: "Verificación en Sitio" },
+  { value: "5 Láminas", label: "Informe .PPTX y PDF" },
+  { value: "< 24 hs", label: "Entrega Gran Asunción" },
 ];
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: "#showcase", label: "Expediente" },
-    { href: "#tecnologia", label: "Metodología" },
+    { href: "#showcase", label: "Plataforma" },
+    { href: "#tecnologia", label: "Método" },
     { href: "#simulador", label: "Aranceles" },
     { href: "#cobertura", label: "Cobertura" },
-    { href: "#faqs", label: "Normativa" },
+    { href: "#faqs", label: "Preguntas" },
   ];
 
   return (
     <div className="relative min-h-screen bg-base text-text selection:bg-gold/30 selection:text-gold overflow-x-hidden">
-      {/* Matriz interactiva sutil que reacciona al cursor */}
+      {/* Fondo interactivo de partículas y filamentos a 60 FPS */}
       <AntigravityBackground />
 
-      {/* Navegación Institucional con Soporte Completo en Celular y PC */}
+      {/* Navegación limpia */}
       <nav aria-label="Navegación principal" className="fixed top-0 left-0 right-0 z-50 glass-panel">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
           <Logo size="md" />
 
-          <div className="hidden md:flex items-center gap-7 text-xs font-semibold text-subtext1">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="hover:text-gold transition-colors py-1"
-              >
-                {link.label}
+          <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-subtext0">
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="hover:text-gold transition-colors">
+                {l.label}
               </a>
             ))}
           </div>
@@ -66,99 +55,112 @@ export default function LandingPage() {
             <ThemeToggle />
             <Link
               href="/login"
-              className="hidden sm:inline-flex min-h-[38px] items-center rounded-xl bg-gold px-4 py-2 text-xs font-bold text-black hover:bg-gold-light transition-colors shadow-xs"
+              className="hidden sm:inline-flex min-h-[38px] items-center rounded-xl bg-gold px-4 py-2 text-xs font-bold text-black hover:bg-gold-light transition-all shadow-xs"
             >
-              Portal Pericial
+              Acceso Evaluadores
             </Link>
-
-            {/* Botón Menú Hamburguesa para Celulares */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden min-h-[40px] min-w-[40px] rounded-xl border border-overlay0/70 bg-surface1 flex items-center justify-center text-text"
-              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
-              aria-expanded={mobileMenuOpen}
+              aria-label="Menú"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
-        {/* Cajón de Navegación Móvil */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-overlay0/60 bg-mantle/95 backdrop-blur-xl px-4 pt-3 pb-5 space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              {navLinks.map((link) => (
+              {navLinks.map((l) => (
                 <a
-                  key={link.href}
-                  href={link.href}
+                  key={l.href}
+                  href={l.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-[44px] px-3.5 py-2.5 rounded-xl bg-surface1 border border-overlay0/50 text-xs font-semibold text-text flex items-center"
+                  className="min-h-[42px] px-3.5 py-2 rounded-xl bg-surface1 border border-overlay0/50 text-xs font-bold text-text flex items-center"
                 >
-                  {link.label}
+                  {l.label}
                 </a>
               ))}
             </div>
-            <div className="grid grid-cols-1 gap-2 pt-2 border-t border-overlay0/40">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="min-h-[44px] rounded-xl bg-gold text-black font-bold text-xs flex items-center justify-center gap-2"
-              >
-                <Lock className="h-4 w-4" />
-                <span>Ingresar al Portal de Evaluadores</span>
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="min-h-[44px] w-full rounded-xl bg-gold text-black font-bold text-xs flex items-center justify-center gap-2"
+            >
+              <Lock className="h-4 w-4" />
+              <span>Acceso Evaluadores</span>
+            </Link>
           </div>
         )}
       </nav>
 
-      {/* Hero Principal Sobrio y Directo */}
-      <main id="main-content" tabIndex={-1} className="relative z-10 pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 outline-none">
-        <div className="max-w-7xl mx-auto space-y-10 sm:space-y-14">
+      {/* HERO DIRECTO ENFOCADO EN LA MARCA JEROVIA */}
+      <main id="main-content" tabIndex={-1} className="relative z-10 pt-28 pb-14 px-4 sm:px-6 lg:px-8 outline-none">
+        <div className="max-w-7xl mx-auto space-y-12">
           <div className="max-w-3xl mx-auto text-center space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-overlay1 bg-surface0/90 px-3.5 py-1.5 text-xs font-semibold text-subtext1 shadow-2xs">
-              <ShieldCheck className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
-              <span>Consultoría Pericial Socioambiental • Matrícula N° 4.819</span>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1 text-xs font-bold text-gold font-mono"
+            >
+              <span className="h-2 w-2 rounded-full bg-gold" aria-hidden="true" />
+              <span>JEROVIA CONSULTORA • PARAGUAY</span>
+            </motion.div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-text">
-              Verificación domiciliaria y solvencia para{" "}
-              <span className="text-gradient-gold">comités de riesgo.</span>
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.05 }}
+              className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.05] text-text"
+            >
+              Visitas socioambientales y{" "}
+              <span className="text-gradient-gold">verificación domiciliaria.</span>
+            </motion.h1>
 
-            <p className="text-sm sm:text-lg text-subtext0 max-w-2xl mx-auto leading-relaxed">
-              Constatamos presencialmente el arraigo, la titularidad del servicio ANDE y la capacidad de pago del postulante. Entregamos el dictamen en 5 láminas ejecutivas en menos de 24 horas.
-            </p>
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.1 }}
+              className="text-sm sm:text-lg text-subtext0 max-w-xl mx-auto"
+            >
+              Relevamiento presencial en terreno, registro fotográfico con GPS e informes ejecutivos claros para la toma de decisiones.
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.15 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1"
+            >
               <Link
                 href="/entrevista/demo"
-                className="min-h-[48px] w-full sm:w-auto group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-md"
+                className="min-h-[46px] w-full sm:w-auto group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/20"
               >
-                <span>Explorar Cuestionario Demo</span>
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <span>Probar Cuestionario</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/login"
-                className="min-h-[48px] w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-overlay1 bg-surface0/90 px-7 py-3 text-sm font-semibold text-text hover:border-gold transition-all"
+                className="min-h-[46px] w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-overlay0/80 bg-surface0/80 backdrop-blur-md px-7 py-3 text-sm font-semibold text-text hover:border-gold transition-all"
               >
-                <Lock className="h-4 w-4 text-gold" aria-hidden="true" />
+                <Lock className="h-4 w-4 text-gold" />
                 <span>Portal de Evaluadores</span>
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Indicadores Clave en Números Tabulares */}
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto">
               {KPIS.map((kpi) => (
                 <div
                   key={kpi.label}
-                  className="rounded-2xl border border-overlay0/60 bg-surface0/85 backdrop-blur-md px-3.5 py-3 text-center"
+                  className="rounded-2xl border border-overlay0/50 bg-surface0/75 backdrop-blur-md px-3 py-2.5 text-center"
                 >
-                  <p className="text-base sm:text-lg font-bold text-text font-mono tabular-nums">
+                  <p className="text-base sm:text-lg font-black text-gold font-mono tabular-nums">
                     {kpi.value}
                   </p>
-                  <p className="text-[11px] font-medium text-subtext0 mt-0.5">
+                  <p className="text-[11px] font-semibold text-subtext0 mt-0.5">
                     {kpi.label}
                   </p>
                 </div>
@@ -166,70 +168,54 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Muestra Interactiva de Expediente Real */}
-          <section id="showcase" aria-label="Demostración de expediente pericial">
+          <section id="showcase" aria-label="Consola interactiva Jerovia">
             <HeroProductShowcase />
           </section>
         </div>
       </main>
 
-      {/* Metodología y Estándar Probatorio */}
-      <section id="tecnologia" className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-            <div>
-              <span className="text-xs font-semibold text-gold">
-                Metodología de Trabajo
-              </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight mt-0.5">
-                Rigor Documental en Cada Inspección
-              </h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-subtext0">
-              <span className="flex items-center gap-1.5">
-                <FileSpreadsheet className="h-4 w-4 text-gold" /> Entregable estandarizado
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-gold" /> Cobertura nacional
-              </span>
-            </div>
+      <section id="tecnologia" className="relative z-10 py-12 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
+        <div className="max-w-7xl mx-auto space-y-5">
+          <div>
+            <span className="text-[10px] font-mono font-bold text-gold uppercase tracking-widest">
+              HERRAMIENTAS DE CAMPO
+            </span>
+            <h2 className="text-2xl font-black text-text tracking-tight mt-0.5">
+              El Método Jerovia
+            </h2>
           </div>
           <BentoFeatures />
         </div>
       </section>
 
-      {/* Simulador de Aranceles */}
-      <section id="simulador" className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
+      <section id="simulador" className="relative z-10 py-12 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
         <div className="max-w-7xl mx-auto">
           <PeritajeCalculator />
         </div>
       </section>
 
-      {/* Cobertura Territorial */}
-      <section id="cobertura" className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
+      <section id="cobertura" className="relative z-10 py-12 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
         <div className="max-w-7xl mx-auto">
           <ParaguayOperationalMap />
         </div>
       </section>
 
-      {/* Respaldo Normativo */}
-      <section id="faqs" className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-t border-overlay0/40">
+      <section id="faqs" className="relative z-10 py-12 px-4 sm:px-6 lg:px-8 border-t border-overlay0/30">
         <div className="max-w-7xl mx-auto">
           <FaqSection />
         </div>
       </section>
 
-      {/* Pie de Página Institucional */}
-      <footer className="relative z-10 border-t border-overlay0/50 py-8 bg-mantle/95">
+      <footer className="relative z-10 border-t border-overlay0/40 py-8 bg-mantle/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext0">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <span>• Informes Socioambientales y Verificación Domiciliaria • Asunción, Paraguay</span>
+            <span>• Visitas Socioambientales y Verificación Domiciliaria • Paraguay</span>
           </div>
           <div className="flex items-center gap-6 font-semibold">
-            <Link href="/login" className="hover:text-gold transition-colors">Portal Pericial</Link>
-            <Link href="/entrevista/demo" className="hover:text-gold transition-colors">Cuestionario Demo</Link>
-            <span className="text-subtext0/70 font-mono">© 2026 Jerovia Consultora</span>
+            <Link href="/login" className="hover:text-gold transition-colors">Acceso Evaluadores</Link>
+            <Link href="/entrevista/demo" className="hover:text-gold transition-colors">Formulario Demo</Link>
+            <span className="text-subtext0/60 font-mono">© 2026 Jerovia Consultora</span>
           </div>
         </div>
       </footer>
