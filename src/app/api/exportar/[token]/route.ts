@@ -5,9 +5,6 @@ import { getSession } from "@/lib/auth";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { enforceRateLimit, getClientIp } from "@/lib/apiSecurity";
 
-/**
- * Sanitizador estricto contra XSS en reportes HTML/PDF
- */
 function escapeHtml(val: unknown): string {
   const str = String(val ?? "");
   return str
@@ -27,7 +24,7 @@ export async function GET(
 
   const { token } = await params;
   const url = new URL(req.url);
-  const formato = url.searchParams.get("formato") || "pptx";
+  const formato = url.searchParams.get("formato") ?? "pptx";
 
   const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
@@ -37,15 +34,13 @@ export async function GET(
     );
   }
 
-  const d = entrevista.datos || {};
+  const d = entrevista.datos ?? {};
+  const fullNombre = [d.nombre, d.apellido].filter(Boolean).join(" ").trim();
   const nombreCandidato =
-    entrevista.candidatoNombre ||
-    `${d.nombre || ""} ${d.apellido || ""}`.trim() ||
-    "Postulante";
+    entrevista.candidatoNombre ?? (fullNombre ? fullNombre : "Postulante");
   const cleanFileName =
     nombreCandidato.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60) || "Informe";
 
-  // Registrar evento en bitácora si hay sesión activa
   const session = await getSession();
   if (session) {
     registrarEventoAuditoria({
@@ -53,7 +48,12 @@ export async function GET(
       userName: session.name,
       userRole: session.role,
       action: "EXPORT_PPTX",
-      detail: `Descarga de informe (${formato.toUpperCase()}) del expediente ${nombreCandidato}.`,
+      detail:
+        "Descarga de informe (" +
+        formato.toUpperCase() +
+        ") del expediente " +
+        nombreCandidato +
+        ".",
       ip: getClientIp(req),
     });
   }
@@ -66,7 +66,8 @@ export async function GET(
         headers: {
           "Content-Type":
             "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          "Content-Disposition": `attachment; filename="Jerovia_Informe_${cleanFileName}.pptx"`,
+          "Content-Disposition":
+            'attachment; filename="Jerovia_Informe_' + cleanFileName + '.pptx"',
         },
       });
     } catch (err: unknown) {
@@ -81,11 +82,71 @@ export async function GET(
   const idiomasTexto =
     Array.isArray(d.idiomas) && d.idiomas.length > 0
       ? d.idiomas
-          .map((i) => `${escapeHtml(i.idioma)} (${escapeHtml(i.nivel)})`)
+          .map((i) => escapeHtml(i.idioma) + " (" + escapeHtml(i.nivel) + ")")
           .join(", ")
       : "Español";
 
-  // Reporte HTML/PDF 100% escapado contra XSS y con los 9 módulos completos
+  const movilidadTexto = d.movilidadPropia
+    ? "Sí (" + escapeHtml(d.tipoMovilidad ?? "Vehículo") + ")"
+    : "No";
+
+  const estudiosTexto =
+    escapeHtml(d.carrera ?? "N/A") +
+    " (" +
+    escapeHtml(d.estadoEstudios ?? "N/A") +
+    ")";
+
+  const empresaTexto =
+    escapeHtml(d.empresaAnterior ?? "N/A") +
+    " (" +
+    escapeHtml(d.cargoAnterior ?? "N/A") +
+    ")";
+
+  const antiguedadPretensionTexto =
+    escapeHtml(d.antiguedad ?? "0") +
+    " meses | " +
+    escapeHtml(d.pretensionSalarial ?? "N/A");
+
+  const hijosTexto = d.hijos
+    ? "Sí (" +
+      escapeHtml(d.cantidadHijos ?? 1) +
+      " - Edades: " +
+      escapeHtml(d.edadesHijos ?? "N/A") +
+      ")"
+    : "Sin hijos";
+
+  const saludTexto =
+    "Seguro: " +
+    escapeHtml(String(d.seguroMedico ?? "ninguno").toUpperCase()) +
+    " | Enf. Base: " +
+    (d.enfermedadBase ? escapeHtml(d.enfermedadBaseDetalle ?? "Sí") : "No refiere");
+
+  const prestamosTexto = d.prestamos
+    ? escapeHtml(d.prestamosDetalle ?? "Registra préstamos activos")
+    : "Sin préstamos declarados";
+
+  const ubicacionTexto =
+    escapeHtml(d.ciudad ?? "N/A") + " - " + escapeHtml(d.barrio ?? "N/A");
+
+  const materialesTexto =
+    "Techo: " +
+    escapeHtml(d.techo ?? "N/A") +
+    " | Paredes: " +
+    escapeHtml(d.paredes ?? "N/A") +
+    " | Pisos: " +
+    escapeHtml(d.pisos ?? "N/A") +
+    " | Habitantes: " +
+    escapeHtml(d.cantidadPersonas ?? 1) +
+    " | Dormitorios: " +
+    escapeHtml(d.habitaciones ?? 1);
+
+  const fechaTexto = escapeHtml(
+    d.fechaVisita ?? new Date().toLocaleDateString("es-PY")
+  );
+  const evaluadorTexto = escapeHtml(
+    d.consultorNombre ?? entrevista.evaluadorAsignado ?? "Jerovia Consultora"
+  );
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -227,60 +288,60 @@ export async function GET(
     <div class="card">
       <div class="card-title">1. Identificación Personal, Formación y Empleo</div>
       <div class="grid-3">
-        <div class="field"><div class="label">Nombre Completo</div><div class="val">${escapeHtml(d.nombre || "")} ${escapeHtml(d.apellido || "")}</div></div>
-        <div class="field"><div class="label">Cédula de Identidad</div><div class="val">${escapeHtml(d.cedula || "N/A")}</div></div>
-        <div class="field"><div class="label">Fecha de Nacimiento</div><div class="val">${escapeHtml(d.fechaNacimiento || "N/A")}</div></div>
-        <div class="field"><div class="label">Estado Civil</div><div class="val">${escapeHtml(d.estadoCivil || "N/A")}</div></div>
-        <div class="field"><div class="label">Teléfono / WhatsApp</div><div class="val">${escapeHtml(d.telefono || "N/A")}</div></div>
-        <div class="field"><div class="label">Movilidad Propia</div><div class="val">${d.movilidadPropia ? `Sí (${escapeHtml(d.tipoMovilidad || "Vehículo")})` : "No"}</div></div>
-        <div class="field"><div class="label">Estudios / Carrera</div><div class="val">${escapeHtml(d.carrera || "N/A")} (${escapeHtml(d.estadoEstudios || "N/A")})</div></div>
-        <div class="field"><div class="label">Institución</div><div class="val">${escapeHtml(d.universidad || "N/A")}</div></div>
+        <div class="field"><div class="label">Nombre Completo</div><div class="val">${escapeHtml(fullNombre ? fullNombre : nombreCandidato)}</div></div>
+        <div class="field"><div class="label">Cédula de Identidad</div><div class="val">${escapeHtml(d.cedula ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Fecha de Nacimiento</div><div class="val">${escapeHtml(d.fechaNacimiento ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Estado Civil</div><div class="val">${escapeHtml(d.estadoCivil ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Teléfono / WhatsApp</div><div class="val">${escapeHtml(d.telefono ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Movilidad Propia</div><div class="val">${movilidadTexto}</div></div>
+        <div class="field"><div class="label">Estudios / Carrera</div><div class="val">${estudiosTexto}</div></div>
+        <div class="field"><div class="label">Institución</div><div class="val">${escapeHtml(d.universidad ?? "N/A")}</div></div>
         <div class="field"><div class="label">Idiomas</div><div class="val">${idiomasTexto}</div></div>
-        <div class="field"><div class="label">Situación Laboral</div><div class="val">${escapeHtml(d.situacionActual || "N/A")}</div></div>
-        <div class="field"><div class="label">Empresa / Actividad</div><div class="val">${escapeHtml(d.empresaAnterior || "N/A")} (${escapeHtml(d.cargoAnterior || "N/A")})</div></div>
-        <div class="field"><div class="label">Antigüedad / Pretensión</div><div class="val">${escapeHtml(d.antiguedad || "0")} meses | ${escapeHtml(d.pretensionSalarial || "N/A")}</div></div>
+        <div class="field"><div class="label">Situación Laboral</div><div class="val">${escapeHtml(d.situacionActual ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Empresa / Actividad</div><div class="val">${empresaTexto}</div></div>
+        <div class="field"><div class="label">Antigüedad / Pretensión</div><div class="val">${antiguedadPretensionTexto}</div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">2. Perfil Psicosocial y Entorno Familiar</div>
       <div class="grid-2">
-        <div class="field"><div class="label">Fortalezas Destacadas</div><div class="val">${escapeHtml(d.aspectosPositivos || "No especificado")}</div></div>
-        <div class="field"><div class="label">Aspectos a Mejorar</div><div class="val">${escapeHtml(d.aspectosMejorar || "No especificado")}</div></div>
-        <div class="field"><div class="label">Proyección a Largo Plazo</div><div class="val">${escapeHtml(d.visionLargoPlazo || "No especificado")}</div></div>
-        <div class="field"><div class="label">Composición Conviviente</div><div class="val">${escapeHtml(d.estructuraFamiliar || "N/A")}</div></div>
-        <div class="field"><div class="label">Hijos / Dependientes</div><div class="val">${d.hijos ? `Sí (${escapeHtml(d.cantidadHijos \vert{}\vert{} 1)} - Edades:${escapeHtml(d.edadesHijos || "N/A")})` : "Sin hijos"}</div></div>
-        <div class="field"><div class="label">Cobertura Médica / Salud</div><div class="val">Seguro: ${escapeHtml((d.seguroMedico || "ninguno").toUpperCase())} | Enf. Base: ${d.enfermedadBase ? escapeHtml(d.enfermedadBaseDetalle || "Sí") : "No refiere"}</div></div>
+        <div class="field"><div class="label">Fortalezas Destacadas</div><div class="val">${escapeHtml(d.aspectosPositivos ?? "No especificado")}</div></div>
+        <div class="field"><div class="label">Aspectos a Mejorar</div><div class="val">${escapeHtml(d.aspectosMejorar ?? "No especificado")}</div></div>
+        <div class="field"><div class="label">Proyección a Largo Plazo</div><div class="val">${escapeHtml(d.visionLargoPlazo ?? "No especificado")}</div></div>
+        <div class="field"><div class="label">Composición Conviviente</div><div class="val">${escapeHtml(d.estructuraFamiliar ?? "N/A")}</div></div>
+        <div class="field"><div class="label">Hijos / Dependientes</div><div class="val">${hijosTexto}</div></div>
+        <div class="field"><div class="label">Cobertura Médica / Salud</div><div class="val">${saludTexto}</div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">3. Situación Económica e Inspección del Inmueble</div>
       <div class="grid-3">
-        <div class="field"><div class="label">Ingresos Familiares</div><div class="val">${escapeHtml(d.ingresosFamiliares || "No declarado")}</div></div>
-        <div class="field"><div class="label">Otros Ingresos</div><div class="val">${escapeHtml(d.otrosIngresos || "No refiere")}</div></div>
-        <div class="field"><div class="label">Egresos Mensuales</div><div class="val">${escapeHtml(d.egresosMensuales || "No declarado")}</div></div>
-        <div class="field full"><div class="label">Compromisos / Préstamos Vigentes</div><div class="val">${d.prestamos ? escapeHtml(d.prestamosDetalle || "Registra préstamos activos") : "Sin préstamos declarados"}</div></div>
-        <div class="field"><div class="label">Ciudad y Barrio</div><div class="val">${escapeHtml(d.ciudad || "N/A")} - ${escapeHtml(d.barrio || "N/A")}</div></div>
-        <div class="field"><div class="label">Tenencia de Vivienda</div><div class="val">${escapeHtml((d.tenenciaVivienda || "propia").toUpperCase())}</div></div>
-        <div class="field"><div class="label">Coordenadas GPS</div><div class="val">${escapeHtml(d.coordenadas || "N/A")}</div></div>
-        <div class="field full"><div class="label">Dirección Exacta</div><div class="val">${escapeHtml(d.direccion || "N/A")}</div></div>
-        <div class="field full"><div class="label">Calidad Constructiva y Distribución</div><div class="val">Techo: ${escapeHtml(d.techo || "N/A")} | Paredes: ${escapeHtml(d.paredes || "N/A")} | Pisos: ${escapeHtml(d.pisos || "N/A")} | Habitantes: ${escapeHtml(d.cantidadPersonas || 1)} | Dormitorios: ${escapeHtml(d.habitaciones || 1)}</div></div>
+        <div class="field"><div class="label">Ingresos Familiares</div><div class="val">${escapeHtml(d.ingresosFamiliares ?? "No declarado")}</div></div>
+        <div class="field"><div class="label">Otros Ingresos</div><div class="val">${escapeHtml(d.otrosIngresos ?? "No refiere")}</div></div>
+        <div class="field"><div class="label">Egresos Mensuales</div><div class="val">${escapeHtml(d.egresosMensuales ?? "No declarado")}</div></div>
+        <div class="field full"><div class="label">Compromisos / Préstamos Vigentes</div><div class="val">${prestamosTexto}</div></div>
+        <div class="field"><div class="label">Ciudad y Barrio</div><div class="val">${ubicacionTexto}</div></div>
+        <div class="field"><div class="label">Tenencia de Vivienda</div><div class="val">${escapeHtml(String(d.tenenciaVivienda ?? "propia").toUpperCase())}</div></div>
+        <div class="field"><div class="label">Coordenadas GPS</div><div class="val">${escapeHtml(d.coordenadas ?? "N/A")}</div></div>
+        <div class="field full"><div class="label">Dirección Exacta</div><div class="val">${escapeHtml(d.direccion ?? "N/A")}</div></div>
+        <div class="field full"><div class="label">Calidad Constructiva y Distribución</div><div class="val">${materialesTexto}</div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">4. Conclusión y Concepto del Evaluador</div>
-      <div class="obs-box">${escapeHtml(d.observacionesEntrevista || "Sin observaciones adicionales.")}</div>
+      <div class="obs-box">${escapeHtml(d.observacionesEntrevista ?? "Sin observaciones adicionales.")}</div>
       <div class="grid-2" style="margin-top: 10px;">
-        <div class="field"><div class="label">Comunicación y Dicción</div><div class="val">${escapeHtml((d.diccion || "fluida").toUpperCase())}</div></div>
-        <div class="field"><div class="label">Estado General del Inmueble</div><div class="val">${escapeHtml((d.estadoVivienda || "bueno").toUpperCase())}</div></div>
+        <div class="field"><div class="label">Comunicación y Dicción</div><div class="val">${escapeHtml(String(d.diccion ?? "fluida").toUpperCase())}</div></div>
+        <div class="field"><div class="label">Estado General del Inmueble</div><div class="val">${escapeHtml(String(d.estadoVivienda ?? "bueno").toUpperCase())}</div></div>
       </div>
     </div>
 
     <div class="footer">
-      <div>Fecha de Visita: <strong>${escapeHtml(d.fechaVisita || new Date().toLocaleDateString("es-PY"))}</strong></div>
-      <div>Evaluador Responsable: <strong>${escapeHtml(d.consultorNombre || entrevista.evaluadorAsignado || "Jerovia Consultora")}</strong></div>
+      <div>Fecha de Visita: <strong>${fechaTexto}</strong></div>
+      <div>Evaluador Responsable: <strong>${evaluadorTexto}</strong></div>
     </div>
   </div>
 </body>

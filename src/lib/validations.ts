@@ -1,29 +1,5 @@
 import { z } from "zod";
 
-/**
- * Helper para campos numéricos opcionales en React Hook Form (convierte NaN o "" en undefined)
- */
-const optionalNumber = (min = 0, max = 1_000_000_000_000) =>
-  z.preprocess(
-    (val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
-      if (typeof val === "number" && Number.isNaN(val)) return undefined;
-      const parsed = Number(val);
-      return Number.isNaN(parsed) ? undefined : parsed;
-    },
-    z.number().min(min).max(max).optional()
-  );
-
-const requiredNumber = (min = 0, max = 100, defaultVal = 0) =>
-  z.preprocess(
-    (val) => {
-      if (val === "" || val === null || val === undefined) return defaultVal;
-      const parsed = Number(val);
-      return Number.isNaN(parsed) ? defaultVal : parsed;
-    },
-    z.number().min(min).max(max)
-  );
-
 export const paso1Schema = z.object({
   nombre: z.string().trim().min(2, "Ingrese el nombre"),
   apellido: z.string().trim().min(2, "Ingrese el apellido"),
@@ -43,7 +19,7 @@ export const paso1Schema = z.object({
 
 export const paso2Schema = z.object({
   carrera: z.string().trim().min(2, "Indique carrera o nivel de estudios"),
-  aniosEstudio: requiredNumber(0, 25, 0),
+  aniosEstudio: z.coerce.number().min(0).max(25).default(0),
   universidad: z.string().trim().min(2, "Indique la institución"),
   estadoEstudios: z.enum(["en_curso", "finalizado", "interrumpido"]),
   idiomas: z
@@ -67,13 +43,8 @@ export const paso3Schema = z.object({
   ]),
   empresaAnterior: z.string().optional(),
   cargoAnterior: z.string().optional(),
-  antiguedad: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((v) =>
-      v === undefined || v === null || Number.isNaN(v) ? "" : String(v)
-    ),
-  salarioAnterior: optionalNumber(0),
+  antiguedad: z.coerce.string().optional(),
+  salarioAnterior: z.coerce.number().min(0).optional().default(0),
   disponibilidad: z
     .enum(["inmediata", "15_dias", "30_dias", "mas_30_dias"])
     .optional()
@@ -101,19 +72,19 @@ export const paso5Schema = z.object({
   ]),
   estructuraFamiliar: z.string().trim().min(4, "Describa la composición del hogar"),
   hijos: z.boolean().optional().default(false),
-  cantidadHijos: optionalNumber(0, 25),
+  cantidadHijos: z.coerce.number().min(0).max(25).optional().default(0),
   edadesHijos: z.string().optional(),
   nombrePadre: z.string().optional(),
-  edadPadre: optionalNumber(0, 120),
+  edadPadre: z.coerce.number().min(0).max(120).optional().default(0),
   ocupacionPadre: z.string().optional(),
   telefonoPadre: z.string().optional(),
   ciudadPadre: z.string().optional(),
   nombreMadre: z.string().optional(),
-  edadMadre: optionalNumber(0, 120),
+  edadMadre: z.coerce.number().min(0).max(120).optional().default(0),
   ocupacionMadre: z.string().optional(),
   telefonoMadre: z.string().optional(),
   ciudadMadre: z.string().optional(),
-  cantidadHermanos: optionalNumber(0, 25).default(0),
+  cantidadHermanos: z.coerce.number().min(0).max(25).optional().default(0),
 });
 
 export const paso6Schema = z.object({
@@ -147,16 +118,16 @@ export const paso8Schema = z.object({
   plusCode: z.string().optional(),
   tipoCamino: z.enum(["asfalto", "empedrado", "tierra"]),
   tenenciaVivienda: z.enum(["propia", "alquilada", "prestada", "familiar"]),
-  costoAlquiler: optionalNumber(0),
-  cantidadPersonas: requiredNumber(1, 40, 1),
-  habitaciones: requiredNumber(0, 30, 1),
-  banos: requiredNumber(0, 15, 1),
+  costoAlquiler: z.coerce.number().min(0).optional().default(0),
+  cantidadPersonas: z.coerce.number().min(1).max(40).default(1),
+  habitaciones: z.coerce.number().min(0).max(30).default(1),
+  banos: z.coerce.number().min(0).max(15).default(1),
   cocina: z.boolean().optional().default(true),
   sala: z.boolean().optional().default(true),
   techo: z.enum(["tejas", "chapa", "losa", "otro"]),
   paredes: z.enum(["ladrillo", "madera", "prefabricado", "otro"]),
   pisos: z.enum(["ceramica", "cemento", "mosaico", "otro"]),
-  plantas: requiredNumber(1, 10, 1),
+  plantas: z.coerce.number().min(1).max(10).default(1),
   fotosVivienda: z.array(z.string()).optional().default([]),
 });
 
