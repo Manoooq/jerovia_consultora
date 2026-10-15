@@ -1,7 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { removeSession, getSession } from "@/lib/auth";
+import { registrarEventoAuditoria } from "@/lib/audit";
+import { getClientIp } from "@/lib/apiSecurity";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (session) {
+    registrarEventoAuditoria({
+      userId: session.userId,
+      userName: session.name,
+      userRole: session.role,
+      action: "LOGOUT",
+      detail: `Cierre de sesión (@${session.username}).`,
+      ip: getClientIp(req),
+    });
+  }
   await removeSession();
   return NextResponse.json({ success: true });
 }

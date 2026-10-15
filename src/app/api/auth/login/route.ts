@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verificarCredenciales } from "@/lib/users";
 import { createSession } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { registrarEventoAuditoria } from "@/lib/audit";
+import { enforceRateLimit, getClientIp, parseSafeJson } from "@/lib/apiSecurity";
 
 export async function POST(req: NextRequest) {
+  const rateErr = enforceRateLimit(req, "auth-login", 8, 60_000);
+  if (rateErr) return rateErr;
+
+  const { data: body, errorResponse } = await parseSafeJson<{
+    username?: string;
+    password?: string;
+    remember?: boolean;
+  }>(req, 16_384);
+  if (errorResponse) return errorResponse;
+
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "localhost";
-    const rateCheck = checkRateLimit(`login_${ip}`, 8, 60 * 1000);
-
-    if (!rateCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: `Demasiados intentos fallidos. Por seguridad, intente nuevamente en ${rateCheck.retryAfterSec} segundos.`,
-        },
-        { status: 429, headers: { "Retry-After": String(rateCheck.retryAfterSec) } }
-      );
-    }
-
-    const { username, password, remember } = await req.json();
-    const identifier = (username || "").trim();
+    const identifier = (body?.username || "").trim();
+    const password = body?.password || "";
 
     if (!identifier || !password) {
       return NextResponse.json(
@@ -28,16 +27,26 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await verificarCredenciales(identifier, password);
-
     if (!user) {
       return NextResponse.json(
-        { error: "Credenciales inválidas o cuenta desactivada. Verifique sus datos con la administración." },
+        {
+          error:
+            "Credenciales inválidas o cuenta desactivada. Verifique sus datos.",
+        },
         { status: 401 }
       );
     }
 
-    // Crear sesión autenticada con rol (admin o evaluador)
-    await createSession(user, !!remember);
+    await createSession(user, Boolean(body?.remember));
+
+    registrarEventoAuditoria({
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action: "LOGIN",
+      detail: `Inicio de sesión exitoso (@${user.username}).`,
+      ip: getClientIp(req),
+    });
 
     return NextResponse.json({
       success: true,
