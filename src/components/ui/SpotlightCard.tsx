@@ -1,82 +1,118 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
-  spotlightColor?: string;
-  tilt?: boolean;
+  /** Intensidad del hundimiento 3D bajo el cursor (grados) */
+  sinkIntensity?: number;
+  /** Si es true, aplica un hundimiento adicional al hacer clic */
+  pressable?: boolean;
 }
 
+/**
+ * Panel corporativo con iluminación especular de doble capa (borde + superficie)
+ * y física de presión 3D: la superficie bajo el cursor se hunde suavemente
+ * a 60 FPS usando variables CSS sin re-renderizar React.
+ */
 export function SpotlightCard({
   children,
   className,
-  spotlightColor = "rgba(249, 226, 175, 0.15)",
-  tilt = true,
+  sinkIntensity = 4.2,
+  pressable = false,
   ...props
 }: SpotlightCardProps) {
-  const divRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
-  const [transform, setTransform] = useState("");
+  const ref = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!divRef.current) return;
-      const rect = divRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (!el) return;
 
-      setPosition({ x, y });
-      setOpacity(1);
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
-      if (tilt) {
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -6; // max 6 deg
-        const rotateY = ((x - centerX) / centerX) * 6;
-        setTransform(`perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.01, 1.01, 1.01)`);
-      }
-    },
-    [tilt]
-  );
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
 
-  const handleMouseLeave = useCallback(() => {
-    setOpacity(0);
-    if (tilt) {
-      setTransform("perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)");
-    }
-  }, [tilt]);
+      // Matemática de hundimiento: la zona donde está el cursor se inclina hacia adentro (eje Z negativo)
+      const rx = ((cy - y) / cy) * sinkIntensity;
+      const ry = ((x - cx) / cx) * sinkIntensity;
+
+      el.style.setProperty("--mx", `${x.toFixed(0)}px`);
+      el.style.setProperty("--my", `${y.toFixed(0)}px`);
+      el.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+      el.style.setProperty("--scale", "0.988");
+      el.style.setProperty("--tz", "-6px");
+    });
+  }
+
+  function handleMouseLeave() {
+    const el = ref.current;
+    if (!el) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+    el.style.setProperty("--scale", "1");
+    el.style.setProperty("--tz", "0px");
+  }
 
   return (
-    <div
-      ref={divRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform,
-        transition: "transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
-      }}
-      className={cn(
-        "relative rounded-3xl border border-overlay0/40 bg-surface0 p-6 overflow-hidden transition-colors shadow-sm",
-        className
-      )}
-      {...props}
-    >
-      {/* Luz radial interactiva que sigue el cursor */}
+    <div className="[perspective:1100px] h-full">
       <div
-        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition-opacity duration-300"
+        ref={ref}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         style={{
-          opacity,
-          background: `radial-gradient(550px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 70%)`,
+          transform:
+            " rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(var(--tz, 0px)) scale(var(--scale, 1))",
         }}
-        aria-hidden="true"
-      />
+        className={cn(
+          "group relative h-full rounded-2xl border border-overlay0/90 bg-surface0/90 backdrop-blur-xl overflow-hidden",
+          "transition-[transform,border-color,box-shadow,background-color] duration-200 ease-out will-change-transform",
+          "hover:border-gold/45 hover:bg-surface1/70",
+          "shadow-[0_8px_28px_-6px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]",
+          "hover:shadow-[inset_0_3px_16px_rgba(0,0,0,0.45),0_2px_10px_rgba(0,0,0,0.25)]",
+          pressable && "active:scale-[0.975] cursor-pointer",
+          className
+        )}
+        {...props}
+      >
+        {/* Capa 1: Brillo especular sobre la superficie interna */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            background:
+              "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(var(--spotlight-rgb), 0.14), transparent 55%)",
+          }}
+        />
 
-      {/* Contenido */}
-      <div className="relative z-10">{children}</div>
+        {/* Capa 2: Iluminación intensa de borde que sigue al puntero */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            padding: "1px",
+            background:
+              "radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(var(--spotlight-rgb), 0.7), transparent 70%)",
+            WebkitMask:
+              "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+            WebkitMaskComposite: "xor",
+            maskComposite: "exclude",
+          }}
+        />
+
+        <div className="relative z-10 h-full">{children}</div>
+      </div>
     </div>
   );
 }
