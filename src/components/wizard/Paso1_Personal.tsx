@@ -29,7 +29,6 @@ export function Paso1Personal({ defaultValues, onNext }: Paso1Props) {
     watch,
     formState: { errors },
   } = useForm<Paso1Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso1Schema),
     defaultValues: {
       licenciaConducir: false,

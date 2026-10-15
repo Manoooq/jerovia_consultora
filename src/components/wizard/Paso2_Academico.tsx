@@ -34,7 +34,6 @@ export function Paso2Academico({ defaultValues, onNext, onPrev }: PasoProps) {
     control,
     formState: { errors },
   } = useForm<Paso2Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso2Schema),
     defaultValues: { idiomas: [], ...defaultValues },
   });

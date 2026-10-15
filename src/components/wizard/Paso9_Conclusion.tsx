@@ -43,7 +43,6 @@ export function Paso9_Conclusion({
     watch,
     formState: { errors },
   } = useForm<Paso9Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso9Schema),
     defaultValues: {
       fechaVisita: defaultValues?.fechaVisita || todayIso,

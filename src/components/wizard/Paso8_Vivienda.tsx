@@ -23,7 +23,6 @@ export function Paso8_Vivienda({ defaultValues, onNext, onPrev }: PasoProps) {
     watch,
     formState: { errors },
   } = useForm<Paso8Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso8Schema),
     defaultValues: { cocina: true, sala: true, plantas: 1, ...defaultValues },
   });

@@ -22,7 +22,6 @@ export function Paso4_Psicosocial({ defaultValues, onNext, onPrev }: PasoProps) 
     watch,
     formState: { errors },
   } = useForm<Paso4Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso4Schema),
     defaultValues: { ...defaultValues },
   });

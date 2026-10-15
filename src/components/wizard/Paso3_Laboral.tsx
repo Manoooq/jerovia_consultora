@@ -20,7 +20,6 @@ export function Paso3_Laboral({ defaultValues, onNext, onPrev }: PasoProps) {
     watch,
     formState: { errors },
   } = useForm<Paso3Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso3Schema),
     defaultValues: { ...defaultValues },
   });

@@ -35,7 +35,6 @@ export function Paso7_Economico({ defaultValues, onNext, onPrev }: PasoProps) {
     watch,
     formState: { errors },
   } = useForm<Paso7Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso7Schema),
     defaultValues: { ...defaultValues },
   });

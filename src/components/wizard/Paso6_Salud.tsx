@@ -21,7 +21,6 @@ export function Paso6_Salud({ defaultValues, onNext, onPrev }: PasoProps) {
     watch,
     formState: { errors },
   } = useForm<Paso6Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso6Schema),
     defaultValues: { ...defaultValues },
   });

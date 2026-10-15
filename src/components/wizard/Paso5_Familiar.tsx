@@ -21,7 +21,6 @@ export function Paso5_Familiar({ defaultValues, onNext, onPrev }: PasoProps) {
     watch,
     formState: { errors },
   } = useForm<Paso5Data>({
-    // @ts-expect-error — RHF + Zod optional default inference compatibility
     resolver: zodResolver(paso5Schema),
     defaultValues: { ...defaultValues },
   });

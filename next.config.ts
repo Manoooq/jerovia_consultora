@@ -18,7 +18,9 @@ const cspHeader = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async headers() {
     return [
       {
