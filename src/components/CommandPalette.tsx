@@ -14,6 +14,7 @@ import {
   X,
   Key,
   Building2,
+  CircleHelp,
 } from "lucide-react";
 
 interface CommandItem {
@@ -25,7 +26,11 @@ interface CommandItem {
   action: () => void;
 }
 
-export function CommandPalette() {
+interface CommandPaletteProps {
+  variant?: "default" | "hero-icon";
+}
+
+export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -58,7 +63,7 @@ export function CommandPalette() {
   const commands: CommandItem[] = [
     {
       id: "demo",
-      title: "Probar Consola Pericial (Demo Interactiva)",
+      title: "Probar Cuestionario Socioambiental (Demo 9 Módulos)",
       category: "Navegación",
       icon: FileText,
       action: () => router.push("/entrevista/demo"),
@@ -81,14 +86,14 @@ export function CommandPalette() {
     },
     {
       id: "showcase",
-      title: "Ver Consola 3D y Láminas Ejecutivas",
+      title: "Explorar Consola Interactiva y 5 Láminas",
       category: "Sección",
       icon: FileText,
       action: () => scrollToSection("showcase"),
     },
     {
       id: "simulador",
-      title: "Cotizador Instantáneo de Aranceles",
+      title: "Simulador de Aranceles y Plazos",
       category: "Sección",
       icon: Calculator,
       action: () => scrollToSection("simulador"),
@@ -101,11 +106,11 @@ export function CommandPalette() {
       action: () => scrollToSection("cobertura"),
     },
     {
-      id: "normativa",
-      title: "Cumplimiento Ley N° 6534/20 y BCP",
+      id: "especificaciones",
+      title: "Especificaciones del Servicio",
       category: "Sección",
       icon: Shield,
-      action: () => scrollToSection("faqs"),
+      action: () => scrollToSection("especificaciones"),
     },
     {
       id: "theme",
@@ -144,7 +149,8 @@ export function CommandPalette() {
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex(
-        (prev) => (prev - 1 + filteredCommands.length) % (filteredCommands.length || 1)
+        (prev) =>
+          (prev - 1 + filteredCommands.length) % (filteredCommands.length || 1)
       );
     } else if (e.key === "Enter" && filteredCommands[selectedIndex]) {
       e.preventDefault();
@@ -155,22 +161,38 @@ export function CommandPalette() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setIsOpen(true);
-          setQuery("");
-          setSelectedIndex(0);
-        }}
-        className="flex items-center gap-2 rounded-xl border border-overlay0/60 bg-surface1/80 px-3 py-1.5 text-xs text-subtext0 hover:border-gold hover:text-text transition-all cursor-pointer"
-        title="Comandos rápidos (Ctrl+K)"
-      >
-        <Search className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Comandos</span>
-        <kbd className="hidden sm:inline-flex items-center rounded bg-surface2 px-1.5 py-0.5 font-mono text-[10px] text-subtext1 border border-overlay0/40">
-          ⌘K
-        </kbd>
-      </button>
+      {variant === "hero-icon" ? (
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(true);
+            setQuery("");
+            setSelectedIndex(0);
+          }}
+          className="h-9 w-9 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+          title="Comandos y ayuda rápida (Ctrl+K)"
+          aria-label="Abrir buscador de comandos"
+        >
+          <CircleHelp className="h-5 w-5 stroke-[1.8]" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(true);
+            setQuery("");
+            setSelectedIndex(0);
+          }}
+          className="min-h-[38px] flex items-center gap-2 rounded-xl border border-overlay1 bg-surface1 px-3 py-1.5 text-xs font-bold text-text hover:border-gold transition-all cursor-pointer"
+          title="Comandos rápidos (Ctrl+K)"
+        >
+          <Search className="h-3.5 w-3.5 text-gold" />
+          <span className="hidden sm:inline">Buscar</span>
+          <kbd className="hidden sm:inline-flex items-center rounded bg-surface2 px-1.5 py-0.5 font-mono text-[10px] text-subtext1 border border-overlay1">
+            ⌘K
+          </kbd>
+        </button>
+      )}
 
       <AnimatePresence>
         {isOpen && (
@@ -178,35 +200,35 @@ export function CommandPalette() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-20 bg-black/70 backdrop-blur-xs"
             onClick={() => setIsOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              initial={{ opacity: 0, scale: 0.96, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              exit={{ opacity: 0, scale: 0.96, y: -10 }}
               transition={{ duration: 0.16 }}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={handleKeyDown}
-              className="w-full max-w-xl rounded-2xl border border-overlay0/80 bg-surface0 shadow-2xl overflow-hidden flex flex-col"
+              className="w-full max-w-xl rounded-2xl border border-overlay1 bg-surface0 shadow-2xl overflow-hidden flex flex-col"
             >
-              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-overlay0/30 bg-surface1/40">
+              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-overlay0 bg-surface1/60">
                 <Search className="h-4 w-4 text-gold shrink-0" />
                 <input
                   type="text"
                   autoFocus
-                  placeholder="Ir a sección, probar demo o cambiar tema..."
+                  placeholder="Ir a sección, probar cuestionario o cambiar tema..."
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
                     setSelectedIndex(0);
                   }}
-                  className="w-full bg-transparent text-sm text-text placeholder-subtext0 outline-none font-medium"
+                  className="w-full bg-transparent text-sm text-text placeholder:text-subtext0 outline-none font-semibold"
                 />
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="text-subtext0 hover:text-text p-1"
+                  className="text-subtext1 hover:text-text p-1 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -226,15 +248,19 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelectedIndex(index)}
                       className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-colors text-xs cursor-pointer ${
                         isSelected
-                          ? "bg-gold/15 text-text font-bold border border-gold/30"
+                          ? "bg-gold/15 text-text font-bold border border-gold/40"
                           : "text-subtext1 hover:bg-surface1"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon className={`h-4 w-4 ${isSelected ? "text-gold" : "text-subtext0"}`} />
+                        <item.icon
+                          className={`h-4 w-4 ${
+                            isSelected ? "text-gold" : "text-subtext0"
+                          }`}
+                        />
                         <span>{item.title}</span>
                       </div>
-                      <span className="text-[10px] font-mono text-subtext0 bg-surface1 px-2 py-0.5 rounded-md border border-overlay0/30">
+                      <span className="text-[10px] font-mono font-bold text-subtext1 bg-surface1 px-2 py-0.5 rounded-md border border-overlay0">
                         {item.category}
                       </span>
                     </button>

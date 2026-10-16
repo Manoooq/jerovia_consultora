@@ -4,7 +4,7 @@ const cspHeader = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://*.tile.openstreetmap.org https://unpkg.com",
+  "img-src 'self' blob: data: https://*.tile.openstreetmap.org https://unpkg.com https://images.unsplash.com",
   "font-src 'self' data:",
   "connect-src 'self' https://generativelanguage.googleapis.com https://nominatim.openstreetmap.org",
   "media-src 'self' blob: data:",
