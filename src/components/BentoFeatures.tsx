@@ -6,58 +6,65 @@ import { MapPin, Mic, Camera, FileSpreadsheet } from "lucide-react";
 const ITEMS = [
   {
     code: "01",
-    title: "Georreferenciación GPS",
-    meta: "Coordenadas + Plus Code",
+    title: "Geolocalización en Sitio",
+    metric: "GPS + Plus Code",
+    desc: "Captura satelital desde el domicilio visitado.",
     icon: MapPin,
+    span: "md:col-span-7",
   },
   {
     code: "02",
-    title: "Dictado por Voz",
-    meta: "Transcripción a campos",
+    title: "Transcripción de Voz",
+    metric: "Carga Asistida",
+    desc: "Dictado rápido para completar campos en terreno.",
     icon: Mic,
+    span: "md:col-span-5",
   },
   {
     code: "03",
     title: "Evidencia Fotográfica",
-    meta: "Fachada y servicios",
+    metric: "Cámara / Galería",
+    desc: "Registro comprimido de fachada y medidor.",
     icon: Camera,
+    span: "md:col-span-5",
   },
   {
     code: "04",
-    title: "Exportación en 5 Láminas",
-    meta: "PowerPoint (.PPTX) y PDF",
+    title: "Entregable Corporativo",
+    metric: ".PPTX + PDF",
+    desc: "5 láminas ejecutivas listas para comité.",
     icon: FileSpreadsheet,
+    span: "md:col-span-7",
   },
 ];
 
 export function BentoFeatures() {
   return (
-    <div className="recessed-well rounded-3xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
       {ITEMS.map((item) => {
         const Icon = item.icon;
         return (
-          <SpotlightCard
-            key={item.code}
-            sinkIntensity={7}
-            pressable
-            className="p-5 flex flex-col justify-between min-h-[148px]"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-gold">
-                {item.code}
-              </span>
-              <div className="h-9 w-9 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold">
-                <Icon className="h-4 w-4" />
+          <div key={item.code} className={item.span}>
+            <SpotlightCard sinkIntensity={4.5} className="p-6 sm:p-7 flex flex-col justify-between min-h-[180px]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-gold">
+                  {item.code} // {item.metric}
+                </span>
+                <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold">
+                  <Icon className="h-5 w-5" />
+                </div>
               </div>
-            </div>
 
-            <div className="pt-4">
-              <h3 className="text-base font-bold text-text">{item.title}</h3>
-              <p className="text-xs text-subtext1 mt-0.5 font-mono">
-                {item.meta}
-              </p>
-            </div>
-          </SpotlightCard>
+              <div className="pt-6">
+                <h3 className="text-lg sm:text-xl font-bold text-text tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-subtext1 mt-1">
+                  {item.desc}
+                </p>
+              </div>
+            </SpotlightCard>
+          </div>
         );
       })}
     </div>

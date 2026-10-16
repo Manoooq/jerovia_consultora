@@ -9,14 +9,15 @@ import { HeroProductShowcase } from "@/components/HeroProductShowcase";
 import { BentoFeatures } from "@/components/BentoFeatures";
 import { PeritajeCalculator } from "@/components/PeritajeCalculator";
 import { ParaguayOperationalMap } from "@/components/ParaguayOperationalMap";
+import { FaqSection } from "@/components/FaqSection";
 import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { ChevronRight, Lock, Menu, X } from "lucide-react";
 
 const METRICS = [
-  { value: "9 Módulos", label: "Protocolo" },
-  { value: "GPS + Fotos", label: "Terreno" },
-  { value: "5 Láminas", label: ".PPTX y PDF" },
+  { value: "9 Módulos", label: "Protocolo de Campo" },
+  { value: "GPS + Fotos", label: "Constatación In Situ" },
+  { value: "5 Láminas", label: "Dossier .PPTX y PDF" },
   { value: "< 24 hs", label: "Gran Asunción" },
 ];
 
@@ -24,8 +25,9 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: "#capacidades", label: "Plataforma" },
-    { href: "#simulador", label: "Cotizador" },
+    { href: "#showcase", label: "Sistema" },
+    { href: "#tecnologia", label: "Capacidades" },
+    { href: "#simulador", label: "Aranceles" },
     { href: "#cobertura", label: "Cobertura" },
   ];
 
@@ -68,13 +70,13 @@ export default function LandingPage() {
 
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-overlay0/60 bg-mantle/95 backdrop-blur-xl px-4 pt-3 pb-5 space-y-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {navLinks.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="min-h-[42px] px-3 py-2 rounded-xl bg-surface1 border border-overlay0 text-xs font-bold text-text flex items-center justify-center"
+                  className="min-h-[42px] px-3.5 py-2 rounded-xl bg-surface1 border border-overlay0 text-xs font-bold text-text flex items-center"
                 >
                   {l.label}
                 </a>
@@ -92,103 +94,107 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* HERO EJECUTIVO ASIMÉTRICO (2 COLUMNAS EN PC, SIN RELLENO) */}
-      <main id="main-content" tabIndex={-1} className="relative z-10 pt-24 sm:pt-28 pb-10 px-4 sm:px-6 lg:px-8 outline-none">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Columna Izquierda: Identidad Directa */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-3">
-                <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-gold">
-                  JEROVIA CONSULTORA · PARAGUAY
-                </p>
-                <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-[1.06] text-text">
-                  Verificación domiciliaria e informes socioambientales.
-                </h1>
-                <p className="text-sm text-subtext1 leading-relaxed">
-                  Inspección presencial georreferenciada y emisión de legajos ejecutivos en 5 láminas.
-                </p>
-              </div>
+      {/* Hero Directo y Sobrio */}
+      <main id="main-content" tabIndex={-1} className="relative z-10 pt-28 pb-12 px-4 sm:px-6 lg:px-8 outline-none">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-gold">
+              JEROVIA CONSULTORA — PARAGUAY
+            </p>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/entrevista/demo"
-                  className="min-h-[46px] group flex items-center justify-center gap-2 rounded-xl bg-gold px-6 py-3 text-xs sm:text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/15"
-                >
-                  <span>Abrir Cuestionario</span>
-                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="min-h-[46px] flex items-center justify-center gap-2 rounded-xl border border-overlay1 bg-surface0/90 px-6 py-3 text-xs sm:text-sm font-semibold text-text hover:border-gold transition-all"
-                >
-                  <Lock className="h-4 w-4 text-gold" />
-                  <span>Acceso Evaluadores</span>
-                </Link>
-              </div>
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.04] text-text">
+              Verificación domiciliaria e{" "}
+              <span className="text-gradient-gold">informes socioambientales.</span>
+            </h1>
 
-              {/* 4 Paneles Táctiles que Brillan y se Hunden */}
-              <div className="recessed-well rounded-2xl p-2.5 grid grid-cols-2 gap-2.5">
-                {METRICS.map((m) => (
-                  <SpotlightCard
-                    key={m.label}
-                    sinkIntensity={8}
-                    pressable
-                    className="px-3.5 py-3"
-                  >
-                    <p className="text-sm sm:text-base font-black text-gold font-mono tabular-nums">
-                      {m.value}
-                    </p>
-                    <p className="text-[11px] font-semibold text-subtext1">
-                      {m.label}
-                    </p>
-                  </SpotlightCard>
-                ))}
-              </div>
+            <p className="text-sm sm:text-base text-subtext1 max-w-xl mx-auto">
+              Relevamiento presencial georreferenciado. Entregables ejecutivos en 5 láminas.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/entrevista/demo"
+                className="min-h-[46px] w-full sm:w-auto group flex items-center justify-center gap-2 rounded-xl bg-gold px-7 py-3 text-sm font-bold text-black hover:bg-gold-light transition-all shadow-lg shadow-gold/15"
+              >
+                <span>Explorar Cuestionario</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/login"
+                className="min-h-[46px] w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-overlay1 bg-surface0/90 px-7 py-3 text-sm font-semibold text-text hover:border-gold transition-all"
+              >
+                <Lock className="h-4 w-4 text-gold" />
+                <span>Acceso Evaluadores</span>
+              </Link>
             </div>
 
-            {/* Columna Derecha: Consola Interactiva Inmediata */}
-            <div className="lg:col-span-7">
-              <HeroProductShowcase />
+            {/* 4 Tarjetas Táctiles que Brillan y se Hunden */}
+            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {METRICS.map((m) => (
+                <SpotlightCard key={m.label} sinkIntensity={6} className="px-4 py-3.5 text-center">
+                  <p className="text-base sm:text-lg font-black text-gold font-mono tabular-nums">
+                    {m.value}
+                  </p>
+                  <p className="text-[11px] font-semibold text-subtext1 mt-0.5">
+                    {m.label}
+                  </p>
+                </SpotlightCard>
+              ))}
             </div>
           </div>
 
-          {/* Fila de Capacidades Operativas */}
-          <section id="capacidades" className="space-y-3">
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-subtext1">
-              01 // PLATAFORMA DE CAMPO
-            </span>
-            <BentoFeatures />
-          </section>
-
-          {/* Cotizador Interactivo */}
-          <section id="simulador" className="space-y-3">
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-subtext1">
-              02 // COTIZADOR DE ARANCELES
-            </span>
-            <PeritajeCalculator />
-          </section>
-
-          {/* Cobertura Territorial */}
-          <section id="cobertura" className="space-y-3">
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-subtext1">
-              03 // COBERTURA EN PARAGUAY
-            </span>
-            <ParaguayOperationalMap />
+          <section id="showcase" aria-label="Sistema pericial interactivo">
+            <HeroProductShowcase />
           </section>
         </div>
       </main>
 
-      <footer className="relative z-10 border-t border-overlay0/50 py-6 mt-8 bg-mantle/90 backdrop-blur-md">
+      <section id="tecnologia" className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+            Capacidades Operativas
+          </h2>
+          <BentoFeatures />
+        </div>
+      </section>
+
+      <section id="simulador" className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+            Simulador de Aranceles
+          </h2>
+          <PeritajeCalculator />
+        </div>
+      </section>
+
+      <section id="cobertura" className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+            Cobertura Territorial
+          </h2>
+          <ParaguayOperationalMap />
+        </div>
+      </section>
+
+      <section id="faqs" className="relative z-10 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-4">
+          <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
+            Especificaciones del Servicio
+          </h2>
+          <FaqSection />
+        </div>
+      </section>
+
+      <footer className="relative z-10 border-t border-overlay0/50 py-8 mt-6 bg-mantle/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-subtext1">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <span>• Jerovia Consultora • Paraguay</span>
+            <span>• Visitas Socioambientales y Verificación Domiciliaria • Paraguay</span>
           </div>
           <div className="flex items-center gap-6 font-semibold">
             <Link href="/login" className="hover:text-gold transition-colors">Portal Evaluadores</Link>
             <Link href="/entrevista/demo" className="hover:text-gold transition-colors">Cuestionario Demo</Link>
-            <span className="text-subtext0 font-mono">© 2026</span>
+            <span className="text-subtext0 font-mono">© 2026 Jerovia Consultora</span>
           </div>
         </div>
       </footer>
