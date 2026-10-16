@@ -20,11 +20,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-xs font-semibold text-subtext1 tracking-tight"
+            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
-              <span className="text-red ml-1" aria-hidden="true">
+              <span className="text-gold ml-1" aria-hidden="true">
                 *
               </span>
             )}
@@ -38,9 +38,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
           className={cn(
-            "w-full rounded-xl border border-overlay0/80 bg-surface1 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium min-h-[44px]",
-            "transition-all duration-150 outline-none",
-            "hover:border-overlay1 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:ring-2 focus-visible:ring-gold/25",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium min-h-[44px]",
+            "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none",
+            "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
               "border-red focus-visible:border-red focus-visible:ring-red/25",
             className
@@ -85,11 +85,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="text-xs font-semibold text-subtext1 tracking-tight"
+            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
-              <span className="text-red ml-1" aria-hidden="true">
+              <span className="text-gold ml-1" aria-hidden="true">
                 *
               </span>
             )}
@@ -103,9 +103,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full rounded-xl border border-overlay0/80 bg-surface1 px-3.5 py-2.5 text-base sm:text-sm text-text font-medium min-h-[44px]",
-            "transition-all duration-150 outline-none cursor-pointer",
-            "hover:border-overlay1 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:ring-2 focus-visible:ring-gold/25",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text font-medium min-h-[44px]",
+            "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none cursor-pointer",
+            "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
               "border-red focus-visible:border-red focus-visible:ring-red/25",
             className
@@ -113,7 +113,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {...props}
         >
           <option value="" className="bg-mantle text-text">
-            Seleccionar opción...
+            Seleccionar...
           </option>
           {options.map((opt) => (
             <option
@@ -160,11 +160,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="text-xs font-semibold text-subtext1 tracking-tight"
+            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
-              <span className="text-red ml-1" aria-hidden="true">
+              <span className="text-gold ml-1" aria-hidden="true">
                 *
               </span>
             )}
@@ -178,9 +178,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
           className={cn(
-            "w-full rounded-xl border border-overlay0/80 bg-surface1 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium",
-            "transition-all duration-150 outline-none resize-y min-h-[88px]",
-            "hover:border-overlay1 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:ring-2 focus-visible:ring-gold/25",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium",
+            "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none resize-y min-h-[88px]",
+            "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
               "border-red focus-visible:border-red focus-visible:ring-red/25",
             className
@@ -221,7 +221,12 @@ export function Toggle({ label, checked, onChange, description }: ToggleProps) {
   return (
     <div
       onClick={() => onChange(!checked)}
-      className="flex items-center justify-between gap-4 py-2 px-3 -mx-3 rounded-xl hover:bg-surface2/50 transition-colors cursor-pointer select-none min-h-[44px]"
+      className={cn(
+        "flex items-center justify-between gap-4 py-2.5 px-3.5 rounded-xl border transition-all cursor-pointer select-none min-h-[46px]",
+        checked
+          ? "border-gold/50 bg-gold/10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]"
+          : "border-overlay0/60 bg-crust/50 hover:border-overlay1"
+      )}
     >
       <div className="flex flex-col">
         <label
@@ -232,7 +237,7 @@ export function Toggle({ label, checked, onChange, description }: ToggleProps) {
           {label}
         </label>
         {description && (
-          <span className="text-xs text-subtext0 mt-0.5">{description}</span>
+          <span className="text-[11px] text-subtext1 mt-0.5">{description}</span>
         )}
       </div>
 
@@ -273,7 +278,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-overlay0/60 bg-surface0 p-5 sm:p-6 shadow-xs",
+        "rounded-2xl border border-overlay0/80 bg-surface0 p-5 sm:p-6 shadow-xs",
         className
       )}
     >

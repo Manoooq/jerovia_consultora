@@ -2,411 +2,330 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Input, Select } from "@/components/ui/FormFields";
+import { Button } from "@/components/ui/Button";
+import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import {
   ArrowLeft,
-  Check,
+  PlusCircle,
   Copy,
+  Check,
   ExternalLink,
   Share2,
-  Building2,
-  User,
-  ShieldCheck,
-  ShieldAlert,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input, Select } from "@/components/ui/FormFields";
 
-const ENTIDADES_FRECUENTES = [
-  { value: "Banco Continental", label: "Banco Continental" },
-  { value: "Cooperativa Universitaria", label: "Cooperativa Universitaria" },
-  { value: "Financiera Familiar", label: "Financiera Familiar" },
-  { value: "Banco Itaú Paraguay", label: "Banco Itaú Paraguay" },
-  { value: "Banco Basa", label: "Banco Basa" },
-  { value: "Sudameris Bank", label: "Sudameris Bank" },
-  { value: "Otra Entidad", label: "Otra Entidad (Personalizada)" },
-];
+interface EvaluadorOption {
+  value: string;
+  label: string;
+}
 
-const CIUDADES_PARAGUAY = [
-  { value: "Luque", label: "Luque" },
-  { value: "Asunción", label: "Asunción" },
-  { value: "San Lorenzo", label: "San Lorenzo" },
-  { value: "Fernando de la Mora", label: "Fernando de la Mora" },
-  { value: "Lambaré", label: "Lambaré" },
-  { value: "Capiatá", label: "Capiatá" },
-  { value: "Ñemby", label: "Ñemby" },
-  { value: "Mariano Roque Alonso", label: "Mariano Roque Alonso" },
-  { value: "Villa Elisa", label: "Villa Elisa" },
-  { value: "Otra Ciudad", label: "Otra Ciudad" },
-];
-
-export default function NuevaEntrevistaPage() {
-  const [entidad, setEntidad] = useState("Banco Continental");
-  const [entidadCustom, setEntidadCustom] = useState("");
-  const [nombre, setNombre] = useState("");
+export default function NuevaVisitaPage() {
+  const [candidatoNombre, setCandidatoNombre] = useState("");
   const [cedula, setCedula] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [ciudad, setCiudad] = useState("Luque");
-  const [evaluador, setEvaluador] = useState("Lic. Michelle Romero");
-  const [evaluadoresList, setEvaluadoresList] = useState<{ value: string; label: string }[]>([
-    { value: "Lic. Michelle Romero", label: "Lic. Michelle Romero (Evaluadora Senior)" },
-    { value: "Lic. Carlos Benítez", label: "Lic. Carlos Benítez (Perito de Campo)" },
+  const [ciudad, setCiudad] = useState("Asunción");
+  const [entidadSolicitante, setEntidadSolicitante] = useState("");
+  const [evaluadorAsignado, setEvaluadorAsignado] = useState("Lic. Michelle Romero");
+  const [evaluadores, setEvaluadores] = useState<EvaluadorOption[]>([
+    { value: "Lic. Michelle Romero", label: "Lic. Michelle Romero" },
+    { value: "Lic. Carlos Benítez", label: "Lic. Carlos Benítez" },
   ]);
 
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [creada, setCreada] = useState<{
-    token: string;
-    entidad: string;
-    candidato: string;
-    evaluador: string;
-    url: string;
-  } | null>(null);
-  const [copiado, setCopiado] = useState(false);
-  const [permisoDenegado, setPermisoDenegado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    async function checkRoleAndLoadUsers() {
-      try {
-        const meRes = await fetch("/api/auth/me");
-        if (meRes.ok) {
-          const meData = await meRes.json();
-          if (meData.user?.role !== "admin") {
-            setPermisoDenegado(true);
-            return;
-          }
+    fetch("/api/usuarios")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((users) => {
+        if (Array.isArray(users) && users.length > 0) {
+          const opts = users
+            .filter((u) => u.activo)
+            .map((u) => ({ value: u.name, label: `${u.name} (${u.role})` }));
+          if (opts.length > 0) setEvaluadores(opts);
         }
-        const usersRes = await fetch("/api/usuarios");
-        if (usersRes.ok) {
-          const usersData = await usersRes.json();
-          const mapped = usersData
-            .filter((u: { activo: boolean }) => u.activo)
-            .map((u: { name: string; role: string }) => ({
-              value: u.name,
-              label: `${u.name} (${u.role === "admin" ? "Administrador" : "Evaluador"})`,
-            }));
-          if (mapped.length > 0) {
-            setEvaluadoresList(mapped);
-          }
-        }
-      } catch {
-        // Conserva valores por defecto ante error de red
-      }
-    }
-    checkRoleAndLoadUsers();
+      })
+      .catch(() => {});
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
+    if (!candidatoNombre.trim() || !entidadSolicitante.trim()) {
+      setError("Complete el nombre del postulante y la entidad solicitante.");
+      return;
+    }
 
-    const entidadFinal = (entidad === "Otra Entidad" ? entidadCustom : entidad).trim();
+    setLoading(true);
+    setError(null);
 
     try {
       const res = await fetch("/api/entrevista", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entidadSolicitante: entidadFinal,
-          evaluadorAsignado: evaluador,
-          candidatoNombre: nombre.trim(),
+          candidatoNombre: candidatoNombre.trim(),
           cedula: cedula.trim(),
           telefono: telefono.trim(),
-          ciudad,
+          ciudad: ciudad.trim(),
+          entidadSolicitante: entidadSolicitante.trim(),
+          evaluadorAsignado: evaluadorAsignado.trim(),
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Error al crear entrevista.");
+        throw new Error(data.error || "No se pudo generar el expediente.");
       }
 
-      const fullUrl = `${window.location.origin}/entrevista/${data.token}`;
-      setCreada({
-        token: data.token,
-        entidad: entidadFinal,
-        candidato: nombre.trim(),
-        evaluador,
-        url: fullUrl,
-      });
+      setCreatedToken(data.token);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : "No se pudo registrar la visita.");
+      setError(
+        err instanceof Error ? err.message : "Error al crear la visita."
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  function handleCopiar() {
-    if (!creada) return;
-    navigator.clipboard.writeText(creada.url);
-    setCopiado(true);
-    setTimeout(() => setCopiado(false), 2500);
+  const interviewUrl =
+    createdToken && typeof window !== "undefined"
+      ? `${window.location.origin}/entrevista/${createdToken}`
+      : "";
+
+  function handleCopy() {
+    if (!interviewUrl) return;
+    navigator.clipboard.writeText(interviewUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   }
 
-  function generarMensajeWhatsApp(): string {
-    if (!creada) return "";
-    const msg = `Estimado/a ${creada.candidato || "postulante"}, le saluda el equipo de Jerovia Consultora.\n\nPara coordinar el estudio socioambiental solicitado por ${creada.entidad}, le facilitamos el siguiente enlace seguro para registrar sus datos preliminares:\n\n${creada.url}\n\nPerito a cargo: ${creada.evaluador}\nQuedamos a su disposición.`;
-    const telLimpio = telefono.replace(/\D/g, "");
-    const telParaguay = telLimpio.startsWith("595")
-      ? telLimpio
-      : `595${telLimpio.replace(/^0/, "")}`;
-    return `https://wa.me/${telParaguay}?text=${encodeURIComponent(msg)}`;
-  }
-
-  if (permisoDenegado) {
-    return (
-      <div className="min-h-screen bg-base flex items-center justify-center p-4">
-        <div className="max-w-md w-full rounded-3xl border border-red/30 bg-surface0 p-8 text-center space-y-4">
-          <div className="h-12 w-12 rounded-2xl bg-red/10 text-red flex items-center justify-center mx-auto">
-            <ShieldAlert className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <h2 className="text-xl font-bold text-text">Acceso Restringido</h2>
-          <p className="text-xs text-subtext0 leading-relaxed">
-            Únicamente los usuarios con rol de <strong>Administrador General</strong> pueden generar nuevos enlaces de visitas y asignaciones.
-          </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-black"
-          >
-            Volver a mis visitas
-          </Link>
-        </div>
-      </div>
-    );
+  function getWhatsAppHref(): string {
+    const msg = `Estimado/a ${candidatoNombre}, le saluda Jerovia Consultora. Para completar los datos de la visita solicitada por ${entidadSolicitante}, ingrese a: ${interviewUrl}`;
+    const digits = telefono.replace(/\D/g, "");
+    const cleanPhone = digits
+      ? digits.startsWith("595")
+        ? digits
+        : `595${digits.replace(/^0/, "")}`
+      : "";
+    return cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
   }
 
   return (
-    <div className="min-h-screen bg-base">
-      <nav className="border-b border-overlay0/30 bg-mantle sticky top-0 z-50">
+    <div className="relative min-h-screen bg-base text-text flex flex-col justify-between overflow-x-hidden">
+      <AntigravityBackground />
+
+      <header className="glass-panel sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 text-xs text-subtext1 hover:text-text transition-colors"
+              className="min-h-[38px] px-3 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-xs font-bold text-text flex items-center gap-1.5 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Volver al panel
+              <ArrowLeft className="h-4 w-4 text-gold" />
+              <span>Volver al Panel</span>
             </Link>
-            <div className="h-4 w-px bg-overlay0/50" />
             <Logo size="sm" />
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <span className="text-xs text-gold uppercase tracking-widest font-semibold hidden sm:inline">
-              Emisión de Enlace
-            </span>
-          </div>
+          <ThemeToggle />
         </div>
-      </nav>
+      </header>
 
-      <main id="main-content" tabIndex={-1} className="max-w-3xl mx-auto px-4 sm:px-6 py-10 outline-none">
-        {!creada ? (
-          <div className="rounded-3xl border border-overlay0/40 bg-surface0 p-8 sm:p-10 shadow-2xl">
-            <div className="mb-8">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold mb-3">
-                <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Estudio Socioambiental Confidencial
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="relative z-10 w-full max-w-2xl mx-auto px-4 py-8 my-auto outline-none"
+      >
+        <div className="recessed-well rounded-3xl p-3 sm:p-4">
+          <SpotlightCard sinkIntensity={3} className="p-6 sm:p-8">
+            {createdToken ? (
+              <div className="space-y-6 text-center py-4">
+                <div className="h-14 w-14 rounded-2xl bg-green/15 border border-green/30 text-green flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-7 w-7" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
+                    EXPEDIENTE HABILITADO
+                  </span>
+                  <h1 className="text-2xl font-black text-text">
+                    {candidatoNombre}
+                  </h1>
+                  <p className="text-xs text-subtext1">
+                    Solicitante: <strong className="text-text">{entidadSolicitante}</strong> • Evaluador:{" "}
+                    <strong className="text-gold">{evaluadorAsignado}</strong>
+                  </p>
+                </div>
+
+                <div className="recessed-well rounded-2xl p-4 text-left space-y-2">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-subtext0 block">
+                    ENLACE ÚNICO DE RELEVAMIENTO
+                  </span>
+                  <p className="text-xs sm:text-sm font-mono font-bold text-gold break-all select-all">
+                    {interviewUrl}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                  <Button type="button" variant="secondary" onClick={handleCopy}>
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-gold" />
+                    )}
+                    <span>{copied ? "Copiado" : "Copiar Enlace"}</span>
+                  </Button>
+
+                  <a
+                    href={getWhatsAppHref()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[44px] rounded-xl border border-green/40 bg-green/10 hover:bg-green/20 text-green font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>Enviar WhatsApp</span>
+                  </a>
+
+                  <Link
+                    href={`/entrevista/${createdToken}`}
+                    className="min-h-[44px] rounded-xl bg-gold hover:bg-gold-light text-black font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <span>Abrir Ahora</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <div className="pt-4 border-t border-overlay0/50 flex justify-between text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreatedToken(null);
+                      setCandidatoNombre("");
+                      setCedula("");
+                      setTelefono("");
+                    }}
+                    className="text-subtext1 hover:text-gold font-bold cursor-pointer"
+                  >
+                    + Cargar otro expediente
+                  </button>
+                  <Link href="/dashboard" className="text-gold font-bold hover:underline">
+                    Ir a Cartera General →
+                  </Link>
+                </div>
               </div>
-              <h1 className="text-3xl font-black text-text">Generar Nueva Visita</h1>
-              <p className="text-sm text-subtext1 mt-1">
-                Registra los datos del postulante, la institución solicitante y el perito evaluador responsable.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-overlay0/60">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
+                      ALTA DE EXPEDIENTE
+                    </span>
+                    <h1 className="text-xl sm:text-2xl font-black text-text mt-0.5">
+                      Datos del Postulante y Asignación
+                    </h1>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
+                    <PlusCircle className="h-5 w-5" />
+                  </div>
+                </div>
 
-            {errorMsg && (
-              <div
-                role="alert"
-                aria-live="assertive"
-                className="mb-6 rounded-2xl bg-red/10 border border-red/30 p-4 text-xs font-semibold text-red flex items-center gap-2"
-              >
-                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{errorMsg}</span>
+                {error && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red/40 bg-red/10 p-3.5 text-xs font-semibold text-red flex items-center gap-2"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                  <Input
+                    label="Nombre y Apellido del Postulante"
+                    required
+                    value={candidatoNombre}
+                    onChange={(e) => setCandidatoNombre(e.target.value)}
+                    placeholder="Ej: Rodrigo Benítez Martínez"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Cédula de Identidad (CI)"
+                      inputMode="numeric"
+                      value={cedula}
+                      onChange={(e) => setCedula(e.target.value)}
+                      placeholder="Ej: 4.892.150"
+                    />
+                    <Input
+                      label="Teléfono / WhatsApp"
+                      type="tel"
+                      inputMode="tel"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value)}
+                      placeholder="Ej: 0981 774890"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Ciudad / Localidad"
+                      required
+                      value={ciudad}
+                      onChange={(e) => setCiudad(e.target.value)}
+                      placeholder="Ej: Asunción / Luque"
+                    />
+                    <Input
+                      label="Entidad Solicitante"
+                      required
+                      value={entidadSolicitante}
+                      onChange={(e) => setEntidadSolicitante(e.target.value)}
+                      placeholder="Ej: Banco Continental"
+                    />
+                  </div>
+
+                  <Select
+                    label="Perito Evaluador Asignado"
+                    required
+                    value={evaluadorAsignado}
+                    onChange={(e) => setEvaluadorAsignado(e.target.value)}
+                    options={evaluadores}
+                  />
+
+                  <div className="pt-4 border-t border-overlay0/50 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="min-h-[44px] w-full sm:w-auto px-5 rounded-xl border border-overlay1 bg-surface1 text-xs font-bold text-text flex items-center justify-center hover:border-gold transition-colors"
+                    >
+                      Cancelar
+                    </Link>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      loading={loading}
+                      className="w-full sm:w-auto min-w-[210px]"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Habilitar Expediente</span>
+                    </Button>
+                  </div>
+                </form>
               </div>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
-                <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <Building2 className="h-4 w-4 text-gold" aria-hidden="true" />
-                  <span>1. Entidad Solicitante</span>
-                </div>
-                <Select
-                  label="Empresa / Institución Bancaria"
-                  options={ENTIDADES_FRECUENTES}
-                  value={entidad}
-                  onChange={(e) => setEntidad(e.target.value)}
-                  required
-                />
-                {entidad === "Otra Entidad" && (
-                  <Input
-                    label="Nombre de la Institución"
-                    placeholder="Ej: Cooperativa San Cristóbal"
-                    value={entidadCustom}
-                    onChange={(e) => setEntidadCustom(e.target.value)}
-                    required
-                  />
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
-                <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <User className="h-4 w-4 text-gold" aria-hidden="true" />
-                  <span>2. Datos del Postulante / Entrevistado</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Nombre Completo"
-                    placeholder="Ej: Tobías Maximiliano Sánchez"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Cédula de Identidad (CI)"
-                    placeholder="Ej: 5.551.895"
-                    value={cedula}
-                    onChange={(e) => setCedula(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Teléfono / WhatsApp"
-                    placeholder="Ej: 0982 176890"
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
-                    required
-                  />
-                  <Select
-                    label="Ciudad de Residencia"
-                    options={CIUDADES_PARAGUAY}
-                    value={ciudad}
-                    onChange={(e) => setCiudad(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-4">
-                <div className="flex items-center gap-2 text-text font-semibold text-sm">
-                  <ShieldCheck className="h-4 w-4 text-gold" aria-hidden="true" />
-                  <span>3. Perito Evaluador Responsable</span>
-                </div>
-                <Select
-                  label="Asignar al Perito"
-                  options={evaluadoresList}
-                  value={evaluador}
-                  onChange={(e) => setEvaluador(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-overlay0/40">
-                <Link
-                  href="/dashboard"
-                  className="rounded-xl border border-overlay0 bg-surface1 px-5 py-3 text-sm font-semibold text-subtext1 hover:text-text transition-all"
-                >
-                  Cancelar
-                </Link>
-                <Button
-                  type="submit"
-                  size="lg"
-                  loading={loading}
-                  className="bg-gold text-black hover:bg-gold-light font-bold px-8 shadow-xl shadow-gold/20"
-                >
-                  Generar Enlace de Visita
-                </Button>
-              </div>
-            </form>
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-gold/30 bg-surface0 p-8 sm:p-10 shadow-2xl space-y-8 animate-in fade-in zoom-in-95 duration-300">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center">
-                <Check className="h-6 w-6 text-gold" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-text">¡Enlace de Visita Generado!</h2>
-                <p className="text-xs text-subtext0 mt-0.5">
-                  Token seguro asignado para {creada.candidato} bajo la supervisión de {creada.evaluador}.
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-overlay0/40 bg-surface1/60 p-5 space-y-3">
-              <div className="flex justify-between text-xs py-1 border-b border-overlay0/30">
-                <span className="text-subtext0">Entidad Solicitante:</span>
-                <span className="font-semibold text-text">{creada.entidad}</span>
-              </div>
-              <div className="flex justify-between text-xs py-1 border-b border-overlay0/30">
-                <span className="text-subtext0">Postulante:</span>
-                <span className="font-semibold text-text">{creada.candidato}</span>
-              </div>
-              <div className="flex justify-between text-xs py-1 border-b border-overlay0/30">
-                <span className="text-subtext0">Ciudad:</span>
-                <span className="font-semibold text-text">{ciudad}</span>
-              </div>
-              <div className="flex justify-between text-xs py-1">
-                <span className="text-subtext0">Perito Asignado:</span>
-                <span className="font-semibold text-gold">{creada.evaluador}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-subtext0 uppercase tracking-wider">
-                Enlace Directo para el Evaluador / Postulante
-              </label>
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-base border border-overlay0/60">
-                <input
-                  type="text"
-                  readOnly
-                  value={creada.url}
-                  className="bg-transparent text-sm text-text font-mono flex-1 outline-none px-2"
-                />
-                <Button size="sm" variant="secondary" onClick={handleCopiar} className="shrink-0">
-                  {copiado ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-green" />
-                      Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      Copiar
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <a
-                href={generarMensajeWhatsApp()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-green/90 hover:bg-green text-black font-bold px-6 py-3.5 text-sm transition-all shadow-lg shadow-green/20"
-              >
-                <Share2 className="h-4 w-4" aria-hidden="true" />
-                Enviar por WhatsApp
-              </a>
-              <Link
-                href={`/entrevista/${creada.token}`}
-                className="flex items-center justify-center gap-2 rounded-xl bg-gold hover:bg-gold-light text-black font-bold px-6 py-3.5 text-sm transition-all shadow-lg shadow-gold/20"
-              >
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                Iniciar Evaluación
-              </Link>
-            </div>
-
-            <div className="pt-4 border-t border-overlay0/30 text-center">
-              <Link href="/dashboard" className="text-xs text-subtext0 hover:text-text transition-colors">
-                Volver al listado de entrevistas
-              </Link>
-            </div>
-          </div>
-        )}
+          </SpotlightCard>
+        </div>
       </main>
+
+      <footer className="relative z-10 border-t border-overlay0/40 py-4 bg-mantle/80 backdrop-blur-md text-center text-xs text-subtext1 font-mono">
+        Jerovia Consultora • Gestión de Expedientes
+      </footer>
     </div>
   );
 }

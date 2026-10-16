@@ -71,6 +71,7 @@ function seedDefaultUsers() {
     email: "admin@jerovia.com.py",
     name: "Lic. Michelle Romero",
     role: "admin",
+    cargo: "Directora General",
     passwordHash:
       "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
     passwordSalt: "salt_adm_2026",
@@ -84,6 +85,7 @@ function seedDefaultUsers() {
     email: "evaluador@jerovia.com.py",
     name: "Lic. Carlos Benítez",
     role: "evaluador",
+    cargo: "Perito Evaluador",
     passwordHash:
       "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
     passwordSalt: "salt_eval_2026",
@@ -178,6 +180,8 @@ export async function crearUsuario(datos: {
   name: string;
   role: UserRole;
   password: string;
+  cargo?: string;
+  telefono?: string;
 }): Promise<SafeUser> {
   const existing =
     obtenerUsuarioPorIdentificador(datos.username) ||
@@ -199,6 +203,8 @@ export async function crearUsuario(datos: {
     passwordSalt: salt,
     activo: true,
     creadoEn: new Date().toISOString(),
+    cargo: datos.cargo?.trim() || undefined,
+    telefono: datos.telefono?.trim() || undefined,
   };
 
   usersStore.set(id, nuevoUsuario);
@@ -248,12 +254,21 @@ export function eliminarUsuario(id: string): boolean {
   return deleted;
 }
 
+const DUMMY_HASH =
+  "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433";
+const DUMMY_SALT = "jerovia_constant_time_salt_2026";
+
 export async function verificarCredenciales(
   identifier: string,
   password: string
 ): Promise<SafeUser | null> {
   const user = obtenerUsuarioPorIdentificador(identifier);
-  if (!user || !user.activo) return null;
+
+  // Evitar Timing Attack cuando el usuario no existe o está inactivo
+  if (!user || !user.activo) {
+    await verifyPassword(password, DUMMY_HASH, DUMMY_SALT);
+    return null;
+  }
 
   const valid = await verifyPassword(
     password,
