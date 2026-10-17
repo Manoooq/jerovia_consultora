@@ -185,6 +185,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
           }}
           className="min-h-[38px] flex items-center gap-2 rounded-xl border border-overlay1 bg-surface1 px-3 py-1.5 text-xs font-bold text-text hover:border-gold transition-all cursor-pointer"
           title="Comandos rápidos (Ctrl+K)"
+          aria-label="Abrir buscador de comandos"
         >
           <Search className="h-3.5 w-3.5 text-gold" />
           <span className="hidden sm:inline">Buscar</span>
@@ -218,6 +219,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                   type="text"
                   autoFocus
                   placeholder="Ir a sección, probar cuestionario o cambiar tema..."
+                  aria-label="Buscar comandos"
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -229,6 +231,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="text-subtext1 hover:text-text p-1 cursor-pointer"
+                  aria-label="Cerrar buscador de comandos"
                 >
                   <X className="h-4 w-4" />
                 </button>
