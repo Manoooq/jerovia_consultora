@@ -5,262 +5,245 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import {
-  MapPin,
   FileSpreadsheet,
-  Layers,
-  Navigation,
-  Camera,
-  ShieldCheck,
-  ArrowUpRight,
+  FileText,
+  CheckCircle2,
+  MapPin,
+  UserCheck,
+  Wallet,
+  Home,
+  Scale,
+  ArrowRight,
 } from "lucide-react";
 
-type TabKey = "inspeccion" | "estructura" | "laminas";
+interface LaminaPreview {
+  num: string;
+  short: string;
+  title: string;
+  modulo: string;
+  icon: React.ElementType;
+  rows: { label: string; value: string }[];
+  highlight: string;
+}
 
-const MODULOS = [
-  { id: "01", title: "Identidad", meta: "CI y filiación" },
-  { id: "02", title: "Académico", meta: "Estudios" },
-  { id: "03", title: "Laboral", meta: "Trayectoria" },
-  { id: "04", title: "Psicosocial", meta: "Perfil" },
-  { id: "05", title: "Familiar", meta: "Convivientes" },
-  { id: "06", title: "Salud", meta: "Cobertura" },
-  { id: "07", title: "Económico", meta: "Flujo mensual" },
-  { id: "08", title: "Vivienda", meta: "GPS y fotos" },
-  { id: "09", title: "Dictamen", meta: "Conclusión" },
+const LAMINAS: LaminaPreview[] = [
+  {
+    num: "01",
+    short: "Lámina 01",
+    title: "Información Personal, Académica y Laboral",
+    modulo: "Módulos 01 al 03",
+    icon: UserCheck,
+    rows: [
+      { label: "Postulante Evaluado", value: "Rodrigo Benítez Martínez (CI: 4.892.150)" },
+      { label: "Nivel Académico", value: "Lic. en Administración — UNA (Finalizado)" },
+      { label: "Situación Ocupacional", value: "Encargado de Logística (48 meses)" },
+      { label: "Movilidad y Contacto", value: "Vehículo propio • Teléfono verificado" },
+    ],
+    highlight: "Datos filiatorios y referencias laborales contrastadas.",
+  },
+  {
+    num: "02",
+    short: "Lámina 02",
+    title: "Perfil Psicolaboral y Proyección",
+    modulo: "Módulo 04",
+    icon: CheckCircle2,
+    rows: [
+      { label: "Fortalezas Observadas", value: "Compromiso operativo, liderazgo y puntualidad" },
+      { label: "Oportunidades de Mejora", value: "Herramientas avanzadas de reportería" },
+      { label: "Proyección a Mediano Plazo", value: "Consolidación profesional y patrimonial" },
+      { label: "Vínculos en la Entidad", value: "Sin conflictos de interés declarados" },
+    ],
+    highlight: "Síntesis cualitativa estructurada durante la entrevista.",
+  },
+  {
+    num: "03",
+    short: "Lámina 03",
+    title: "Entorno Familiar y Cobertura de Salud",
+    modulo: "Módulos 05 y 06",
+    icon: Home,
+    rows: [
+      { label: "Grupo Conviviente", value: "Cónyuge e hijo menor (3 integrantes)" },
+      { label: "Referencias Filiales", value: "Padres residentes en Luque con arraigo" },
+      { label: "Cobertura Sanitaria", value: "Instituto de Previsión Social (IPS) activo" },
+      { label: "Condiciones Preexistentes", value: "Sin tratamientos de alta complejidad" },
+    ],
+    highlight: "Estabilidad del núcleo familiar y previsión médica.",
+  },
+  {
+    num: "04",
+    short: "Lámina 04",
+    title: "Balance Económico e Inspección de Vivienda",
+    modulo: "Módulos 07 y 08",
+    icon: Wallet,
+    rows: [
+      { label: "Ingresos Totales del Hogar", value: "Gs. 12.500.000 mensuales verificados" },
+      { label: "Egresos Operativos", value: "Gs. 5.800.000 (Compromiso del 46%)" },
+      { label: "Tenencia y Materiales", value: "Vivienda Propia • Ladrillo, tejas y cerámica" },
+      { label: "Coordenada GPS Capturada", value: "-25.269932, -57.489012 (Plus Code 6867+XQ)" },
+    ],
+    highlight: "Cruce automático de liquidez y georreferenciación in situ.",
+  },
+  {
+    num: "05",
+    short: "Lámina 05",
+    title: "Conclusiones Generales y Dictamen Pericial",
+    modulo: "Módulo 09",
+    icon: Scale,
+    rows: [
+      { label: "Concepto del Inmueble", value: "Óptimo estado de conservación y orden" },
+      { label: "Comunicación y Trato", value: "Fluida, colaborativa y consistente" },
+      { label: "Perito Evaluador", value: "Lic. Michelle Romero — Jerovia Consultora" },
+      { label: "Resultado de la Visita", value: "FAVORABLE PARA CONTINUAR PROCESO" },
+    ],
+    highlight: "Dictamen final firmado listo para archivo en comité.",
+  },
 ];
 
 export function HeroProductShowcase() {
-  const [activeTab, setActiveTab] = useState<TabKey>("inspeccion");
-
-  const tabs: { id: TabKey; label: string; icon: React.ElementType }[] = [
-    { id: "inspeccion", label: "Verificación en Sitio", icon: MapPin },
-    { id: "estructura", label: "9 Módulos", icon: Layers },
-    { id: "laminas", label: "5 Láminas (.PPTX / PDF)", icon: FileSpreadsheet },
-  ];
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const active = LAMINAS[selectedIdx];
+  const Icon = active.icon;
 
   return (
-    <div className="rounded-3xl border border-overlay1/60 bg-mantle/85 backdrop-blur-2xl p-3 sm:p-5 shadow-2xl">
-      {/* Barra superior sobria de instrumento */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 px-2 border-b border-overlay0/60">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-gold" />
-            <span className="text-xs font-mono font-bold tracking-widest uppercase text-text">
-              JEROVIA // SISTEMA PERICIAL
-            </span>
-          </div>
-        </div>
-
+    <div className="recessed-well rounded-3xl p-3.5 sm:p-5 space-y-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-overlay0">
         <div
           role="tablist"
-          className="grid grid-cols-3 sm:flex items-center gap-1 recessed-well p-1 rounded-xl"
+          aria-label="Láminas del informe ejecutivo"
+          className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full lg:w-auto"
         >
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const active = activeTab === t.id;
+          {LAMINAS.map((lam, idx) => {
+            const isSelected = idx === selectedIdx;
             return (
               <button
-                key={t.id}
+                key={lam.num}
                 role="tab"
-                aria-selected={active}
+                aria-selected={isSelected}
                 type="button"
-                onClick={() => setActiveTab(t.id)}
-                className={`relative min-h-[36px] flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  active ? "text-black" : "text-subtext1 hover:text-text"
+                onClick={() => setSelectedIdx(idx)}
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer border flex items-center justify-center gap-2 ${
+                  isSelected
+                    ? "bg-gold border-gold shadow-sm"
+                    : "bg-surface0 text-subtext1 border-overlay1 hover:border-gold/60 hover:text-text"
                 }`}
               >
-                {active && (
-                  <motion.span
-                    layoutId="console-tab"
-                    className="absolute inset-0 rounded-lg bg-gold shadow-sm"
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  />
-                )}
-                <Icon className="h-3.5 w-3.5 relative z-10 shrink-0" />
-                <span className="relative z-10 truncate">{t.label}</span>
+                <span>{lam.short}</span>
               </button>
             );
           })}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <a
+            href="/api/exportar/demo?formato=pptx"
+            className="min-h-[40px] px-4 rounded-xl bg-gold hover:bg-gold-light font-bold text-xs flex items-center gap-2 transition-colors shadow-xs"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Descargar .PPTX</span>
+          </a>
+          <a
+            href="/api/exportar/demo?formato=pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-h-[40px] px-4 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-text font-bold text-xs flex items-center gap-2 transition-colors"
+          >
+            <FileText className="h-4 w-4 text-gold" />
+            <span>Ver PDF A4</span>
+          </a>
+        </div>
       </div>
 
-      {/* Cavidad Hundida Principal */}
-      <div className="mt-4 recessed-well rounded-2xl p-4 sm:p-6">
-        <AnimatePresence mode="wait">
-          {activeTab === "inspeccion" && (
-            <motion.div
-              key="inspeccion"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch"
-            >
-              {/* Visor Satelital Hundido */}
-              <div className="lg:col-span-7">
-                <SpotlightCard sinkIntensity={3.5} className="p-6 flex flex-col justify-between min-h-[250px]">
-                  <div className="flex items-center justify-between">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active.num}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18 }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch"
+        >
+          <div className="lg:col-span-8">
+            <SpotlightCard sinkIntensity={4} className="p-5 sm:p-7 flex flex-col justify-between space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-overlay0 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
                     <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-gold">
-                      GEORREFERENCIACIÓN IN SITU
+                      LÁMINA OFICIAL {active.num} // {active.modulo}
                     </span>
-                    <span className="text-[11px] font-mono text-green bg-green/10 border border-green/30 px-2.5 py-0.5 rounded-md tabular-nums">
-                      GPS ACTIVO
-                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-text mt-0.5">
+                      {active.title}
+                    </h3>
                   </div>
-
-                  <div className="my-auto py-6 flex flex-col items-center justify-center relative">
-                    {[1, 2].map((r) => (
-                      <motion.div
-                        key={r}
-                        initial={{ scale: 0.6, opacity: 0.5 }}
-                        animate={{ scale: 2.1, opacity: 0 }}
-                        transition={{
-                          duration: 2.6,
-                          repeat: Infinity,
-                          delay: r * 1.1,
-                          ease: "easeOut",
-                        }}
-                        className="absolute h-20 w-20 rounded-full border border-gold/40"
-                      />
-                    ))}
-                    <div className="h-12 w-12 rounded-2xl bg-gold/15 border border-gold/40 text-gold flex items-center justify-center shadow-inner">
-                      <Navigation className="h-5 w-5" />
-                    </div>
-                    <p className="mt-3 text-sm font-mono font-bold text-text tabular-nums">
-                      -25.2867° S, -57.6470° O
-                    </p>
-                    <p className="text-xs text-subtext1">
-                      Asunción &amp; Gran Asunción
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs border-t border-overlay0/60 pt-3 text-subtext1">
-                    <span>Plus Code automático</span>
-                    <Link
-                      href="/entrevista/demo"
-                      className="inline-flex items-center gap-1 font-bold text-gold hover:underline"
-                    >
-                      <span>Abrir Relevamiento</span>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </SpotlightCard>
+                </div>
+                <span className="text-xs font-mono font-bold text-subtext1 bg-surface1 px-2.5 py-1 rounded-lg border border-overlay0">
+                  16:9 Widescreen + A4
+                </span>
               </div>
 
-              {/* 3 Paneles Táctiles que se hunden al pasar el mouse */}
-              <div className="lg:col-span-5 grid grid-cols-1 gap-3">
-                <SpotlightCard sinkIntensity={5} className="p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-subtext0">
-                      UBICACIÓN
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {active.rows.map((r) => (
+                  <div
+                    key={r.label}
+                    className="p-3.5 rounded-xl bg-surface1 border border-overlay0 space-y-1"
+                  >
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-subtext0 block">
+                      {r.label}
                     </span>
-                    <p className="text-sm font-bold text-text mt-0.5">
-                      Coordenada Satelital Directa
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold shrink-0">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                </SpotlightCard>
-
-                <SpotlightCard sinkIntensity={5} className="p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-subtext0">
-                      EVIDENCIA
-                    </span>
-                    <p className="text-sm font-bold text-text mt-0.5">
-                      Fachada y Comprobante ANDE
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold shrink-0">
-                    <Camera className="h-4 w-4" />
-                  </div>
-                </SpotlightCard>
-
-                <SpotlightCard sinkIntensity={5} className="p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-subtext0">
-                      RESGUARDO
-                    </span>
-                    <p className="text-sm font-bold text-text mt-0.5">
-                      Control por Rol y Auditoría
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold shrink-0">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                </SpotlightCard>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === "estructura" && (
-            <motion.div
-              key="estructura"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2.5"
-            >
-              {MODULOS.map((m) => (
-                <SpotlightCard
-                  key={m.id}
-                  sinkIntensity={6}
-                  pressable
-                  className="p-3.5 flex flex-col justify-between min-h-[116px]"
-                >
-                  <span className="text-xs font-mono font-bold text-gold tabular-nums">
-                    {m.id}
-                  </span>
-                  <div>
                     <p className="text-xs sm:text-sm font-bold text-text">
-                      {m.title}
-                    </p>
-                    <p className="text-[11px] text-subtext1 mt-0.5">
-                      {m.meta}
+                      {r.value}
                     </p>
                   </div>
-                </SpotlightCard>
-              ))}
-            </motion.div>
-          )}
+                ))}
+              </div>
 
-          {activeTab === "laminas" && (
-            <motion.div
-              key="laminas"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-              className="grid grid-cols-1 sm:grid-cols-5 gap-3"
-            >
-              {[
-                { num: "01", title: "Filiación y Empleo", meta: "Módulos 1 al 3" },
-                { num: "02", title: "Perfil Psicosocial", meta: "Módulo 4" },
-                { num: "03", title: "Familia y Salud", meta: "Módulos 5 y 6" },
-                { num: "04", title: "Economía y Vivienda", meta: "Módulos 7 y 8" },
-                { num: "05", title: "Dictamen Final", meta: "Módulo 9" },
-              ].map((s) => (
-                <SpotlightCard
-                  key={s.num}
-                  sinkIntensity={5.5}
-                  className="p-4 flex flex-col justify-between min-h-[130px]"
-                >
-                  <span className="text-[11px] font-mono font-bold text-gold">
-                    LÁMINA {s.num}
+              <div className="pt-2 border-t border-overlay0 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-green flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {active.highlight}
+                </span>
+                <span className="font-mono text-subtext1">
+                  Jerovia Consultora
+                </span>
+              </div>
+            </SpotlightCard>
+          </div>
+
+          <div className="lg:col-span-4 flex flex-col gap-3">
+            <SpotlightCard sinkIntensity={6} className="p-5 flex flex-col justify-between flex-1">
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
+                  FLUJO EJECUTIVO
+                </span>
+                <h4 className="text-base font-black text-text">
+                  Emisión inmediata al concluir la visita
+                </h4>
+                <p className="text-xs font-medium text-subtext1 leading-relaxed">
+                  Los 9 módulos del relevamiento se consolidan automáticamente en 5 diapositivas corporativas y documento A4.
+                </p>
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-overlay0 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-subtext1 font-medium">Ubicación Demo</span>
+                  <span className="font-mono font-bold text-text flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-gold" /> Luque, Central
                   </span>
-                  <div>
-                    <p className="text-sm font-bold text-text">{s.title}</p>
-                    <p className="text-xs text-subtext1 mt-0.5 font-mono">
-                      {s.meta}
-                    </p>
-                  </div>
-                </SpotlightCard>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                </div>
+                <Link
+                  href="/entrevista/demo"
+                  className="min-h-[42px] w-full rounded-xl bg-gold hover:bg-gold-light font-bold text-xs flex items-center justify-center gap-2 transition-colors mt-2"
+                >
+                  <span>Probar Relevamiento en Vivo</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </SpotlightCard>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

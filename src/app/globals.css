@@ -3,24 +3,24 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* MODO CLARO — Blanco Puro & Azul Real Vibrante (Cero tonos amarillentos/marrones en tarjetas) */
+  /* MODO CLARO — Blanco Cristalino & Azul Real Corporativo (Cero dorado/marrón) */
   --bg-base: #f0f4f9;
   --bg-mantle: #ffffff;
-  --bg-crust: #e4ebf5;
+  --bg-crust: #e3ebf6;
   --bg-surface0: #ffffff;
-  --bg-surface1: #f4f7fb;
+  --bg-surface1: #f1f5f9;
   --bg-surface2: #e2e8f0;
 
   --border-overlay0: rgba(15, 30, 60, 0.12);
   --border-overlay1: rgba(15, 30, 60, 0.22);
   --border-overlay2: rgba(15, 30, 60, 0.35);
 
-  --text-main: #0a1428;
+  --text-main: #091326;
   --text-subtext1: #1e293b;
   --text-subtext0: #475569;
   --text-placeholder: #64748b;
 
-  /* Acento Corporativo Vivo: Azul Real Intenso */
+  /* Acento Primario: Azul Real Vivo (Reemplaza por completo al dorado) */
   --brand-gold: #1d4ed8;
   --brand-gold-light: #2563eb;
   --brand-gold-dark: #1e40af;
@@ -31,7 +31,7 @@
   --sem-green: #059669;
   --sem-blue: #2563eb;
   --sem-sky: #0284c7;
-  --sem-yellow: #d97706;
+  --sem-yellow: #0284c7;
   --sem-red: #dc2626;
   --sem-pink: #db2777;
 
@@ -39,31 +39,31 @@
   --glass-border: rgba(29, 78, 216, 0.14);
   --glass-shadow: 0 4px 24px rgba(15, 30, 60, 0.06);
 
-  --well-bg: #e6edf7;
+  --well-bg: #e5ecf6;
   --well-shadow: inset 0 2px 6px rgba(15, 30, 60, 0.08), 0 1px 0 rgba(255, 255, 255, 0.9);
   --well-border: rgba(29, 78, 216, 0.14);
 
-  /* En Modo Claro el cuadro se mantiene Blanco Puro al tocarlo, con brillo Azul Real limpio */
+  /* Cuadros en Modo Claro: Blancos puros, y al tocarlos o seleccionarlos se iluminan en Azul Cielo Limpio */
   --card-bg: #ffffff;
-  --card-hover-bg: #ffffff;
+  --card-hover-bg: #f8fbff;
   --card-active-bg: #eff6ff;
   --card-border: rgba(15, 30, 60, 0.12);
-  --card-hover-border: rgba(37, 99, 235, 0.65);
+  --card-hover-border: rgba(37, 99, 235, 0.7);
   --card-shadow: 0 8px 24px -6px rgba(15, 30, 60, 0.07), 0 2px 6px rgba(15, 30, 60, 0.04);
-  --card-sink-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.18), inset 0 0 0 1px rgba(37, 99, 235, 0.25);
+  --card-sink-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.18), inset 0 0 0 1.5px rgba(37, 99, 235, 0.45);
 
   --input-bg: #ffffff;
   --input-focus-bg: #ffffff;
   --input-border: rgba(15, 30, 60, 0.22);
   --input-shadow: inset 0 1px 2px rgba(15, 30, 60, 0.05);
 
-  --spotlight-surface: rgba(37, 99, 235, 0.08);
+  --spotlight-surface: rgba(37, 99, 235, 0.09);
   --spotlight-sub: rgba(14, 165, 233, 0.03);
-  --spotlight-border: rgba(37, 99, 235, 0.9);
+  --spotlight-border: rgba(37, 99, 235, 0.95);
 }
 
 .dark, html.dark {
-  /* MODO OSCURO — Azul Noche Profundo & Zafiro Eléctrico Luminoso */
+  /* MODO OSCURO — Azul Noche Corporativo & Zafiro Eléctrico */
   --bg-base: #060b16;
   --bg-mantle: #091122;
   --bg-crust: #040811;
@@ -80,46 +80,46 @@
   --text-subtext0: #94a3b8;
   --text-placeholder: #64748b;
 
-  /* Acento Luminoso en Modo Oscuro: Azul Cobalto / Cian Brillante */
-  --brand-gold: #60a5fa;
-  --brand-gold-light: #93c5fd;
-  --brand-gold-dark: #3b82f6;
-  --brand-gold-btn: #3b82f6;
-  --brand-gold-btn-hover: #60a5fa;
+  /* Acento Primario en Modo Oscuro: Azul Zafiro / Cian Luminoso */
+  --brand-gold: #38bdf8;
+  --brand-gold-light: #7dd3fc;
+  --brand-gold-dark: #2563eb;
+  --brand-gold-btn: #2563eb;
+  --brand-gold-btn-hover: #3b82f6;
   --brand-gold-btn-text: #ffffff;
 
   --sem-green: #34d399;
   --sem-blue: #60a5fa;
   --sem-sky: #38bdf8;
-  --sem-yellow: #fbbf24;
+  --sem-yellow: #38bdf8;
   --sem-red: #f87171;
   --sem-pink: #f472b6;
 
   --glass-bg: rgba(9, 17, 34, 0.88);
-  --glass-border: rgba(96, 165, 250, 0.16);
+  --glass-border: rgba(56, 189, 248, 0.16);
   --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
 
-  --well-bg: #050914;
+  --well-bg: #040812;
   --well-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.05);
-  --well-border: rgba(96, 165, 250, 0.14);
+  --well-border: rgba(56, 189, 248, 0.14);
 
-  /* En Modo Oscuro el cuadro se ilumina en Zafiro Limpio al tocarlo */
+  /* Cuadros en Modo Oscuro: Se iluminan en Azul Zafiro Limpio al tocarlos */
   --card-bg: rgba(13, 23, 42, 0.95);
-  --card-hover-bg: rgba(19, 34, 64, 0.98);
-  --card-active-bg: rgba(37, 99, 235, 0.22);
+  --card-hover-bg: rgba(18, 33, 62, 0.98);
+  --card-active-bg: rgba(37, 99, 235, 0.28);
   --card-border: rgba(148, 163, 184, 0.16);
-  --card-hover-border: rgba(96, 165, 250, 0.75);
+  --card-hover-border: rgba(56, 189, 248, 0.8);
   --card-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  --card-sink-shadow: 0 14px 32px -6px rgba(37, 99, 235, 0.28), inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+  --card-sink-shadow: 0 14px 32px -6px rgba(37, 99, 235, 0.35), inset 0 0 0 1.5px rgba(56, 189, 248, 0.55);
 
   --input-bg: #070d1b;
   --input-focus-bg: #0c1528;
   --input-border: rgba(148, 163, 184, 0.26);
   --input-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
 
-  --spotlight-surface: rgba(59, 130, 246, 0.16);
-  --spotlight-sub: rgba(56, 189, 248, 0.05);
-  --spotlight-border: rgba(147, 197, 253, 0.95);
+  --spotlight-surface: rgba(56, 189, 248, 0.15);
+  --spotlight-sub: rgba(37, 99, 235, 0.05);
+  --spotlight-border: rgba(125, 211, 252, 0.95);
 }
 
 @theme {
@@ -171,15 +171,15 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Botones principales con Azul Real Vibrante y texto blanco nítido */
+/* Todos los botones y elementos activos usan Azul Real Vibrante con letras blancas */
 .bg-gold {
   background-color: var(--brand-gold-btn) !important;
-  color: var(--brand-gold-btn-text) !important;
+  color: #ffffff !important;
 }
 
 .hover\:bg-gold-light:hover {
   background-color: var(--brand-gold-btn-hover) !important;
-  color: var(--brand-gold-btn-text) !important;
+  color: #ffffff !important;
 }
 
 .tabular-nums {
@@ -237,7 +237,7 @@ body {
 .tactile-input:focus-visible {
   background-color: var(--input-focus-bg);
   border-color: var(--brand-gold);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.24);
 }
 
 :focus-visible {

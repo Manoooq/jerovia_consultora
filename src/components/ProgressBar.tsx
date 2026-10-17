@@ -88,7 +88,7 @@ export function ProgressBar({
               className={cn(
                 "min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 border transition-all",
                 activo &&
-                  "bg-gold text-black border-gold font-bold shadow-2xs cursor-default",
+                  "bg-gold text-white border-gold font-bold shadow-2xs cursor-default",
                 !activo &&
                   completado &&
                   "bg-green/10 text-green border-green/30 hover:bg-green/20 cursor-pointer",
