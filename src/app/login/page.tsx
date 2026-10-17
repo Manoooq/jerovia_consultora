@@ -123,11 +123,11 @@ function DiagonalLoginContent() {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-[#f4f7fb] dark:bg-[#060b16] text-text flex flex-col justify-between overflow-hidden select-none">
-      {/* 1. Fondo Exterior con el Corte Diagonal Azul Real exacto a tu imagen */}
+    <div className="relative min-h-screen w-full bg-[#f3f5f0] dark:bg-[#090d09] text-text flex flex-col justify-between overflow-hidden select-none">
+      {/* 1. Fondo Exterior con Corte Diagonal Verde Oliva Ejecutivo */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 hidden lg:block bg-[#144399] dark:bg-[#0c275e] transition-colors duration-500"
+        className="pointer-events-none fixed inset-0 z-0 hidden lg:block bg-[#2e4716] dark:bg-[#15240b] transition-colors duration-500"
         style={{
           clipPath: "polygon(55% 0%, 100% 0%, 100% 100%, 40% 100%)",
         }}
@@ -139,16 +139,16 @@ function DiagonalLoginContent() {
       <header className="relative z-30 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-5 flex items-center justify-between">
         <Link
           href="/"
-          className="min-h-[38px] px-3.5 rounded-xl border border-slate-300/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 backdrop-blur-md hover:border-blue-600 text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2 shadow-sm transition-all"
+          className="min-h-[38px] px-3.5 rounded-xl border border-overlay1 bg-surface0/90 backdrop-blur-md hover:border-gold text-xs font-bold text-text flex items-center gap-2 shadow-sm transition-all"
         >
-          <ArrowLeft className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+          <ArrowLeft className="h-3.5 w-3.5 text-gold" />
           <span>Inicio</span>
         </Link>
 
         <ThemeToggle />
       </header>
 
-      {/* 2. Tarjeta Central Panorámica con Corte Diagonal Blanco / Azul Real (Estilo NSOC) */}
+      {/* 2. Panel Panorámico Central con Corte Diagonal Blanco / Verde Oliva */}
       <main
         id="main-content"
         tabIndex={-1}
@@ -167,48 +167,48 @@ function DiagonalLoginContent() {
               transform:
                 "perspective(1400px) rotateX(0deg) rotateY(0deg) translateZ(0px)",
             }}
-            className="group relative w-full min-h-[510px] rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_30px_80px_-12px_rgba(10,25,65,0.45)] border border-slate-200/80 dark:border-white/15 transition-transform duration-150 ease-out will-change-transform grid grid-cols-1 lg:grid-cols-12 bg-white dark:bg-[#0e172a]"
+            className="group relative w-full min-h-[510px] rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_30px_80px_-12px_rgba(15,28,12,0.45)] border border-overlay1 transition-transform duration-150 ease-out will-change-transform grid grid-cols-1 lg:grid-cols-12 bg-white dark:bg-[#111911]"
           >
-            {/* Corte Diagonal Azul Real dentro de la tarjeta (Desktop) */}
+            {/* Corte Diagonal Verde Oliva dentro de la tarjeta (Desktop) */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 hidden lg:block bg-gradient-to-br from-[#1748a1] via-[#133d8a] to-[#0e2e6b]"
+              className="pointer-events-none absolute inset-0 hidden lg:block bg-gradient-to-br from-[#3a5a1c] via-[#2e4716] to-[#1f310e]"
               style={{
                 clipPath: "polygon(54% 0%, 100% 0%, 100% 100%, 39% 100%)",
               }}
             />
 
-            {/* Brillo especular interactivo sobre el ala azul */}
+            {/* Brillo especular interactivo sobre el ala verde oliva */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               style={{
                 background:
-                  "radial-gradient(480px circle at var(--mx, 75%) var(--my, 50%), rgba(96, 165, 250, 0.22), transparent 60%)",
+                  "radial-gradient(480px circle at var(--mx, 75%) var(--my, 50%), rgba(163, 230, 53, 0.18), transparent 60%)",
               }}
             />
 
-            {/* ALA IZQUIERDA: Superficie Blanca Limpia con el Logo de Jerovia */}
-            <div className="relative z-20 lg:col-span-6 p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-white dark:bg-[#0e172a] lg:bg-transparent lg:dark:bg-transparent lg:pr-16">
+            {/* ALA IZQUIERDA: Superficie Limpia con el Logo Original de Jerovia en Alta Calidad */}
+            <div className="relative z-20 lg:col-span-6 p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-white dark:bg-[#111911] lg:bg-transparent lg:dark:bg-transparent lg:pr-16">
               <motion.div
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="mb-5 scale-125"
+                className="mb-5 scale-125 drop-shadow-sm"
               >
                 <Logo size="lg" />
               </motion.div>
 
-              <h1 className="text-2xl sm:text-3xl font-black tracking-[0.06em] uppercase text-[#1748a1] dark:text-[#60a5fa] mt-2">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-[0.06em] uppercase text-[#365314] dark:text-[#a3e635] mt-2">
                 JEROVIA DASHBOARD
               </h1>
 
-              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-300 mt-1.5">
+              <p className="text-xs sm:text-sm font-medium text-subtext1 mt-1.5">
                 Verificación Domiciliaria y Estudios Socioambientales
               </p>
             </div>
 
-            {/* ALA DERECHA: Superficie Azul Real Vibrante con Inputs Blancos */}
-            <div className="relative z-20 lg:col-span-6 p-8 sm:p-12 flex flex-col justify-center bg-gradient-to-br from-[#1748a1] via-[#133d8a] to-[#0e2e6b] lg:bg-none text-white">
+            {/* ALA DERECHA: Superficie Verde Oliva con Inputs Blancos */}
+            <div className="relative z-20 lg:col-span-6 p-8 sm:p-12 flex flex-col justify-center bg-gradient-to-br from-[#3a5a1c] via-[#2e4716] to-[#1f310e] lg:bg-none text-white">
               <div className="w-full max-w-xs mx-auto space-y-5">
                 {error && (
                   <motion.div
@@ -223,11 +223,10 @@ function DiagonalLoginContent() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                  {/* Username */}
                   <div className="space-y-1.5">
                     <label
                       htmlFor="login-user"
-                      className="block text-xs font-semibold text-blue-100 tracking-wide"
+                      className="block text-xs font-semibold text-lime-100 tracking-wide"
                     >
                       Usuario
                     </label>
@@ -239,15 +238,14 @@ function DiagonalLoginContent() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Ingrese su usuario"
-                      className="w-full min-h-[42px] rounded-md bg-white text-slate-900 placeholder:text-slate-400 px-3.5 py-2 text-sm font-semibold border border-transparent shadow-sm outline-none transition-all focus:ring-2 focus:ring-[#60a5fa]"
+                      className="w-full min-h-[42px] rounded-md bg-white text-[#111a10] placeholder:text-stone-400 px-3.5 py-2 text-sm font-semibold border border-transparent shadow-sm outline-none transition-all focus:ring-2 focus:ring-[#a3e635]"
                     />
                   </div>
 
-                  {/* Password */}
                   <div className="space-y-1.5">
                     <label
                       htmlFor="login-pass"
-                      className="block text-xs font-semibold text-blue-100 tracking-wide"
+                      className="block text-xs font-semibold text-lime-100 tracking-wide"
                     >
                       Contraseña
                     </label>
@@ -262,12 +260,12 @@ function DiagonalLoginContent() {
                         onKeyUp={handleKeyEvent}
                         onKeyDown={handleKeyEvent}
                         placeholder="Ingrese su contraseña"
-                        className="w-full min-h-[42px] rounded-md bg-white text-slate-900 placeholder:text-slate-400 px-3.5 py-2 pr-10 text-sm font-semibold border border-transparent shadow-sm outline-none transition-all focus:ring-2 focus:ring-[#60a5fa]"
+                        className="w-full min-h-[42px] rounded-md bg-white text-[#111a10] placeholder:text-stone-400 px-3.5 py-2 pr-10 text-sm font-semibold border border-transparent shadow-sm outline-none transition-all focus:ring-2 focus:ring-[#a3e635]"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded text-slate-400 hover:text-slate-800 flex items-center justify-center cursor-pointer"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded text-stone-400 hover:text-stone-800 flex items-center justify-center cursor-pointer"
                         aria-label={
                           showPassword
                             ? "Ocultar contraseña"
@@ -283,39 +281,37 @@ function DiagonalLoginContent() {
                     </div>
 
                     {capsLock && (
-                      <p className="text-[11px] font-mono font-bold text-amber-300 flex items-center gap-1.5 pt-1">
+                      <p className="text-[11px] font-mono font-bold text-lime-300 flex items-center gap-1.5 pt-1">
                         <AlertCircle className="h-3.5 w-3.5" />
                         <span>Bloq Mayús activado</span>
                       </p>
                     )}
                   </div>
 
-                  {/* Remember me + Demo link (Igual a la referencia NSOC) */}
                   <div className="flex items-center justify-between pt-1 text-xs">
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-blue-100 hover:text-white">
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-lime-100 hover:text-white">
                       <input
                         type="checkbox"
                         checked={remember}
                         onChange={(e) => setRemember(e.target.checked)}
-                        className="h-4 w-4 rounded border-white/40 text-[#4f7df9] focus:ring-white"
+                        className="h-4 w-4 rounded border-white/40 text-[#65a30d] focus:ring-white"
                       />
                       <span>Mantener sesión</span>
                     </label>
 
                     <Link
                       href="/entrevista/demo"
-                      className="text-blue-200 hover:text-white underline-offset-4 hover:underline"
+                      className="text-lime-200 hover:text-white underline-offset-4 hover:underline"
                     >
                       Explorar Demo
                     </Link>
                   </div>
 
-                  {/* Botón LOGIN en Azul Eléctrico Luminoso exacto a la referencia */}
                   <div className="pt-2">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full min-h-[42px] rounded-md bg-[#4e7cff] hover:bg-[#608aff] text-white font-bold text-xs uppercase tracking-[0.14em] shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
+                      className="w-full min-h-[42px] rounded-md bg-[#65a30d] hover:bg-[#84cc16] text-white font-bold text-xs uppercase tracking-[0.14em] shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
                     >
                       {loading ? (
                         <>
@@ -334,7 +330,7 @@ function DiagonalLoginContent() {
         </motion.div>
       </main>
 
-      <footer className="relative z-20 py-4 text-center text-[11px] font-mono text-slate-500 dark:text-slate-400">
+      <footer className="relative z-20 py-4 text-center text-[11px] font-mono text-subtext1">
         © 2026 Jerovia Consultora • Paraguay
       </footer>
     </div>
@@ -343,7 +339,7 @@ function DiagonalLoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f4f7fb] dark:bg-[#060b16]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-base" />}>
       <DiagonalLoginContent />
     </Suspense>
   );

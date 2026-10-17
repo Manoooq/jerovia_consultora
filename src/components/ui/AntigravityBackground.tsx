@@ -11,7 +11,7 @@ interface Particle {
   baseVy: number;
   size: number;
   alpha: number;
-  isPrimary: boolean;
+  isOlive: boolean;
 }
 
 export function AntigravityBackground() {
@@ -56,7 +56,7 @@ export function AntigravityBackground() {
         baseVy,
         size: Math.random() * 1.8 + 1,
         alpha: Math.random() * 0.45 + 0.2,
-        isPrimary: Math.random() > 0.35,
+        isOlive: Math.random() > 0.35,
       };
     });
 
@@ -95,8 +95,8 @@ export function AntigravityBackground() {
       ctx.clearRect(0, 0, width, height);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const primaryRgb = isDark ? "59, 130, 246" : "29, 78, 216";
-      const slateRgb = isDark ? "148, 163, 184" : "100, 116, 139";
+      const oliveRgb = isDark ? "132, 204, 22" : "77, 124, 15";
+      const sageRgb = isDark ? "148, 168, 146" : "90, 110, 88";
 
       mouse.x += (mouse.targetX - mouse.x) * 0.15;
       mouse.y += (mouse.targetY - mouse.y) * 0.15;
@@ -111,7 +111,7 @@ export function AntigravityBackground() {
           mouse.y,
           r
         );
-        grad.addColorStop(0, `rgba(${primaryRgb}, ${isDark ? 0.12 : 0.07})`);
+        grad.addColorStop(0, `rgba(${oliveRgb}, ${isDark ? 0.12 : 0.08})`);
         grad.addColorStop(1, "rgba(0, 0, 0, 0)");
         ctx.fillStyle = grad;
         ctx.fillRect(mouse.x - r, mouse.y - r, r * 2, r * 2);
@@ -149,7 +149,7 @@ export function AntigravityBackground() {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = `rgba(${primaryRgb}, ${cAlpha})`;
+            ctx.strokeStyle = `rgba(${oliveRgb}, ${cAlpha})`;
             ctx.lineWidth = 0.85;
             ctx.stroke();
           }
@@ -158,7 +158,7 @@ export function AntigravityBackground() {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${
-          p.isPrimary ? primaryRgb : slateRgb
+          p.isOlive ? oliveRgb : sageRgb
         }, ${p.alpha})`;
         ctx.fill();
 
@@ -175,7 +175,7 @@ export function AntigravityBackground() {
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = `rgba(${
-              p.isPrimary ? primaryRgb : slateRgb
+              p.isOlive ? oliveRgb : sageRgb
             }, ${lineAlpha})`;
             ctx.lineWidth = 0.65;
             ctx.stroke();

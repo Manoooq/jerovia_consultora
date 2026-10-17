@@ -3,123 +3,123 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* MODO CLARO — Blanco Cristalino & Azul Real Corporativo (Cero dorado/marrón) */
-  --bg-base: #f0f4f9;
+  /* MODO CLARO — Blanco Alabastro & Verde Oliva Ejecutivo (WCAG AAA, Cero Dorado) */
+  --bg-base: #f3f5f0;
   --bg-mantle: #ffffff;
-  --bg-crust: #e3ebf6;
+  --bg-crust: #e5ebe0;
   --bg-surface0: #ffffff;
-  --bg-surface1: #f1f5f9;
-  --bg-surface2: #e2e8f0;
+  --bg-surface1: #f4f7f2;
+  --bg-surface2: #dfe7d9;
 
-  --border-overlay0: rgba(15, 30, 60, 0.12);
-  --border-overlay1: rgba(15, 30, 60, 0.22);
-  --border-overlay2: rgba(15, 30, 60, 0.35);
+  --border-overlay0: rgba(24, 38, 20, 0.12);
+  --border-overlay1: rgba(24, 38, 20, 0.22);
+  --border-overlay2: rgba(24, 38, 20, 0.35);
 
-  --text-main: #091326;
-  --text-subtext1: #1e293b;
-  --text-subtext0: #475569;
-  --text-placeholder: #64748b;
+  --text-main: #111a10;
+  --text-subtext1: #263324;
+  --text-subtext0: #465743;
+  --text-placeholder: #657862;
 
-  /* Acento Primario: Azul Real Vivo (Reemplaza por completo al dorado) */
-  --brand-gold: #1d4ed8;
-  --brand-gold-light: #2563eb;
-  --brand-gold-dark: #1e40af;
-  --brand-gold-btn: #1d4ed8;
-  --brand-gold-btn-hover: #2563eb;
+  /* Acento Corporativo: Verde Oliva Intenso */
+  --brand-gold: #4d7c0f;
+  --brand-gold-light: #65a30d;
+  --brand-gold-dark: #3f6212;
+  --brand-gold-btn: #4d7c0f;
+  --brand-gold-btn-hover: #3f6212;
   --brand-gold-btn-text: #ffffff;
 
-  --sem-green: #059669;
-  --sem-blue: #2563eb;
-  --sem-sky: #0284c7;
-  --sem-yellow: #0284c7;
+  --sem-green: #15803d;
+  --sem-blue: #4d7c0f;
+  --sem-sky: #65a30d;
+  --sem-yellow: #4d7c0f;
   --sem-red: #dc2626;
-  --sem-pink: #db2777;
+  --sem-pink: #be185d;
 
   --glass-bg: rgba(255, 255, 255, 0.92);
-  --glass-border: rgba(29, 78, 216, 0.14);
-  --glass-shadow: 0 4px 24px rgba(15, 30, 60, 0.06);
+  --glass-border: rgba(77, 124, 15, 0.16);
+  --glass-shadow: 0 4px 24px rgba(20, 34, 16, 0.06);
 
-  --well-bg: #e5ecf6;
-  --well-shadow: inset 0 2px 6px rgba(15, 30, 60, 0.08), 0 1px 0 rgba(255, 255, 255, 0.9);
-  --well-border: rgba(29, 78, 216, 0.14);
+  --well-bg: #e6ece1;
+  --well-shadow: inset 0 2px 6px rgba(20, 34, 16, 0.08), 0 1px 0 rgba(255, 255, 255, 0.9);
+  --well-border: rgba(77, 124, 15, 0.16);
 
-  /* Cuadros en Modo Claro: Blancos puros, y al tocarlos o seleccionarlos se iluminan en Azul Cielo Limpio */
+  /* Cuadros en Modo Claro: Blancos limpios con iluminación Verde Oliva Suave */
   --card-bg: #ffffff;
-  --card-hover-bg: #f8fbff;
-  --card-active-bg: #eff6ff;
-  --card-border: rgba(15, 30, 60, 0.12);
-  --card-hover-border: rgba(37, 99, 235, 0.7);
-  --card-shadow: 0 8px 24px -6px rgba(15, 30, 60, 0.07), 0 2px 6px rgba(15, 30, 60, 0.04);
-  --card-sink-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.18), inset 0 0 0 1.5px rgba(37, 99, 235, 0.45);
+  --card-hover-bg: #f9fbf7;
+  --card-active-bg: #eef7e6;
+  --card-border: rgba(24, 38, 20, 0.13);
+  --card-hover-border: rgba(77, 124, 15, 0.7);
+  --card-shadow: 0 8px 24px -6px rgba(20, 34, 16, 0.07), 0 2px 6px rgba(20, 34, 16, 0.04);
+  --card-sink-shadow: 0 12px 28px -6px rgba(77, 124, 15, 0.18), inset 0 0 0 1.5px rgba(77, 124, 15, 0.45);
 
   --input-bg: #ffffff;
   --input-focus-bg: #ffffff;
-  --input-border: rgba(15, 30, 60, 0.22);
-  --input-shadow: inset 0 1px 2px rgba(15, 30, 60, 0.05);
+  --input-border: rgba(24, 38, 20, 0.24);
+  --input-shadow: inset 0 1px 2px rgba(20, 34, 16, 0.05);
 
-  --spotlight-surface: rgba(37, 99, 235, 0.09);
-  --spotlight-sub: rgba(14, 165, 233, 0.03);
-  --spotlight-border: rgba(37, 99, 235, 0.95);
+  --spotlight-surface: rgba(101, 163, 13, 0.10);
+  --spotlight-sub: rgba(77, 124, 15, 0.03);
+  --spotlight-border: rgba(77, 124, 15, 0.95);
 }
 
 .dark, html.dark {
-  /* MODO OSCURO — Azul Noche Corporativo & Zafiro Eléctrico */
-  --bg-base: #060b16;
-  --bg-mantle: #091122;
-  --bg-crust: #040811;
-  --bg-surface0: #0d172a;
-  --bg-surface1: #132038;
-  --bg-surface2: #1c2d4d;
+  /* MODO OSCURO — Bosque Obsidiana & Verde Oliva Luminoso */
+  --bg-base: #090d09;
+  --bg-mantle: #0d140d;
+  --bg-crust: #060906;
+  --bg-surface0: #121c12;
+  --bg-surface1: #182618;
+  --bg-surface2: #223522;
 
-  --border-overlay0: rgba(148, 163, 184, 0.14);
-  --border-overlay1: rgba(148, 163, 184, 0.24);
-  --border-overlay2: rgba(148, 163, 184, 0.38);
+  --border-overlay0: rgba(163, 184, 158, 0.14);
+  --border-overlay1: rgba(163, 184, 158, 0.24);
+  --border-overlay2: rgba(163, 184, 158, 0.38);
 
-  --text-main: #ffffff;
-  --text-subtext1: #e2e8f0;
-  --text-subtext0: #94a3b8;
-  --text-placeholder: #64748b;
+  --text-main: #f8faf7;
+  --text-subtext1: #dce5da;
+  --text-subtext0: #9cb098;
+  --text-placeholder: #6b8068;
 
-  /* Acento Primario en Modo Oscuro: Azul Zafiro / Cian Luminoso */
-  --brand-gold: #38bdf8;
-  --brand-gold-light: #7dd3fc;
-  --brand-gold-dark: #2563eb;
-  --brand-gold-btn: #2563eb;
-  --brand-gold-btn-hover: #3b82f6;
+  /* Acento Luminoso en Modo Oscuro: Verde Oliva / Salvia Brillante */
+  --brand-gold: #84cc16;
+  --brand-gold-light: #a3e635;
+  --brand-gold-dark: #65a30d;
+  --brand-gold-btn: #4d7c0f;
+  --brand-gold-btn-hover: #65a30d;
   --brand-gold-btn-text: #ffffff;
 
-  --sem-green: #34d399;
-  --sem-blue: #60a5fa;
-  --sem-sky: #38bdf8;
-  --sem-yellow: #38bdf8;
+  --sem-green: #4ade80;
+  --sem-blue: #84cc16;
+  --sem-sky: #a3e635;
+  --sem-yellow: #84cc16;
   --sem-red: #f87171;
   --sem-pink: #f472b6;
 
-  --glass-bg: rgba(9, 17, 34, 0.88);
-  --glass-border: rgba(56, 189, 248, 0.16);
-  --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --glass-bg: rgba(13, 20, 13, 0.88);
+  --glass-border: rgba(132, 204, 22, 0.18);
+  --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
 
-  --well-bg: #040812;
+  --well-bg: #050805;
   --well-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.05);
-  --well-border: rgba(56, 189, 248, 0.14);
+  --well-border: rgba(132, 204, 22, 0.15);
 
-  /* Cuadros en Modo Oscuro: Se iluminan en Azul Zafiro Limpio al tocarlos */
-  --card-bg: rgba(13, 23, 42, 0.95);
-  --card-hover-bg: rgba(18, 33, 62, 0.98);
-  --card-active-bg: rgba(37, 99, 235, 0.28);
-  --card-border: rgba(148, 163, 184, 0.16);
-  --card-hover-border: rgba(56, 189, 248, 0.8);
+  /* Cuadros en Modo Oscuro: Se iluminan en Verde Oliva Profundo al tocarlos */
+  --card-bg: rgba(18, 28, 18, 0.95);
+  --card-hover-bg: rgba(25, 39, 25, 0.98);
+  --card-active-bg: rgba(77, 124, 15, 0.28);
+  --card-border: rgba(163, 184, 158, 0.16);
+  --card-hover-border: rgba(132, 204, 22, 0.8);
   --card-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  --card-sink-shadow: 0 14px 32px -6px rgba(37, 99, 235, 0.35), inset 0 0 0 1.5px rgba(56, 189, 248, 0.55);
+  --card-sink-shadow: 0 14px 32px -6px rgba(77, 124, 15, 0.35), inset 0 0 0 1.5px rgba(132, 204, 22, 0.55);
 
-  --input-bg: #070d1b;
-  --input-focus-bg: #0c1528;
-  --input-border: rgba(148, 163, 184, 0.26);
+  --input-bg: #080d08;
+  --input-focus-bg: #0e170e;
+  --input-border: rgba(163, 184, 158, 0.26);
   --input-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
 
-  --spotlight-surface: rgba(56, 189, 248, 0.15);
-  --spotlight-sub: rgba(37, 99, 235, 0.05);
-  --spotlight-border: rgba(125, 211, 252, 0.95);
+  --spotlight-surface: rgba(132, 204, 22, 0.15);
+  --spotlight-sub: rgba(77, 124, 15, 0.05);
+  --spotlight-border: rgba(163, 230, 53, 0.95);
 }
 
 @theme {
@@ -171,7 +171,6 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Todos los botones y elementos activos usan Azul Real Vibrante con letras blancas */
 .bg-gold {
   background-color: var(--brand-gold-btn) !important;
   color: #ffffff !important;
@@ -237,7 +236,7 @@ body {
 .tactile-input:focus-visible {
   background-color: var(--input-focus-bg);
   border-color: var(--brand-gold);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.24);
+  box-shadow: 0 0 0 3px rgba(101, 163, 13, 0.24);
 }
 
 :focus-visible {
@@ -246,7 +245,7 @@ body {
 }
 
 .text-gradient-gold {
-  background: linear-gradient(135deg, var(--brand-gold) 0%, var(--sem-sky) 100%);
+  background: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
