@@ -20,7 +20,7 @@ const METRICS = [
 ];
 
 const sectionTransition = {
-  duration: 0.7,
+  duration: 0.65,
   ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
 };
 
@@ -30,14 +30,14 @@ export default function LandingPage() {
       <SmoothScroll />
       <AntigravityBackground />
 
-      {/* 1. PORTADA CORPORATIVA CON FUSIÓN GRADUAL AL BAJAR */}
+      {/* 1. PORTADA CORPORATIVA */}
       <CinematicHero />
 
-      {/* 2. SECCIONES INTERACTIVAS CON REVELADO SUAVE */}
+      {/* 2. SECCIONES INTERACTIVAS BIEN SEPARADAS (SIN ENCIMARSE) */}
       <main
         id="main-content"
         tabIndex={-1}
-        className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-14 pb-16 sm:pb-20 space-y-16 sm:space-y-20 outline-none"
+        className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-16 sm:pb-20 space-y-16 sm:space-y-20 outline-none"
       >
         {/* 4 Indicadores Clave */}
         <motion.section
@@ -72,7 +72,7 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={sectionTransition}
-          className="scroll-mt-10 space-y-3"
+          className="scroll-mt-12 space-y-3"
         >
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight">
@@ -92,7 +92,7 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={sectionTransition}
-          className="scroll-mt-10 space-y-3"
+          className="scroll-mt-12 space-y-3"
         >
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight">
@@ -112,7 +112,7 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={sectionTransition}
-          className="scroll-mt-10 space-y-3"
+          className="scroll-mt-12 space-y-3"
         >
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight">
@@ -132,7 +132,7 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={sectionTransition}
-          className="scroll-mt-10 space-y-3"
+          className="scroll-mt-12 space-y-3"
         >
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-2xl sm:text-3xl font-black text-text tracking-tight">

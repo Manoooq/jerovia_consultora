@@ -35,18 +35,18 @@ const LAUREL_BADGES = [
 
 export function CinematicHero() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const bgRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
   const mouseOffset = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
-  // Bucle de interpolación continua (Lerp) para que el desvanecimiento al bajar sea 100% fluido
+  // Desvanecimiento limpio al hacer scroll sin desplazar elementos sobre la sección siguiente
   useEffect(() => {
     let rafId: number;
     let smoothScrollY = window.scrollY;
 
     function renderLoop() {
       const targetScrollY = window.scrollY;
-      smoothScrollY += (targetScrollY - smoothScrollY) * 0.12;
+      smoothScrollY += (targetScrollY - smoothScrollY) * 0.14;
 
       mouseOffset.current.x +=
         (mouseOffset.current.targetX - mouseOffset.current.x) * 0.08;
@@ -54,24 +54,17 @@ export function CinematicHero() {
         (mouseOffset.current.targetY - mouseOffset.current.y) * 0.08;
 
       const vh = window.innerHeight || 800;
-      const progress = Math.min(Math.max(smoothScrollY / (vh * 0.92), 0), 1);
-      // Curva suave (smoothstep) para evitar cualquier cambio brusco de velocidad
-      const eased = progress * progress * (3 - 2 * progress);
+      const progress = Math.min(Math.max(smoothScrollY / (vh * 0.85), 0), 1);
 
       if (bgRef.current) {
-        const opacity = Math.max(0.04, 1 - eased * 0.92).toFixed(3);
-        const ty = (smoothScrollY * 0.22 + mouseOffset.current.y).toFixed(1);
         const tx = mouseOffset.current.x.toFixed(1);
-        const scale = (1.03 + eased * 0.04).toFixed(4);
-        bgRef.current.style.opacity = opacity;
-        bgRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+        const ty = (mouseOffset.current.y + smoothScrollY * 0.15).toFixed(1);
+        bgRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(1.03)`;
       }
 
-      if (contentRef.current) {
-        const cOpacity = Math.max(0, 1 - eased * 1.15).toFixed(3);
-        const cTy = (smoothScrollY * 0.14).toFixed(1);
-        contentRef.current.style.opacity = cOpacity;
-        contentRef.current.style.transform = `translate3d(0px, -${cTy}px, 0)`;
+      if (sectionRef.current) {
+        const fadeOut = Math.max(0.15, 1 - progress * 0.85).toFixed(3);
+        sectionRef.current.style.opacity = fadeOut;
       }
 
       rafId = requestAnimationFrame(renderLoop);
@@ -83,8 +76,8 @@ export function CinematicHero() {
 
   function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
     if (window.innerWidth < 1024) return;
-    mouseOffset.current.targetX = (e.clientX / window.innerWidth - 0.5) * -14;
-    mouseOffset.current.targetY = (e.clientY / window.innerHeight - 0.5) * -10;
+    mouseOffset.current.targetX = (e.clientX / window.innerWidth - 0.5) * -12;
+    mouseOffset.current.targetY = (e.clientY / window.innerHeight - 0.5) * -8;
   }
 
   function handleMouseLeave() {
@@ -101,12 +94,13 @@ export function CinematicHero() {
 
   return (
     <section
+      ref={sectionRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       aria-label="Portada corporativa Jerovia Consultora"
-      className="relative w-full h-[100dvh] min-h-[640px] overflow-hidden flex flex-col justify-between select-none bg-[#232f1e] text-white"
+      className="relative z-10 w-full min-h-[100dvh] overflow-hidden flex flex-col justify-between select-none bg-[#232f1e] text-white border-b border-[#536c45]/30 will-change-[opacity]"
     >
-      {/* 1. Imagen Corporativa Arquitectónica con movimiento interpolado sin CSS transitions conflictivas */}
+      {/* 1. Imagen Corporativa Arquitectónica */}
       <div
         ref={bgRef}
         style={{
@@ -115,30 +109,20 @@ export function CinematicHero() {
             "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=85')",
           backgroundPosition: "center center",
         }}
-        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-no-repeat will-change-[transform,opacity]"
+        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-no-repeat will-change-transform"
       />
 
-      {/* Capas atmosféricas en Verde Oliva (#536c45 y #485536) */}
+      {/* Capas en Verde Oliva (#536c45 y #485536) */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-[#1d2719]/92 via-[#38492f]/75 to-[#253120]/85"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-[#161e13]/60 via-transparent to-transparent"
+        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#141b12]/90 via-transparent to-[#161e13]/65"
       />
 
-      {/* Fundido Inferior Extra-Largo (320px) multiparada para transición imperceptible hacia la página */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-80 z-20"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, color-mix(in srgb, var(--bg-base) 35%, transparent) 45%, color-mix(in srgb, var(--bg-base) 78%, transparent) 75%, var(--bg-base) 100%)",
-        }}
-      />
-
-      {/* 2. Barra Superior con el Logo de Jerovia en Cápsula de Alto Contraste */}
+      {/* 2. Barra Superior */}
       <header className="relative z-30 w-full max-w-7xl mx-auto px-6 sm:px-10 pt-6 sm:pt-7 flex items-center justify-between gap-4">
         <a href="#" aria-label="Jerovia Consultora Inicio">
           <Logo size="md" variant="cover" />
@@ -204,15 +188,12 @@ export function CinematicHero() {
         </div>
       )}
 
-      {/* 3. Cuerpo Central Corporativo Limpio */}
-      <div
-        ref={contentRef}
-        className="relative z-30 w-full max-w-7xl mx-auto px-6 sm:px-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center will-change-[transform,opacity]"
-      >
+      {/* 3. Cuerpo Central con espaciado garantizado */}
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 py-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-7 space-y-5"
         >
           <p className="font-serif italic text-base sm:text-xl text-[#d5ddd1] tracking-wide">
@@ -252,13 +233,13 @@ export function CinematicHero() {
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-5 hidden sm:flex flex-col items-start lg:items-end justify-center gap-5"
         >
           {LAUREL_BADGES.map((b) => (
             <div
               key={b.main}
-              className="w-64 rounded-2xl bg-[#1c2519]/75 hover:bg-[#243021]/85 backdrop-blur-md border border-[#85987a]/45 px-5 py-3.5 text-center transition-all shadow-lg"
+              className="w-64 rounded-2xl bg-[#1c2519]/80 hover:bg-[#243021]/90 backdrop-blur-md border border-[#85987a]/45 px-5 py-3.5 text-center transition-all shadow-lg"
             >
               <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#b4c6aa]">
                 <Award className="h-3.5 w-3.5 text-[#85987a]" />
@@ -275,17 +256,17 @@ export function CinematicHero() {
         </motion.div>
       </div>
 
-      {/* 4. Pie de Portada sobre la Fusión */}
-      <div className="relative z-30 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 sm:pb-8 flex items-center justify-between text-xs">
+      {/* 4. Barra Inferior de la Portada bien separada y legible */}
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-7 sm:pb-8 flex items-center justify-between text-xs text-white/90">
         <div className="flex items-center gap-4">
           <Link
             href="/entrevista/demo"
-            className="font-bold text-text hover:text-gold underline underline-offset-4"
+            className="font-bold text-white hover:text-[#d5ddd1] underline underline-offset-4"
           >
             Probar Cuestionario Demo
           </Link>
-          <span className="hidden sm:inline text-subtext0">|</span>
-          <span className="hidden sm:inline font-medium text-subtext1">
+          <span className="hidden sm:inline text-white/40">|</span>
+          <span className="hidden sm:inline font-medium text-[#d5ddd1]">
             Asunción, Paraguay
           </span>
         </div>
@@ -293,10 +274,10 @@ export function CinematicHero() {
         <a
           href="#showcase"
           aria-label="Deslizar hacia abajo"
-          className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-widest text-gold hover:opacity-80 transition-opacity"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-widest text-[#d5ddd1] hover:text-white transition-colors"
         >
           <span>Deslizar</span>
-          <ChevronDown className="h-4 w-4 animate-bounce" />
+          <ChevronDown className="h-4 w-4 animate-bounce text-[#85987a]" />
         </a>
       </div>
     </section>
