@@ -23,8 +23,8 @@ const LAUREL_BADGES = [
   },
   {
     top: "Entregable Comité",
-    main: "DOSSIER EN 5 LÁMINAS",
-    sub: "Formato .PPTX & PDF A4",
+    main: "DOSSIER EN 5 PÁGINAS",
+    sub: "Formato PDF A4 & .PPTX",
   },
   {
     top: "Alcance Operativo",
@@ -37,63 +37,59 @@ export function CinematicHero() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const bgRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const rafRef = useRef<number | null>(null);
+  const mouseOffset = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
-  // Desvanecimiento continuo al desplazar hacia abajo
+  // Bucle de interpolación continua (Lerp) para que el desvanecimiento al bajar sea 100% fluido
   useEffect(() => {
-    let scrollRaf: number | null = null;
+    let rafId: number;
+    let smoothScrollY = window.scrollY;
 
-    function handleScroll() {
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
-      scrollRaf = requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const vh = window.innerHeight || 800;
-        const progress = Math.min(Math.max(y / (vh * 0.82), 0), 1);
+    function renderLoop() {
+      const targetScrollY = window.scrollY;
+      smoothScrollY += (targetScrollY - smoothScrollY) * 0.12;
 
-        if (bgRef.current) {
-          const opacity = (1 - progress * 0.92).toFixed(3);
-          const translateY = (y * 0.26).toFixed(1);
-          const blur = (progress * 7).toFixed(1);
-          bgRef.current.style.opacity = opacity;
-          bgRef.current.style.filter = `blur(${blur}px)`;
-          bgRef.current.style.transform = `scale(${(1.02 + progress * 0.04).toFixed(3)}) translate3d(0px, ${translateY}px, 0)`;
-        }
+      mouseOffset.current.x +=
+        (mouseOffset.current.targetX - mouseOffset.current.x) * 0.08;
+      mouseOffset.current.y +=
+        (mouseOffset.current.targetY - mouseOffset.current.y) * 0.08;
 
-        if (contentRef.current) {
-          const cOpacity = Math.max(0, 1 - progress * 1.3).toFixed(3);
-          const cTranslateY = (y * 0.16).toFixed(1);
-          contentRef.current.style.opacity = cOpacity;
-          contentRef.current.style.transform = `translate3d(0px, -${cTranslateY}px, 0)`;
-        }
-      });
+      const vh = window.innerHeight || 800;
+      const progress = Math.min(Math.max(smoothScrollY / (vh * 0.92), 0), 1);
+      // Curva suave (smoothstep) para evitar cualquier cambio brusco de velocidad
+      const eased = progress * progress * (3 - 2 * progress);
+
+      if (bgRef.current) {
+        const opacity = Math.max(0.04, 1 - eased * 0.92).toFixed(3);
+        const ty = (smoothScrollY * 0.22 + mouseOffset.current.y).toFixed(1);
+        const tx = mouseOffset.current.x.toFixed(1);
+        const scale = (1.03 + eased * 0.04).toFixed(4);
+        bgRef.current.style.opacity = opacity;
+        bgRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+      }
+
+      if (contentRef.current) {
+        const cOpacity = Math.max(0, 1 - eased * 1.15).toFixed(3);
+        const cTy = (smoothScrollY * 0.14).toFixed(1);
+        contentRef.current.style.opacity = cOpacity;
+        contentRef.current.style.transform = `translate3d(0px, -${cTy}px, 0)`;
+      }
+
+      rafId = requestAnimationFrame(renderLoop);
     }
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
-    };
+    rafId = requestAnimationFrame(renderLoop);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
-    const el = bgRef.current;
-    if (!el || window.innerWidth < 1024 || window.scrollY > 120) return;
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      const nx = (clientX / window.innerWidth - 0.5) * -14;
-      const ny = (clientY / window.innerHeight - 0.5) * -10;
-      el.style.transform = `scale(1.03) translate3d(${nx.toFixed(1)}px, ${ny.toFixed(1)}px, 0)`;
-    });
+    if (window.innerWidth < 1024) return;
+    mouseOffset.current.targetX = (e.clientX / window.innerWidth - 0.5) * -14;
+    mouseOffset.current.targetY = (e.clientY / window.innerHeight - 0.5) * -10;
   }
 
   function handleMouseLeave() {
-    const el = bgRef.current;
-    if (!el || window.scrollY > 120) return;
-    el.style.transform = "scale(1.02) translate3d(0px, 0px, 0)";
+    mouseOffset.current.targetX = 0;
+    mouseOffset.current.targetY = 0;
   }
 
   const navLinks = [
@@ -110,35 +106,35 @@ export function CinematicHero() {
       aria-label="Portada corporativa Jerovia Consultora"
       className="relative w-full h-[100dvh] min-h-[640px] overflow-hidden flex flex-col justify-between select-none bg-[#232f1e] text-white"
     >
-      {/* 1. Imagen Corporativa Arquitectónica de Alta Resolución armonizada en Verde Oliva */}
+      {/* 1. Imagen Corporativa Arquitectónica con movimiento interpolado sin CSS transitions conflictivas */}
       <div
         ref={bgRef}
         style={{
-          transform: "scale(1.02) translate3d(0px, 0px, 0)",
+          transform: "translate3d(0px, 0px, 0) scale(1.03)",
           backgroundImage:
             "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=85')",
           backgroundPosition: "center center",
         }}
-        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-no-repeat transition-transform duration-300 ease-out will-change-[transform,opacity,filter]"
+        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-no-repeat will-change-[transform,opacity]"
       />
 
-      {/* Capas en los tonos exactos de la muestra Verde Oliva (#536c45 y #485536) */}
+      {/* Capas atmosféricas en Verde Oliva (#536c45 y #485536) */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-[#1d2719]/92 via-[#38492f]/75 to-[#253120]/85"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-[#161e13]/65 via-transparent to-transparent"
+        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-[#161e13]/60 via-transparent to-transparent"
       />
 
-      {/* Fundido Inferior Suave hacia el color base de la página (--bg-base) */}
+      {/* Fundido Inferior Extra-Largo (320px) multiparada para transición imperceptible hacia la página */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-44 sm:h-56 z-20"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-80 z-20"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--bg-base) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, color-mix(in srgb, var(--bg-base) 35%, transparent) 45%, color-mix(in srgb, var(--bg-base) 78%, transparent) 75%, var(--bg-base) 100%)",
         }}
       />
 
@@ -214,9 +210,9 @@ export function CinematicHero() {
         className="relative z-30 w-full max-w-7xl mx-auto px-6 sm:px-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center will-change-[transform,opacity]"
       >
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-7 space-y-5"
         >
           <p className="font-serif italic text-base sm:text-xl text-[#d5ddd1] tracking-wide">
@@ -254,9 +250,9 @@ export function CinematicHero() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.12, ease: "easeOut" }}
+          transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-5 hidden sm:flex flex-col items-start lg:items-end justify-center gap-5"
         >
           {LAUREL_BADGES.map((b) => (

@@ -1,410 +1,646 @@
 import pptxgen from "pptxgenjs";
 import { EntrevistaRecord } from "./store";
 
-export async function generarPptxInforme(entrevista: EntrevistaRecord): Promise<Buffer> {
+function calcularEdadPptx(fechaNac?: string): string {
+  if (!fechaNac) return "N/A";
+  let year = 0;
+  if (/^\d{4}-\d{2}-\d{2}/.test(fechaNac)) {
+    year = Number(fechaNac.slice(0, 4));
+  } else if (/^\d{2}\/\d{2}\/\d{4}/.test(fechaNac)) {
+    year = Number(fechaNac.slice(6, 10));
+  }
+  if (!year || year < 1920) return "N/A";
+  const age = new Date().getFullYear() - year;
+  return age > 0 && age < 110 ? `${age} años` : "N/A";
+}
+
+export async function generarPptxInforme(
+  entrevista: EntrevistaRecord
+): Promise<Buffer> {
   const d = entrevista.datos;
   const pres = new pptxgen();
 
   pres.layout = "LAYOUT_16x9";
   pres.author = "Jerovia Consultora";
   pres.company = "Jerovia Consultora";
-  pres.title = `Informe Confidencial - ${d.nombre || "Candidato"} ${d.apellido || ""}`;
+  pres.title = `Informe Confidencial - ${d.nombre || "Candidato"} ${
+    d.apellido || ""
+  }`;
 
-  // Paleta corporativa
-  const COLOR_BG = "0D0D11";
-  const COLOR_CARD = "16161D";
-  const COLOR_GOLD = "536C45";
-  const COLOR_TEXT = "E2E8F0";
-  const COLOR_MUTED = "94A3B8";
-  const COLOR_LINE = "2D2D3A";
+  // Paleta Verde Oliva Corporativa (#536C45 / #85987A / #F4F6F2)
+  const COLOR_BG = "F4F6F2";
+  const COLOR_CARD = "FFFFFF";
+  const COLOR_OLIVE = "536C45";
+  const COLOR_SAGE = "85987A";
+  const COLOR_TEXT = "1A2216";
+  const COLOR_MUTED = "52634B";
 
-  const addHeader = (slide: pptxgen.Slide, titulo: string, moduloNum: string) => {
+  const addHeader = (
+    slide: pptxgen.Slide,
+    titulo: string,
+    paginaStr: string
+  ) => {
     slide.background = { color: COLOR_BG };
-    
-    // Header bar
+
+    // Formas suaves laterales en Verde Oliva
     slide.addShape(pres.ShapeType.rect, {
-      x: 0.5, y: 0.4, w: 12.3, h: 0.8,
-      fill: { color: COLOR_CARD },
-      line: { color: COLOR_GOLD, width: 1 },
+      x: 0,
+      y: 0,
+      w: 13.33,
+      h: 0.14,
+      fill: { color: COLOR_OLIVE },
+    });
+
+    slide.addShape(pres.ShapeType.roundRect, {
+      x: 0.5,
+      y: 0.35,
+      w: 12.33,
+      h: 0.8,
+      fill: { color: COLOR_OLIVE },
+      line: { color: COLOR_SAGE, width: 1 },
     });
 
     slide.addText("JEROVIA CONSULTORA", {
-      x: 0.8, y: 0.5, w: 4, h: 0.3,
-      fontSize: 11, fontFace: "Arial", bold: true, color: COLOR_GOLD,
+      x: 0.8,
+      y: 0.45,
+      w: 4.5,
+      h: 0.3,
+      fontSize: 12,
+      fontFace: "Arial",
+      bold: true,
+      color: "FFFFFF",
     });
 
-    slide.addText(`INFORME SOCIOAMBIENTAL CONFIDENCIAL · ${moduloNum}`, {
-      x: 0.8, y: 0.8, w: 7, h: 0.3,
-      fontSize: 9, fontFace: "Arial", color: COLOR_MUTED,
-    });
+    slide.addText(
+      `INFORME CONFIDENCIAL · ${entrevista.entidadSolicitante.toUpperCase()} ·${paginaStr}`,
+      {
+        x: 0.8,
+        y: 0.75,
+        w: 7.5,
+        h: 0.3,
+        fontSize: 8.5,
+        fontFace: "Arial",
+        color: "E2E8DE",
+      }
+    );
 
     slide.addText(titulo.toUpperCase(), {
-      x: 6.5, y: 0.5, w: 6, h: 0.6,
-      fontSize: 15, fontFace: "Arial", bold: true, color: "FFFFFF", align: "right",
+      x: 6.5,
+      y: 0.45,
+      w: 6.0,
+      h: 0.6,
+      fontSize: 13,
+      fontFace: "Arial",
+      bold: true,
+      color: "FFFFFF",
+      align: "right",
     });
   };
 
-  const addFooter = (slide: pptxgen.Slide) => {
+  const addFooter = (slide: pptxgen.Slide, pageNum: number) => {
     slide.addText(
-      `Entidad Solicitante: ${entrevista.entidadSolicitante} | Evaluado: ${d.nombre || ""} ${d.apellido || ""} (CI: ${d.cedula || "N/A"}) | Jerovia Consultora Confidential`,
+      `Evaluado: ${d.nombre || ""} ${d.apellido || ""} (CI: ${
+        d.cedula || "N/A"
+      }) | Jerovia Consultora · Página ${pageNum} de 5`,
       {
-        x: 0.5, y: 7.1, w: 12.3, h: 0.3,
-        fontSize: 8, fontFace: "Arial", color: COLOR_MUTED, align: "center",
+        x: 0.5,
+        y: 7.1,
+        w: 12.33,
+        h: 0.3,
+        fontSize: 8.5,
+        fontFace: "Arial",
+        color: COLOR_MUTED,
+        align: "center",
       }
     );
   };
 
-  // -------------------------------------------------------------
-  // SLIDE 1: INFORMACIÓN PERSONAL, ACADÉMICA Y LABORAL
-  // -------------------------------------------------------------
+  // =============================================================
+  // PÁGINA 1: IDENTIFICACIÓN, FORMACIÓN ACADÉMICA Y LABORAL
+  // =============================================================
   const s1 = pres.addSlide();
-  addHeader(s1, "Información Personal, Académica y Laboral", "MÓDULO 01 - 03");
+  addHeader(s1, "1. Filiación, Estudios y Trayectoria Laboral", "PÁGINA 1 DE 5");
 
-  // Col 1: Datos Personales
+  // Banner Superior con Nombre, Edad, Nac, CI, Estado Civil y Contacto
   s1.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 1.5, w: 3.9, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
-  });
-  s1.addText("INFORMACIÓN PERSONAL", {
-    x: 0.7, y: 1.7, w: 3.5, h: 0.4,
-    fontSize: 12, bold: true, color: COLOR_GOLD,
-  });
-
-  const textoPersonal = [
-    `Nombre: ${d.nombre || ""} ${d.apellido || ""}`,
-    `Cédula (CI): ${d.cedula || "N/A"}`,
-    `Fecha Nac.: ${d.fechaNacimiento || "N/A"}`,
-    `Estado Civil: ${d.estadoCivil || "N/A"}`,
-    `Contacto: ${d.telefono || "N/A"}`,
-    `Email: ${d.email || "N/A"}`,
-    `Red Social: ${d.redSocial || "N/A"} (${d.redSocialPlataforma || "N/A"})`,
-    `Licencia Conducir: ${d.licenciaConducir ? "Sí" : "No"}`,
-    `Movilidad Propia: ${d.movilidadPropia ? `Sí (${d.tipoMovilidad || "Vehículo"})` : "No"}`,
-  ].join("\n\n");
-
-  s1.addText(textoPersonal, {
-    x: 0.7, y: 2.2, w: 3.5, h: 4.4,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
+    x: 0.5,
+    y: 1.35,
+    w: 12.33,
+    h: 1.35,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_OLIVE, width: 1.5 },
   });
 
-  // Col 2: Formación Académica
+  const edadStr = calcularEdadPptx(d.fechaNacimiento);
+  s1.addText(
+    `${d.nombre || ""} ${d.apellido || ""}   |   Edad: ${edadStr}\nFecha de Nac.: ${ d.fechaNacimiento || "N/A" }   |   CI: ${d.cedula || "N/A"}   |   Estado Civil: ${ d.estadoCivil || "N/A" }   |   Contacto: ${d.telefono || "N/A"}`,
+    {
+      x: 0.8,
+      y: 1.48,
+      w: 11.7,
+      h: 1.1,
+      fontSize: 12,
+      bold: true,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
+
+  // Columna Izquierda: Académico
   s1.addShape(pres.ShapeType.roundRect, {
-    x: 4.7, y: 1.5, w: 3.9, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 0.5,
+    y: 2.9,
+    w: 6.0,
+    h: 4.0,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
   s1.addText("FORMACIÓN ACADÉMICA", {
-    x: 4.9, y: 1.7, w: 3.5, h: 0.4,
-    fontSize: 12, bold: true, color: COLOR_GOLD,
+    x: 0.8,
+    y: 3.1,
+    w: 5.4,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
 
-  const idiomasStr = (d.idiomas && d.idiomas.length > 0)
-    ? d.idiomas.map(i => `${i.idioma} (${i.nivel})`).join(", ")
-    : "Español";
+  const idiomasStr =
+    d.idiomas && d.idiomas.length > 0
+      ? d.idiomas.map((i) => `${i.idioma} (${i.nivel})`).join(", ")
+      : "Español";
 
-  const textoAcademico = [
-    `Carrera / Especialidad:`,
-    `${d.carrera || "N/A"} (${d.aniosEstudio || 0} años cursados)`,
-    ``,
-    `Universidad / Institución:`,
-    `${d.universidad || "N/A"}`,
-    ``,
-    `Estado de Estudios: ${d.estadoEstudios || "N/A"}`,
-    `Idiomas: ${idiomasStr}`,
-    ``,
-    `Capacitaciones Adicionales:`,
-    `${d.cursos || "Ninguno declarado"}`,
-  ].join("\n");
+  s1.addText(
+    [
+      `Carrera / Nivel: ${d.carrera || "N/A"} (${
+        d.aniosEstudio || 0
+      } años cursados)`,
+      `Universidad / Institución: ${d.universidad || "N/A"}`,
+      `Estado de Estudios: ${d.estadoEstudios || "N/A"}`,
+      `Idiomas: ${idiomasStr}`,
+      `Cursos / Capacitaciones: ${d.cursos || "Ninguno declarado"}`,
+    ].join("\n\n"),
+    {
+      x: 0.8,
+      y: 3.55,
+      w: 5.4,
+      h: 3.1,
+      fontSize: 10.5,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
 
-  s1.addText(textoAcademico, {
-    x: 4.9, y: 2.2, w: 3.5, h: 4.4,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  // Col 3: Trayectoria Laboral
+  // Columna Derecha: Laboral
   s1.addShape(pres.ShapeType.roundRect, {
-    x: 8.9, y: 1.5, w: 3.9, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 6.83,
+    y: 2.9,
+    w: 6.0,
+    h: 4.0,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s1.addText("TRAYECTORIA LABORAL", {
-    x: 9.1, y: 1.7, w: 3.5, h: 0.4,
-    fontSize: 12, bold: true, color: COLOR_GOLD,
-  });
-
-  const textoLaboral = [
-    `Situación Actual: ${d.situacionActual || "N/A"}`,
-    `Empleo Anterior: ${d.empresaAnterior || "N/A"}`,
-    `Cargo Desempeñado: ${d.cargoAnterior || "N/A"}`,
-    `Antigüedad: ${d.antiguedad || "N/A"}`,
-    `Último Salario: ${d.salarioAnterior ? d.salarioAnterior.toLocaleString("es-PY") + " Gs." : "N/A"}`,
-    `Disponibilidad: ${d.disponibilidad || "Inmediata"}`,
-    `Pretensión Salarial: ${d.pretensionSalarial || "Mínimo Legal Vigente"}`,
-    `Familiares en entidad: ${d.vinculosFamiliares ? `Sí (${d.vinculosFamiliaresDetalle || ""})` : "No"}`,
-  ].join("\n\n");
-
-  s1.addText(textoLaboral, {
-    x: 9.1, y: 2.2, w: 3.5, h: 4.4,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
+  s1.addText("EXPERIENCIA Y SITUACIÓN LABORAL", {
+    x: 7.1,
+    y: 3.1,
+    w: 5.4,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
 
-  addFooter(s1);
+  s1.addText(
+    [
+      `Situación Actual: ${d.situacionActual || "N/A"}`,
+      `Empleo / Empresa: ${d.empresaAnterior || "N/A"}`,
+      `Cargo: ${d.cargoAnterior || "N/A"} (${d.antiguedad || "0"} meses)`,
+      `Último Salario: ${
+        d.salarioAnterior
+          ? d.salarioAnterior.toLocaleString("es-PY") + " Gs."
+          : "N/A"
+      }`,
+      `Disponibilidad: ${d.disponibilidad || "Inmediata"} | Pretensión: ${
+        d.pretensionSalarial || "N/A"
+      }`,
+    ].join("\n\n"),
+    {
+      x: 7.1,
+      y: 3.55,
+      w: 5.4,
+      h: 3.1,
+      fontSize: 10.5,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
+  addFooter(s1, 1);
 
-  // -------------------------------------------------------------
-  // SLIDE 2: PERFIL PSICOLABORAL Y PROYECCIÓN
-  // -------------------------------------------------------------
+  // =============================================================
+  // PÁGINA 2: PERFIL PSICOSOCIAL, REDES, MOVILIDAD Y VÍNCULOS
+  // =============================================================
   const s2 = pres.addSlide();
-  addHeader(s2, "Perfil Psicolaboral y Proyección", "MÓDULO 04");
+  addHeader(
+    s2,
+    "2. Perfil Psicosocial, Redes y Movilidad",
+    "PÁGINA 2 DE 5"
+  );
 
-  // Box 1: Fortalezas
   s2.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 1.5, w: 6.0, h: 2.5,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 0.5,
+    y: 1.4,
+    w: 6.0,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s2.addText("ASPECTOS POSITIVOS (FORTALEZAS)", {
-    x: 0.8, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s2.addText("PERFIL PSICOSOCIAL Y PROYECCIÓN", {
+    x: 0.8,
+    y: 1.6,
+    w: 5.4,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
-  s2.addText(d.aspectosPositivos || "No especificado", {
-    x: 0.8, y: 2.1, w: 5.5, h: 1.7,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
+  s2.addText(
+    [
+      `Aspectos positivos de tu persona:\n${
+        d.aspectosPositivos || "No especificado."
+      }`,
+      `Aspectos para mejorar:\n${d.aspectosMejorar || "No especificado."}`,
+      `Visión a largo plazo:\n- ${d.visionLargoPlazo || "No especificado."}`,
+      `Expectativas de ${entrevista.entidadSolicitante}:\n-${
+        d.expectativasEntidad || "No especificado."
+      }`,
+    ].join("\n\n"),
+    {
+      x: 0.8,
+      y: 2.05,
+      w: 5.4,
+      h: 4.6,
+      fontSize: 10,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
 
-  // Box 2: Oportunidades de Mejora
   s2.addShape(pres.ShapeType.roundRect, {
-    x: 6.8, y: 1.5, w: 6.0, h: 2.5,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 6.83,
+    y: 1.4,
+    w: 6.0,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s2.addText("ASPECTOS PARA MEJORAR", {
-    x: 7.1, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s2.addText("REDES SOCIALES, MOVILIDAD Y VÍNCULOS", {
+    x: 7.1,
+    y: 1.6,
+    w: 5.4,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
-  s2.addText(d.aspectosMejorar || "No especificado", {
-    x: 7.1, y: 2.1, w: 5.5, h: 1.7,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
+  s2.addText(
+    [
+      `Red social que más utilices:\n- ${
+        d.redSocial
+          ? `${d.redSocialPlataforma || "Red"} (${d.redSocial})`
+          : "No."
+      }`,
+      `Licencia de conducir:\n- ${d.licenciaConducir ? "Sí." : "No."}`,
+      `Movilidad propia:\n- ${d.movilidadPropia ? "Sí." : "No."}`,
+      `Tipo de movilidad / Características:\n- ${
+        d.movilidadPropia ? d.tipoMovilidad || "Vehículo propio." : "No."
+      }`,
+      `Tienes algún familiar político o miembro de un sindicato:\n- ${
+        d.familiaresPoliticos
+          ? `Sí (${d.familiaresPoliticosDetalle || ""})`
+          : "No."
+      }`,
+    ].join("\n\n"),
+    {
+      x: 7.1,
+      y: 2.05,
+      w: 5.4,
+      h: 4.6,
+      fontSize: 10,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
+  addFooter(s2, 2);
 
-  // Box 3: Visión a Largo Plazo
-  s2.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 4.3, w: 6.0, h: 2.5,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
-  });
-  s2.addText("VISIÓN A LARGO PLAZO", {
-    x: 0.8, y: 4.5, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
-  });
-  s2.addText(d.visionLargoPlazo || "No especificado", {
-    x: 0.8, y: 4.9, w: 5.5, h: 1.7,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  // Box 4: Expectativas hacia la entidad
-  s2.addShape(pres.ShapeType.roundRect, {
-    x: 6.8, y: 4.3, w: 6.0, h: 2.5,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
-  });
-  s2.addText(`EXPECTATIVAS HACIA ${entrevista.entidadSolicitante.toUpperCase()}`, {
-    x: 7.1, y: 4.5, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
-  });
-  s2.addText(d.expectativasEntidad || "No especificado", {
-    x: 7.1, y: 4.9, w: 5.5, h: 1.7,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  addFooter(s2);
-
-  // -------------------------------------------------------------
-  // SLIDE 3: ENTORNO FAMILIAR Y SALUD
-  // -------------------------------------------------------------
+  // =============================================================
+  // PÁGINA 3: SALUD (IZQ/ARRIBA) Y ESTRUCTURA FAMILIAR (DER/ABAJO)
+  // =============================================================
   const s3 = pres.addSlide();
-  addHeader(s3, "Entorno Familiar y Estado de Salud", "MÓDULO 05 - 06");
+  addHeader(s3, "3. Estado de Salud y Estructura Familiar", "PÁGINA 3 DE 5");
 
-  // Col 1: Estructura Familiar
   s3.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 1.5, w: 6.0, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 0.5,
+    y: 1.4,
+    w: 5.8,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s3.addText("COMPOSICIÓN FAMILIAR DEL HOGAR", {
-    x: 0.8, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s3.addText("SALUD, SEGURO MÉDICO Y HÁBITOS", {
+    x: 0.8,
+    y: 1.6,
+    w: 5.2,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
+  s3.addText(
+    [
+      `Enfermedad de base o Alergias:\n- ${
+        d.enfermedadBase ? `Sí (${d.enfermedadBaseDetalle || ""})` : "No."
+      }`,
+      `Familiares con enfermedad de base:\n- ${
+        d.familiaresEnfermedad
+          ? `Sí (${d.familiaresEnfermedadDetalle || ""})`
+          : "No."
+      }`,
+      `Posees seguro médico:\n- ${
+        d.seguroMedico && d.seguroMedico !== "ninguno"
+          ? `Sí (${d.seguroMedico.toUpperCase()}).`
+          : "No."
+      }`,
+      `Consumes bebidas alcohólicas:\n- ${d.consumoAlcohol || "No"}.`,
+      `Fumas o vapea:\n- ${d.consumoTabaco ? "Sí." : "No."}`,
+      `Realizas algún tipo de tratamiento:\n- ${
+        d.tratamientos ? `Sí (${d.tratamientosDetalle || ""})` : "No."
+      }`,
+    ].join("\n\n"),
+    {
+      x: 0.8,
+      y: 2.05,
+      w: 5.2,
+      h: 4.6,
+      fontSize: 9.8,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
 
-  const textoFamilia = [
-    `Relación de los padres: ${d.relacionPadres || "N/A"}`,
-    `Convivencia actual: ${d.estructuraFamiliar || "N/A"}`,
-    `Hijos: ${d.hijos ? `Sí (${d.cantidadHijos || 0} hijos - Edades: ${d.edadesHijos || "N/A"})` : "No posee"}`,
-    `Cantidad de hermanos: ${d.cantidadHermanos || 0}`,
-    ``,
-    `DATOS DEL PADRE:`,
-    `Nombre: ${d.nombrePadre || "N/A"} (${d.edadPadre || "N/A"} años)`,
-    `Ocupación: ${d.ocupacionPadre || "N/A"} | Ciudad: ${d.ciudadPadre || "N/A"}`,
-    `Contacto: ${d.telefonoPadre || "N/A"}`,
-    ``,
-    `DATOS DE LA MADRE:`,
-    `Nombre: ${d.nombreMadre || "N/A"} (${d.edadMadre || "N/A"} años)`,
-    `Ocupación: ${d.ocupacionMadre || "N/A"} | Ciudad: ${d.ciudadMadre || "N/A"}`,
-    `Contacto: ${d.telefonoMadre || "N/A"}`,
-  ].join("\n");
-
-  s3.addText(textoFamilia, {
-    x: 0.8, y: 2.1, w: 5.5, h: 4.5,
-    fontSize: 9.5, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  // Col 2: Salud
   s3.addShape(pres.ShapeType.roundRect, {
-    x: 6.8, y: 1.5, w: 6.0, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 6.55,
+    y: 1.4,
+    w: 6.28,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s3.addText("ESTADO DE SALUD Y HÁBITOS", {
-    x: 7.1, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s3.addText("ESTRUCTURA Y ENTORNO FAMILIAR", {
+    x: 6.85,
+    y: 1.6,
+    w: 5.7,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
+  s3.addText(
+    [
+      `Hijos: ${
+        d.hijos
+          ? `Sí (${d.cantidadHijos || 1} - Edades: ${d.edadesHijos || "N/A"})`
+          : "No."
+      }`,
+      `Relación de sus padres: ${d.relacionPadres || "N/A"}.`,
+      `Estructura Familiar: ${d.estructuraFamiliar || "N/A"}`,
+      ``,
+      `Nombre del padre: ${d.nombrePadre || "N/A"} (${
+        d.edadPadre || "N/A"
+      } Años)`,
+      `Ocupación: ${d.ocupacionPadre || "N/A"} | Contacto: ${
+        d.telefonoPadre || "N/A"
+      } | Vive en: ${d.ciudadPadre || "N/A"}`,
+      ``,
+      `Nombre de la madre: ${d.nombreMadre || "N/A"} (${
+        d.edadMadre || "N/A"
+      } Años)`,
+      `Ocupación: ${d.ocupacionMadre || "N/A"} | Contacto: ${
+        d.telefonoMadre || "N/A"
+      } | Vive en: ${d.ciudadMadre || "N/A"}`,
+      ``,
+      `Cantidad de hermanos: ${d.cantidadHermanos ?? 0}`,
+    ].join("\n"),
+    {
+      x: 6.85,
+      y: 2.05,
+      w: 5.7,
+      h: 4.6,
+      fontSize: 9.8,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
+  addFooter(s3, 3);
 
-  const textoSalud = [
-    `Enfermedad de Base o Alergias:`,
-    `${d.enfermedadBase ? `Sí: ${d.enfermedadBaseDetalle || ""}` : "No refiere"}`,
-    ``,
-    `Familiares con enfermedad de base:`,
-    `${d.familiaresEnfermedad ? `Sí: ${d.familiaresEnfermedadDetalle || ""}` : "No refiere"}`,
-    ``,
-    `Cobertura de Seguro Médico: ${d.seguroMedico ? d.seguroMedico.toUpperCase() : "NINGUNO"}`,
-    `Tratamientos Médicos Actuales: ${d.tratamientos ? `Sí (${d.tratamientosDetalle || ""})` : "No"}`,
-    ``,
-    `Consumo de Bebidas Alcohólicas: ${d.consumoAlcohol || "No"}`,
-    `Consumo de Tabaco / Vapeo: ${d.consumoTabaco ? "Sí" : "No"}`,
-    ``,
-    `Vínculos Políticos o Sindicales:`,
-    `${d.familiaresPoliticos ? `Sí (${d.familiaresPoliticosDetalle || ""})` : "No refiere"}`,
-  ].join("\n");
-
-  s3.addText(textoSalud, {
-    x: 7.1, y: 2.1, w: 5.5, h: 4.5,
-    fontSize: 9.5, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  addFooter(s3);
-
-  // -------------------------------------------------------------
-  // SLIDE 4: ECONOMÍA Y CONDICIONES HABITACIONALES
-  // -------------------------------------------------------------
+  // =============================================================
+  // PÁGINA 4: VIVIENDA (PRIMERO) Y SITUACIÓN ECONÓMICA (SEGUNDO)
+  // =============================================================
   const s4 = pres.addSlide();
-  addHeader(s4, "Situación Económica y Condiciones de Vivienda", "MÓDULO 07 - 08");
+  addHeader(
+    s4,
+    "4. Inspección de Vivienda y Situación Económica",
+    "PÁGINA 4 DE 5"
+  );
 
-  // Col 1: Economía
+  // Vivienda a la izquierda (Primero, respetando el orden del documento)
   s4.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 1.5, w: 6.0, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 0.5,
+    y: 1.4,
+    w: 6.2,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s4.addText("BALANCE SOCIOECONÓMICO", {
-    x: 0.8, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s4.addText("DATOS DE LA VIVIENDA Y GEORREFERENCIACIÓN", {
+    x: 0.8,
+    y: 1.6,
+    w: 5.6,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
+  s4.addText(
+    [
+      `Ciudad: ${d.ciudad || "Asunción"}. | Coordenadas: ${
+        d.coordenadas || "N/A"
+      }`,
+      `Dirección: ${d.direccion || "N/A"}`,
+      `Barrio: ${d.barrio || "N/A"} | Camino: ${d.tipoCamino || "Asfaltado"}`,
+      `Propiedad de la vivienda: ${d.tenenciaVivienda || "Propia"}`,
+      `Costo de alquiler: ${
+        d.costoAlquiler ? d.costoAlquiler.toLocaleString("es-PY") + " Gs." : "-"
+      }`,
+      `Cantidad de personas que viven en la casa: ${
+        d.cantidadPersonas || 1
+      } Personas.`,
+      `Composición de la vivienda:`,
+      `  - habitaciones: ${d.habitaciones ?? 1}   |   - baño: ${d.banos ?? 1}`,
+      `  - cocina comedor: ${d.cocina ? 1 : 0}   |   - sala: ${d.sala ? 1 : 0}`,
+      `Construcción: Techo: ${d.techo || "Tejas"}. Pisos: ${
+        d.pisos || "Cerámica"
+      }. Paredes: ${d.paredes || "Ladrillos"}.`,
+      `Número de planta: ${d.plantas || 1} piso(s).`,
+    ].join("\n"),
+    {
+      x: 0.8,
+      y: 2.05,
+      w: 5.6,
+      h: 4.6,
+      fontSize: 9.8,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
 
-  const textoEco = [
-    `Productos en la entidad solicitante:`,
-    `${d.productosEntidad ? `Sí (${d.tiposProductosEntidad || "Caja de ahorro/Tarjetas"})` : "No posee"}`,
-    ``,
-    `Familiares con productos en la entidad:`,
-    `${d.familiaresProductosEntidad ? "Sí" : "No"}`,
-    ``,
-    `Ingresos Familiares Estimados: ${d.ingresosFamiliares || "No declarado"}`,
-    `Otros Ingresos Secundarios: ${d.otrosIngresos || "No refiere"}`,
-    `Egresos Mensuales Estimados: ${d.egresosMensuales || "No declarado"}`,
-    ``,
-    `Deudas / Préstamos a su nombre:`,
-    `${d.prestamos ? `Sí: ${d.prestamosDetalle || ""}` : "No registra préstamos activos"}`,
-  ].join("\n");
-
-  s4.addText(textoEco, {
-    x: 0.8, y: 2.1, w: 5.5, h: 4.5,
-    fontSize: 10, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  // Col 2: Vivienda
+  // Economía a la derecha (Segundo)
   s4.addShape(pres.ShapeType.roundRect, {
-    x: 6.8, y: 1.5, w: 6.0, h: 5.3,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 6.95,
+    y: 1.4,
+    w: 5.88,
+    h: 5.5,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s4.addText("INFRAESTRUCTURA HABITACIONAL Y UBICACIÓN", {
-    x: 7.1, y: 1.7, w: 5.5, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s4.addText("PRODUCTOS BANCARIOS Y FLUJO ECONÓMICO", {
+    x: 7.25,
+    y: 1.6,
+    w: 5.3,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
+  s4.addText(
+    [
+      `Posee algún producto de ${entrevista.entidadSolicitante}:\n${
+        d.productosEntidad ? "Sí." : "No."
+      }`,
+      `Miembros de la familia con productos de ${entrevista.entidadSolicitante}:\n${
+        d.familiaresProductosEntidad ? "Sí." : "No."
+      }`,
+      `Tipos de productos:\n${
+        d.productosEntidad ? d.tiposProductosEntidad || "Sí." : "No."
+      }`,
+      `Ingresos Familiares:\n${d.ingresosFamiliares || "No declarado."}`,
+      `Otros ingresos del entrevistado:\n${d.otrosIngresos || "No refiere."}`,
+      `Egresos mensuales:\n${d.egresosMensuales || "No declarado."}`,
+      `Posee préstamo a su nombre:\n${
+        d.prestamos ? `Sí (${d.prestamosDetalle || ""})` : "No."
+      }`,
+    ].join("\n\n"),
+    {
+      x: 7.25,
+      y: 2.05,
+      w: 5.3,
+      h: 4.6,
+      fontSize: 9.8,
+      color: COLOR_TEXT,
+      fontFace: "Arial",
+    }
+  );
+  addFooter(s4, 4);
 
-  const textoViv = [
-    `Ubicación: ${d.ciudad || "Luque"}, Barrio ${d.barrio || "Cañada Garay"}`,
-    `Dirección: ${d.direccion || "N/A"}`,
-    `Coordenadas GPS: ${d.coordenadas || "N/A"} | Plus Code: ${d.plusCode || "N/A"}`,
-    `Acceso / Camino: ${d.tipoCamino ? d.tipoCamino.toUpperCase() : "N/A"}`,
-    ``,
-    `Tenencia del Inmueble: ${d.tenenciaVivienda ? d.tenenciaVivienda.toUpperCase() : "PROPIA"}`,
-    `${d.costoAlquiler ? `Costo de Alquiler: ${d.costoAlquiler.toLocaleString("es-PY")} Gs.` : ""}`,
-    `Habitantes en la vivienda: ${d.cantidadPersonas || 1} personas`,
-    `Ambientes: ${d.habitaciones || 1} habitaciones, ${d.banos || 1} baño(s), Cocina: ${d.cocina ? "Sí" : "No"}, Sala: ${d.sala ? "Sí" : "No"}`,
-    ``,
-    `MATERIALES DE CONSTRUCCIÓN:`,
-    `Techo: ${d.techo || "Tejas"} | Paredes: ${d.paredes || "Ladrillo"}`,
-    `Pisos: ${d.pisos || "Cerámica"} | Plantas: ${d.plantas || 1} piso(s)`,
-  ].join("\n");
-
-  s4.addText(textoViv, {
-    x: 7.1, y: 2.1, w: 5.5, h: 4.5,
-    fontSize: 9.5, color: COLOR_TEXT, fontFace: "Arial",
-  });
-
-  addFooter(s4);
-
-  // -------------------------------------------------------------
-  // SLIDE 5: CONCLUSIONES Y DICTAMEN DEL CONSULTOR
-  // -------------------------------------------------------------
+  // =============================================================
+  // PÁGINA 5: OBSERVACIONES Y FIRMA (REALIZADO POR MICHELLE ROMERO)
+  // =============================================================
   const s5 = pres.addSlide();
-  addHeader(s5, "Conclusiones Generales y Dictamen", "MÓDULO 09");
+  addHeader(
+    s5,
+    "5. Observaciones de la Entrevista y Firma",
+    "PÁGINA 5 DE 5"
+  );
 
-  // Big observation box
   s5.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 1.5, w: 12.3, h: 3.5,
-    fill: { color: COLOR_CARD }, line: { color: COLOR_LINE, width: 1 },
+    x: 0.5,
+    y: 1.4,
+    w: 12.33,
+    h: 3.6,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_SAGE, width: 1 },
   });
-  s5.addText("OBSERVACIONES DEL EVALUADOR DURANTE LA VISITA", {
-    x: 0.8, y: 1.7, w: 11.7, h: 0.3,
-    fontSize: 11, bold: true, color: COLOR_GOLD,
+  s5.addText("OBSERVACIONES DURANTE LA ENTREVISTA", {
+    x: 0.8,
+    y: 1.6,
+    w: 11.7,
+    h: 0.35,
+    fontSize: 11,
+    bold: true,
+    color: COLOR_OLIVE,
   });
 
   const textoObs = [
-    d.observacionesEntrevista || "Se muestra como una persona amable, colaboradora y con predisposición favorable al diálogo.",
+    d.observacionesEntrevista ||
+      "Se muestra como una persona amable y cooperadora.",
     "",
-    `Personas presentes durante la inspección: ${d.quienesPresentes || "Entrevistado a solas en el domicilio."}`,
-    `Dicción y coherencia comunicacional: ${d.diccion ? d.diccion.toUpperCase() : "FLUIDA Y COHERENTE"}.`,
-    `Condición de orden y habitabilidad: ${d.estadoVivienda ? d.estadoVivienda.toUpperCase() : "BUENO - EN ORDEN Y LIMPIEZA"}.`,
-    d.otrasObservaciones ? `Otras consideraciones: ${d.otrasObservaciones}` : "",
-  ].filter(Boolean).join("\n");
+    `${
+      d.quienesPresentes ||
+      "En el momento de la visita, se encontraba solo en la vivienda."
+    } Dicción: ${d.diccion ? d.diccion : "Fluida y coherente"}.`,
+    "",
+    `Otras observaciones:`,
+    `${
+      d.otrasObservaciones ||
+      "La vivienda se encontró en orden y limpieza."
+    }`,
+    `Visita realizada en: ${
+      d.fechaVisita || new Date().toLocaleDateString("es-PY")
+    }`,
+  ].join("\n");
 
   s5.addText(textoObs, {
-    x: 0.8, y: 2.1, w: 11.7, h: 2.7,
-    fontSize: 11, color: COLOR_TEXT, fontFace: "Arial",
+    x: 0.8,
+    y: 2.05,
+    w: 11.7,
+    h: 2.75,
+    fontSize: 11,
+    color: COLOR_TEXT,
+    fontFace: "Arial",
   });
 
-  // Footer signature box
+  // Recuadro de Firma ("Realizado por Michelle Romero")
   s5.addShape(pres.ShapeType.roundRect, {
-    x: 0.5, y: 5.2, w: 12.3, h: 1.6,
-    fill: { color: "111116" }, line: { color: COLOR_GOLD, width: 1 },
+    x: 3.66,
+    y: 5.25,
+    w: 6.0,
+    h: 1.6,
+    fill: { color: COLOR_CARD },
+    line: { color: COLOR_OLIVE, width: 1.5 },
   });
 
-  s5.addText(`Fecha de Realización de la Visita: ${d.fechaVisita || new Date().toLocaleDateString("es-PY")}`, {
-    x: 0.8, y: 5.5, w: 6, h: 0.3,
-    fontSize: 11, color: COLOR_TEXT, bold: true,
+  s5.addText(`Realizado por ${d.consultorNombre || "Michelle Romero"}`, {
+    x: 3.86,
+    y: 5.55,
+    w: 5.6,
+    h: 0.45,
+    fontSize: 13,
+    color: COLOR_TEXT,
+    align: "center",
+    bold: true,
   });
 
-  s5.addText(`Dictamen: APTO PARA CONTINUAR PROCESO`, {
-    x: 0.8, y: 6.0, w: 6, h: 0.3,
-    fontSize: 11, color: COLOR_GOLD, bold: true,
+  s5.addText("JEROVIA CONSULTORA · VERIFICACIÓN SOCIOAMBIENTAL", {
+    x: 3.86,
+    y: 6.05,
+    w: 5.6,
+    h: 0.35,
+    fontSize: 9,
+    color: COLOR_OLIVE,
+    align: "center",
+    bold: true,
   });
 
-  s5.addText(`Perito Evaluador Responsable:\n${d.consultorNombre || "Michelle Romero"}\nJerovia Consultora`, {
-    x: 7.5, y: 5.4, w: 5, h: 0.9,
-    fontSize: 11, color: "FFFFFF", align: "right", bold: true,
-  });
-
-  addFooter(s5);
+  addFooter(s5, 5);
 
   const buffer = await pres.write({ outputType: "nodebuffer" });
   return buffer as Buffer;

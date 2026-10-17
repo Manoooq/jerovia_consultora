@@ -72,8 +72,7 @@ function seedDefaultUsers() {
     name: "Lic. Michelle Romero",
     role: "admin",
     cargo: "Directora General",
-    passwordHash:
-      "281058ee367ef73d7e7ac1088c42673560ad0efe6c45bb09c7e87573fa8b3433",
+    passwordHash: "64a964191b895fd55cdb5b01a36fabe09b276358a0c61cd57705ccb63dfd63a9",
     passwordSalt: "salt_adm_2026",
     activo: true,
     creadoEn: "2026-09-01T08:00:00.000Z",
@@ -86,8 +85,7 @@ function seedDefaultUsers() {
     name: "Lic. Carlos Benítez",
     role: "evaluador",
     cargo: "Perito Evaluador",
-    passwordHash:
-      "0fdb065e6fb13a58f92d6ae838f86574c4484abba831f42b1843cbbb65381d65",
+    passwordHash: "a7fa4ca835e360820418dca15665094ed64a5121a0b68ee84c5bee0ec9ba0b08",
     passwordSalt: "salt_eval_2026",
     activo: true,
     creadoEn: "2026-09-15T09:30:00.000Z",

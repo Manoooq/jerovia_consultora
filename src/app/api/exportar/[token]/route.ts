@@ -15,6 +15,48 @@ function escapeHtml(val: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
+function v(val: unknown, fallback = "N/A"): string {
+  if (val !== undefined && val !== null) {
+    const trimmed = String(val).trim();
+    if (trimmed.length > 0) {
+      return escapeHtml(trimmed);
+    }
+  }
+  return escapeHtml(fallback);
+}
+
+function calcularEdad(fechaNac?: string): string {
+  if (!fechaNac) return "N/A";
+  let year = 0;
+  let month = 0;
+  let day = 0;
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(fechaNac)) {
+    const parts = fechaNac.slice(0, 10).split("-").map(Number);
+    [year, month, day] = parts;
+  } else if (/^\d{2}\/\d{2}\/\d{4}/.test(fechaNac)) {
+    const parts = fechaNac.slice(0, 10).split("/").map(Number);
+    [day, month, year] = parts;
+  }
+
+  if (!year || year < 1920) return "N/A";
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  const m = today.getMonth() + 1 - month;
+  if (m < 0 || (m === 0 && today.getDate() < day)) {
+    age--;
+  }
+  return age > 0 && age < 110 ? `${age} años` : "N/A";
+}
+
+function siNo(val: unknown, detalle?: unknown): string {
+  if (val === true || val === "si" || val === "Sí") {
+    const det = String(detalle ?? "").trim();
+    return det ? `Sí (${escapeHtml(det)})` : "Sí.";
+  }
+  return "No.";
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -79,271 +121,768 @@ export async function GET(
     }
   }
 
+  const nombreMostrar = v(fullNombre, nombreCandidato);
+  const edadCalculada = calcularEdad(d.fechaNacimiento);
   const idiomasTexto =
     Array.isArray(d.idiomas) && d.idiomas.length > 0
       ? d.idiomas
-          .map((i) => escapeHtml(i.idioma) + " (" + escapeHtml(i.nivel) + ")")
+          .map((i) => v(i.idioma, "Idioma") + " (" + v(i.nivel, "intermedio") + ")")
           .join(", ")
       : "Español";
 
-  const movilidadTexto = d.movilidadPropia
-    ? "Sí (" + escapeHtml(d.tipoMovilidad ?? "Vehículo") + ")"
-    : "No";
+  const redSocialTexto = d.redSocial
+    ? v(d.redSocialPlataforma, "Red Social") + " (" + v(d.redSocial) + ")"
+    : "No declarado.";
 
-  const estudiosTexto =
-    escapeHtml(d.carrera ?? "N/A") +
-    " (" +
-    escapeHtml(d.estadoEstudios ?? "N/A") +
-    ")";
+  const fechaVisitaTexto = v(
+    d.fechaVisita,
+    new Date().toLocaleDateString("es-PY")
+  );
+  const evaluadorRaw = d.consultorNombre
+    ? d.consultorNombre
+    : entrevista.evaluadorAsignado;
+  const evaluadorTexto = v(evaluadorRaw, "Michelle Romero");
+  const entidadTexto = v(entrevista.entidadSolicitante, "Entidad Solicitante");
 
-  const empresaTexto =
-    escapeHtml(d.empresaAnterior ?? "N/A") +
-    " (" +
-    escapeHtml(d.cargoAnterior ?? "N/A") +
-    ")";
-
-  const antiguedadPretensionTexto =
-    escapeHtml(d.antiguedad ?? "0") +
-    " meses | " +
-    escapeHtml(d.pretensionSalarial ?? "N/A");
-
+  const salarioAntTexto = d.salarioAnterior
+    ? "Gs. " + Number(d.salarioAnterior).toLocaleString("es-PY")
+    : "N/A";
+  const costoAlquilerTexto = d.costoAlquiler
+    ? "Gs. " + Number(d.costoAlquiler).toLocaleString("es-PY")
+    : "-";
+  const seguroMedTexto =
+    d.seguroMedico && d.seguroMedico !== "ninguno"
+      ? "Sí (" + v(d.seguroMedico.toUpperCase()) + ")."
+      : "No.";
+  const alcoholTexto = d.consumoAlcohol
+    ? escapeHtml(
+        d.consumoAlcohol.charAt(0).toUpperCase() + d.consumoAlcohol.slice(1)
+      ) + "."
+    : "No.";
   const hijosTexto = d.hijos
     ? "Sí (" +
-      escapeHtml(d.cantidadHijos ?? 1) +
+      v(d.cantidadHijos, "1") +
       " - Edades: " +
-      escapeHtml(d.edadesHijos ?? "N/A") +
-      ")"
-    : "Sin hijos";
+      v(d.edadesHijos, "N/A") +
+      ")."
+    : "No.";
+  const hermanosTexto = d.cantidadHermanos
+    ? v(d.cantidadHermanos) + " hermano(s)."
+    : "No registra / Hijo único.";
+  const diccionTexto = d.diccion
+    ? escapeHtml(d.diccion.charAt(0).toUpperCase() + d.diccion.slice(1))
+    : "Fluida y coherente";
+  const otrasObsFallback =
+    "La vivienda se encontró en estado " +
+    v(d.estadoVivienda, "bueno") +
+    ", en orden y limpieza.";
 
-  const saludTexto =
-    "Seguro: " +
-    escapeHtml(String(d.seguroMedico ?? "ninguno").toUpperCase()) +
-    " | Enf. Base: " +
-    (d.enfermedadBase ? escapeHtml(d.enfermedadBaseDetalle ?? "Sí") : "No refiere");
+  const waveBgSvg = `<svg class="page-waves" viewBox="0 0 800 1130" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M800 0C680 340 520 720 140 1130H800V0Z" fill="#85987a" fill-opacity="0.08"/>
+    <path d="M800 220C690 520 560 840 280 1130H800V220Z" fill="#536c45" fill-opacity="0.09"/>
+    <path d="M800 480C720 710 610 940 440 1130H800V480Z" fill="#485536" fill-opacity="0.08"/>
+    <path d="M800 0C680 340 520 720 140 1130" stroke="#85987a" stroke-opacity="0.22" stroke-width="2"/>
+    <path d="M800 220C690 520 560 840 280 1130" stroke="#536c45" stroke-opacity="0.25" stroke-width="1.5"/>
+  </svg>`;
 
-  const prestamosTexto = d.prestamos
-    ? escapeHtml(d.prestamosDetalle ?? "Registra préstamos activos")
-    : "Sin préstamos declarados";
+  const pageHeader = (pageNum: number, sectionTitle: string) => `
+    <div class="page-header">
+      <div class="brand-wrap">
+        <div class="brand-badge">J</div>
+        <div>
+          <div class="brand-name">JEROVIA <span>CONSULTORA</span></div>
+          <div class="brand-sub">INFORME CONFIDENCIAL DE VISITA DOMICILIARIA · ${entidadTexto}</div>
+        </div>
+      </div>
+      <div class="page-meta">
+        <span class="page-pill">${escapeHtml(sectionTitle)}</span>
+        <span class="page-num">Página ${pageNum} de 5</span>
+      </div>
+    </div>
+  `;
 
-  const ubicacionTexto =
-    escapeHtml(d.ciudad ?? "N/A") + " - " + escapeHtml(d.barrio ?? "N/A");
-
-  const materialesTexto =
-    "Techo: " +
-    escapeHtml(d.techo ?? "N/A") +
-    " | Paredes: " +
-    escapeHtml(d.paredes ?? "N/A") +
-    " | Pisos: " +
-    escapeHtml(d.pisos ?? "N/A") +
-    " | Habitantes: " +
-    escapeHtml(d.cantidadPersonas ?? 1) +
-    " | Dormitorios: " +
-    escapeHtml(d.habitaciones ?? 1);
-
-  const fechaTexto = escapeHtml(
-    d.fechaVisita ?? new Date().toLocaleDateString("es-PY")
-  );
-  const evaluadorTexto = escapeHtml(
-    d.consultorNombre ?? entrevista.evaluadorAsignado ?? "Jerovia Consultora"
-  );
+  const pageFooter = (pageNum: number) => `
+    <div class="page-footer">
+      <span>Evaluado: <strong>${nombreMostrar}</strong> (CI: ${v(d.cedula)})</span>
+      <span>Jerovia Consultora · Documento Confidencial · Pág. ${pageNum}/5</span>
+    </div>
+  `;
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Informe Socioambiental - ${escapeHtml(nombreCandidato)}</title>
+  <title>Informe Confidencial - ${nombreMostrar}</title>
   <style>
-    @page { size: A4 portrait; margin: 14mm; }
-    * { box-sizing: border-box; }
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #0f172a;
-      background: #f8fafc;
+      color: #1a2216;
+      background: #dfe6dc;
       margin: 0;
-      padding: 24px;
-      font-size: 10pt;
-      line-height: 1.45;
-    }
-    .sheet {
-      max-width: 210mm;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 24px 28px;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      padding: 24px 12px;
+      font-size: 10.5pt;
+      line-height: 1.5;
     }
     .toolbar {
       max-width: 210mm;
-      margin: 0 auto 16px auto;
-      padding: 12px 16px;
-      background: #0f172a;
-      color: #f8fafc;
-      border-radius: 10px;
+      margin: 0 auto 20px auto;
+      padding: 12px 18px;
+      background: #1c2519;
+      color: #f4f6f2;
+      border-radius: 12px;
+      border: 1px solid #536c45;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
     .toolbar button {
-      background: #85987a;
-      color: #000000;
-      border: none;
-      padding: 8px 16px;
+      background: #536c45;
+      color: #ffffff;
+      border: 1px solid #85987a;
+      padding: 9px 18px;
       font-weight: 700;
       font-size: 9.5pt;
       border-radius: 8px;
       cursor: pointer;
     }
-    .header {
+    .toolbar button:hover { background: #485536; }
+
+    .a4-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 24px auto;
+      background: #ffffff;
+      padding: 18mm 18mm 16mm 18mm;
+      border-radius: 6px;
+      box-shadow: 0 12px 36px rgba(26, 34, 22, 0.14);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+    }
+    .a4-page:last-of-type {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .page-waves {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page-content {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .page-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 2px solid #536c45;
       padding-bottom: 12px;
       margin-bottom: 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 16px;
     }
-    .brand { font-size: 16pt; font-weight: 900; color: #0f172a; letter-spacing: 0.5px; }
-    .brand span { color: #536c45; }
-    .badge {
-      display: inline-block;
-      font-size: 7.5pt;
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fcd34d;
-      padding: 3px 8px;
-      font-weight: 700;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-    .subtitle { font-size: 8.5pt; color: #475569; margin-top: 3px; }
-    .card {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
+    .brand-wrap { display: flex; align-items: center; gap: 10px; }
+    .brand-badge {
+      width: 34px;
+      height: 34px;
       border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 12px;
-      page-break-inside: avoid;
+      background: #536c45;
+      color: #ffffff;
+      font-family: Georgia, serif;
+      font-weight: 900;
+      font-size: 15pt;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .card-title {
+    .brand-name { font-size: 13pt; font-weight: 900; letter-spacing: 0.8px; color: #1a2216; }
+    .brand-name span { color: #536c45; }
+    .brand-sub { font-size: 7.5pt; font-weight: 700; color: #52634b; letter-spacing: 0.5px; margin-top: 2px; }
+    .page-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .page-pill {
+      background: #eaefe7;
+      color: #485536;
+      border: 1px solid #85987a;
+      font-size: 7.5pt;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .page-num { font-size: 8pt; color: #52634b; font-weight: 600; }
+
+    .hero-banner {
+      background: linear-gradient(135deg, #536c45 0%, #485536 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 18px 22px;
+      border: 1px solid #85987a;
+      box-shadow: 0 6px 18px rgba(83, 108, 69, 0.18);
+    }
+    .hero-name {
+      font-size: 18pt;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      margin: 0 0 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.22);
+      padding-bottom: 8px;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px 16px;
+      font-size: 9.5pt;
+    }
+    .hero-item span {
+      display: block;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #d5ddd1;
+      font-weight: 700;
+    }
+    .hero-item strong {
+      font-size: 10.5pt;
+      color: #ffffff;
+    }
+
+    .section-box {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1.5px solid #85987a;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(26, 34, 22, 0.04);
+    }
+    .section-header {
+      background: #536c45;
+      color: #ffffff;
       font-size: 9.5pt;
       font-weight: 800;
-      color: #536c45;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.8px;
+      padding: 8px 16px;
     }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 12px; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; }
-    .field { margin-bottom: 4px; }
-    .label { font-size: 7.5pt; color: #64748b; font-weight: 700; text-transform: uppercase; }
-    .val { font-size: 9.5pt; font-weight: 600; color: #0f172a; word-break: break-word; }
-    .full { grid-column: 1 / -1; }
-    .obs-box {
-      background: #f8fafc;
-      border-left: 3px solid #536c45;
-      padding: 10px 12px;
-      font-size: 9.5pt;
-      color: #1e293b;
-      text-align: justify;
+    .section-body {
+      padding: 14px 16px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .qa-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .qa-item {
+      border-bottom: 1px dashed #cbd5c5;
+      padding-bottom: 8px;
+    }
+    .qa-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .qa-label {
+      font-size: 8.5pt;
+      font-weight: 800;
+      color: #485536;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+    }
+    .qa-val {
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #1a2216;
       white-space: pre-line;
     }
-    .footer {
-      margin-top: 20px;
-      border-top: 1px solid #cbd5e1;
+
+    .composition-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .comp-pill {
+      background: #f2f5f0;
+      border: 1px solid #85987a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .comp-pill span {
+      display: block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #52634b;
+    }
+    .comp-pill strong {
+      font-size: 11pt;
+      color: #1a2216;
+    }
+
+    .signature-area {
+      margin-top: auto;
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .signature-box {
+      background: #f8faf7;
+      border: 1.5px solid #85987a;
+      border-radius: 14px;
+      padding: 20px 44px;
+      min-width: 320px;
+    }
+    .signature-line {
+      border-top: 1.5px solid #485536;
+      padding-top: 8px;
+      margin-top: 6px;
+      font-size: 11pt;
+      font-weight: 800;
+      color: #1a2216;
+    }
+    .signature-role {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #536c45;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    .page-footer {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid #cbd5c5;
       padding-top: 10px;
+      margin-top: 16px;
       display: flex;
       justify-content: space-between;
-      font-size: 8.5pt;
-      color: #475569;
+      font-size: 8pt;
+      color: #52634b;
     }
+
     @media print {
       body { background: #ffffff; padding: 0; }
-      .sheet { border: none; padding: 0; max-width: 100%; }
       .no-print { display: none !important; }
+      .a4-page {
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+      }
     }
   </style>
 </head>
 <body>
   <div class="toolbar no-print">
-    <span>Vista previa de impresión A4 — <strong>${escapeHtml(nombreCandidato)}</strong></span>
-    <button onclick="window.print()">Imprimir / Guardar como PDF</button>
+    <div>
+      <strong>Informe Confidencial de 5 Páginas — ${nombreMostrar}</strong>
+      <div style="font-size: 8.5pt; color: #d5ddd1;">Formato Oficial Jerovia Consultora (Paleta Verde Oliva)</div>
+    </div>
+    <button onclick="window.print()">Imprimir / Guardar PDF (5 Páginas)</button>
   </div>
 
-  <div class="sheet">
-    <div class="header">
-      <div>
-        <div class="brand">JEROVIA <span>CONSULTORA</span></div>
-        <div class="subtitle">INFORME DE VISITA SOCIOAMBIENTAL Y VERIFICACIÓN DOMICILIARIA</div>
+  <!-- ==================== PÁGINA 1: IDENTIFICACIÓN, ACADÉMICO Y LABORAL ==================== -->
+  <section class="a4-page">
+    ${waveBgSvg}
+    ${pageHeader(1, "I. Filiación, Estudios y Empleo")}
+    <div class="page-content">
+      <div class="hero-banner">
+        <h1 class="hero-name">${nombreMostrar}</h1>
+        <div class="hero-grid">
+          <div class="hero-item"><span>Edad</span><strong>${escapeHtml(edadCalculada)}</strong></div>
+          <div class="hero-item"><span>Fecha de Nac.</span><strong>${v(d.fechaNacimiento)}</strong></div>
+          <div class="hero-item"><span>Cédula de Identidad (CI)</span><strong>${v(d.cedula)}</strong></div>
+          <div class="hero-item"><span>Estado Civil</span><strong>${v(d.estadoCivil)}</strong></div>
+          <div class="hero-item"><span>Contacto</span><strong>${v(d.telefono)}</strong></div>
+          <div class="hero-item"><span>Correo Electrónico</span><strong>${v(d.email)}</strong></div>
+        </div>
       </div>
-      <div style="text-align: right;">
-        <span class="badge">Confidencial</span>
-        <div class="subtitle">Entidad Solicitante: <strong>${escapeHtml(entrevista.entidadSolicitante)}</strong></div>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">1. Identificación Personal, Formación y Empleo</div>
-      <div class="grid-3">
-        <div class="field"><div class="label">Nombre Completo</div><div class="val">${escapeHtml(fullNombre ? fullNombre : nombreCandidato)}</div></div>
-        <div class="field"><div class="label">Cédula de Identidad</div><div class="val">${escapeHtml(d.cedula ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Fecha de Nacimiento</div><div class="val">${escapeHtml(d.fechaNacimiento ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Estado Civil</div><div class="val">${escapeHtml(d.estadoCivil ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Teléfono / WhatsApp</div><div class="val">${escapeHtml(d.telefono ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Movilidad Propia</div><div class="val">${movilidadTexto}</div></div>
-        <div class="field"><div class="label">Estudios / Carrera</div><div class="val">${estudiosTexto}</div></div>
-        <div class="field"><div class="label">Institución</div><div class="val">${escapeHtml(d.universidad ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Idiomas</div><div class="val">${idiomasTexto}</div></div>
-        <div class="field"><div class="label">Situación Laboral</div><div class="val">${escapeHtml(d.situacionActual ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Empresa / Actividad</div><div class="val">${empresaTexto}</div></div>
-        <div class="field"><div class="label">Antigüedad / Pretensión</div><div class="val">${antiguedadPretensionTexto}</div></div>
+      <div class="two-col">
+        <div class="section-box">
+          <div class="section-header">Formación Académica y Estudios</div>
+          <div class="section-body qa-list">
+            <div class="qa-item">
+              <div class="qa-label">Carrera / Nivel Educativo</div>
+              <div class="qa-val">${v(d.carrera, "No especificado")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Universidad / Institución</div>
+              <div class="qa-val">${v(d.universidad, "No especificado")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Años de Estudio y Estado Actual</div>
+              <div class="qa-val">${v(d.aniosEstudio, "0")} años cursados · ${v(d.estadoEstudios)}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Dominio de Idiomas</div>
+              <div class="qa-val">${idiomasTexto}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Cursos y Capacitaciones Adicionales</div>
+              <div class="qa-val">${v(d.cursos, "Ninguno declarado.")}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-header">Situación y Trayectoria Laboral</div>
+          <div class="section-body qa-list">
+            <div class="qa-item">
+              <div class="qa-label">Situación Ocupacional Actual</div>
+              <div class="qa-val">${v(d.situacionActual, "No especificado")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Empresa / Empleo Anterior o Actual</div>
+              <div class="qa-val">${v(d.empresaAnterior, "No registra")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Cargo Desempeñado y Antigüedad</div>
+              <div class="qa-val">${v(d.cargoAnterior)} (${v(d.antiguedad, "0")} meses)</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Último Salario / Pretensión Salarial</div>
+              <div class="qa-val">${salarioAntTexto} · Pretensión: ${v(d.pretensionSalarial, "Acorde al cargo")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Disponibilidad y Vínculos en la Entidad</div>
+              <div class="qa-val">Disponibilidad: ${v(d.disponibilidad, "Inmediata")} · Vínculos: ${siNo(d.vinculosFamiliares, d.vinculosFamiliaresDetalle)}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    ${pageFooter(1)}
+  </section>
 
-    <div class="card">
-      <div class="card-title">2. Perfil Psicosocial y Entorno Familiar</div>
-      <div class="grid-2">
-        <div class="field"><div class="label">Fortalezas Destacadas</div><div class="val">${escapeHtml(d.aspectosPositivos ?? "No especificado")}</div></div>
-        <div class="field"><div class="label">Aspectos a Mejorar</div><div class="val">${escapeHtml(d.aspectosMejorar ?? "No especificado")}</div></div>
-        <div class="field"><div class="label">Proyección a Largo Plazo</div><div class="val">${escapeHtml(d.visionLargoPlazo ?? "No especificado")}</div></div>
-        <div class="field"><div class="label">Composición Conviviente</div><div class="val">${escapeHtml(d.estructuraFamiliar ?? "N/A")}</div></div>
-        <div class="field"><div class="label">Hijos / Dependientes</div><div class="val">${hijosTexto}</div></div>
-        <div class="field"><div class="label">Cobertura Médica / Salud</div><div class="val">${saludTexto}</div></div>
+  <!-- ==================== PÁGINA 2: PERFIL PSICOSOCIAL, REDES Y MOVILIDAD ==================== -->
+  <section class="a4-page">
+    ${waveBgSvg}
+    ${pageHeader(2, "II. Perfil Personal y Movilidad")}
+    <div class="page-content">
+      <div class="section-box">
+        <div class="section-header">Evaluación Psicosocial y Proyección Personal</div>
+        <div class="section-body qa-list">
+          <div class="qa-item">
+            <div class="qa-label">Aspectos positivos de tu persona</div>
+            <div class="qa-val">${v(d.aspectosPositivos, "No especificado.")}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Aspectos para mejorar</div>
+            <div class="qa-val">${v(d.aspectosMejorar, "No especificado.")}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Visión a largo plazo</div>
+            <div class="qa-val">- ${v(d.visionLargoPlazo, "No especificado.")}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Expectativas de ${entidadTexto} (por qué eligió esta entidad)</div>
+            <div class="qa-val">- ${v(d.expectativasEntidad, "No especificado.")}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">Presencia Digital, Movilidad y Vínculos Sindicales / Políticos</div>
+        <div class="section-body qa-list">
+          <div class="qa-item">
+            <div class="qa-label">Red social que más utilices</div>
+            <div class="qa-val">- ${redSocialTexto}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Licencia de conducir</div>
+            <div class="qa-val">- ${d.licenciaConducir ? "Sí." : "No."}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Movilidad propia</div>
+            <div class="qa-val">- ${d.movilidadPropia ? "Sí." : "No."}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Tipo de movilidad / Características</div>
+            <div class="qa-val">- ${d.movilidadPropia ? v(d.tipoMovilidad, "Vehículo propio.") : "No."}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Tienes algún familiar político o miembro de un sindicato</div>
+            <div class="qa-val">- ${siNo(d.familiaresPoliticos, d.familiaresPoliticosDetalle)}</div>
+          </div>
+        </div>
       </div>
     </div>
+    ${pageFooter(2)}
+  </section>
 
-    <div class="card">
-      <div class="card-title">3. Situación Económica e Inspección del Inmueble</div>
-      <div class="grid-3">
-        <div class="field"><div class="label">Ingresos Familiares</div><div class="val">${escapeHtml(d.ingresosFamiliares ?? "No declarado")}</div></div>
-        <div class="field"><div class="label">Otros Ingresos</div><div class="val">${escapeHtml(d.otrosIngresos ?? "No refiere")}</div></div>
-        <div class="field"><div class="label">Egresos Mensuales</div><div class="val">${escapeHtml(d.egresosMensuales ?? "No declarado")}</div></div>
-        <div class="field full"><div class="label">Compromisos / Préstamos Vigentes</div><div class="val">${prestamosTexto}</div></div>
-        <div class="field"><div class="label">Ciudad y Barrio</div><div class="val">${ubicacionTexto}</div></div>
-        <div class="field"><div class="label">Tenencia de Vivienda</div><div class="val">${escapeHtml(String(d.tenenciaVivienda ?? "propia").toUpperCase())}</div></div>
-        <div class="field"><div class="label">Coordenadas GPS</div><div class="val">${escapeHtml(d.coordenadas ?? "N/A")}</div></div>
-        <div class="field full"><div class="label">Dirección Exacta</div><div class="val">${escapeHtml(d.direccion ?? "N/A")}</div></div>
-        <div class="field full"><div class="label">Calidad Constructiva y Distribución</div><div class="val">${materialesTexto}</div></div>
+  <!-- ==================== PÁGINA 3: SALUD Y ESTRUCTURA FAMILIAR ==================== -->
+  <section class="a4-page">
+    ${waveBgSvg}
+    ${pageHeader(3, "III. Salud y Entorno Familiar")}
+    <div class="page-content">
+      <div class="section-box">
+        <div class="section-header">Estado de Salud, Cobertura y Hábitos</div>
+        <div class="section-body two-col">
+          <div class="qa-list">
+            <div class="qa-item">
+              <div class="qa-label">Enfermedad de base o Alergias</div>
+              <div class="qa-val">- ${siNo(d.enfermedadBase, d.enfermedadBaseDetalle)}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Familiares con enfermedad de base</div>
+              <div class="qa-val">- ${siNo(d.familiaresEnfermedad, d.familiaresEnfermedadDetalle)}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Posees seguro médico</div>
+              <div class="qa-val">- ${seguroMedTexto}</div>
+            </div>
+          </div>
+          <div class="qa-list">
+            <div class="qa-item">
+              <div class="qa-label">Consumes bebidas alcohólicas</div>
+              <div class="qa-val">- ${alcoholTexto}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Fumas o vapea</div>
+              <div class="qa-val">- ${d.consumoTabaco ? "Sí." : "No."}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Realizas algún tipo de tratamiento</div>
+              <div class="qa-val">- ${siNo(d.tratamientos, d.tratamientosDetalle)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">Composición del Hogar y Referencias Filiales</div>
+        <div class="section-body qa-list">
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Hijos</div>
+              <div class="qa-val">${hijosTexto}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Relación de sus padres</div>
+              <div class="qa-val">${v(d.relacionPadres)}.</div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Estructura Familiar</div>
+            <div class="qa-val">${v(d.estructuraFamiliar, "No especificado.")}</div>
+          </div>
+
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Datos del Padre</div>
+              <div class="qa-val">Nombre del padre: ${v(d.nombrePadre)}.
+Edad: ${v(d.edadPadre)} Años.
+Ocupación: ${v(d.ocupacionPadre)}.
+Contacto: ${v(d.telefonoPadre)}.
+Vive en: ${v(d.ciudadPadre)}.</div>
+            </div>
+
+            <div class="qa-item">
+              <div class="qa-label">Datos de la Madre</div>
+              <div class="qa-val">Nombre de la madre: ${v(d.nombreMadre)}.
+Edad: ${v(d.edadMadre)} Años.
+Ocupación: ${v(d.ocupacionMadre)}.
+Vive en: ${v(d.ciudadMadre)}.
+Contacto: ${v(d.telefonoMadre)}.</div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Cantidad de hermanos</div>
+            <div class="qa-val">${hermanosTexto}</div>
+          </div>
+        </div>
       </div>
     </div>
+    ${pageFooter(3)}
+  </section>
 
-    <div class="card">
-      <div class="card-title">4. Conclusión y Concepto del Evaluador</div>
-      <div class="obs-box">${escapeHtml(d.observacionesEntrevista ?? "Sin observaciones adicionales.")}</div>
-      <div class="grid-2" style="margin-top: 10px;">
-        <div class="field"><div class="label">Comunicación y Dicción</div><div class="val">${escapeHtml(String(d.diccion ?? "fluida").toUpperCase())}</div></div>
-        <div class="field"><div class="label">Estado General del Inmueble</div><div class="val">${escapeHtml(String(d.estadoVivienda ?? "bueno").toUpperCase())}</div></div>
+  <!-- ==================== PÁGINA 4: VIVIENDA (ARRIBA) Y ECONOMÍA (ABAJO) ==================== -->
+  <section class="a4-page">
+    ${waveBgSvg}
+    ${pageHeader(4, "IV. Vivienda y Balance Económico")}
+    <div class="page-content">
+      <div class="section-box">
+        <div class="section-header">Inspección Física de la Vivienda y Georreferenciación</div>
+        <div class="section-body qa-list">
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Ciudad y Barrio</div>
+              <div class="qa-val">Ciudad: ${v(d.ciudad, "Asunción")}. · Barrio: ${v(d.barrio)}.</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Coordenadas GPS</div>
+              <div class="qa-val">${v(d.coordenadas)} ${d.plusCode ? "(" + v(d.plusCode) + ")" : ""}</div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Dirección Exacta</div>
+            <div class="qa-val">${v(d.direccion, "No especificada.")}</div>
+          </div>
+
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Camino y Propiedad de la Vivienda</div>
+              <div class="qa-val">Camino: ${v(d.tipoCamino, "Asfaltado")}. · Propiedad: ${v(d.tenenciaVivienda, "Propia")}.</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Costo de Alquiler y Habitantes</div>
+              <div class="qa-val">Costo de alquiler: ${costoAlquilerTexto} · Habitantes: ${v(d.cantidadPersonas, "1")} Personas.</div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Composición de la vivienda</div>
+            <div class="composition-grid">
+              <div class="comp-pill"><span>Habitaciones</span><strong>${v(d.habitaciones, "1")}</strong></div>
+              <div class="comp-pill"><span>Baño</span><strong>${v(d.banos, "1")}</strong></div>
+              <div class="comp-pill"><span>Cocina Comedor</span><strong>${d.cocina ? "1" : "0"}</strong></div>
+              <div class="comp-pill"><span>Sala</span><strong>${d.sala ? "1" : "0"}</strong></div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Construcción y Número de Plantas</div>
+            <div class="qa-val">Techo: ${v(d.techo, "Tejas")}. · Pisos: ${v(d.pisos, "Cerámica")}. · Paredes: ${v(d.paredes, "Ladrillos")}. · Número de planta: ${v(d.plantas, "1")} piso(s).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">Situación Bancaria y Flujo Económico Mensual</div>
+        <div class="section-body qa-list">
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">La persona entrevistada posee algún producto de ${entidadTexto}</div>
+              <div class="qa-val">${d.productosEntidad ? "Sí." : "No."}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Miembros de la familia que posean productos de ${entidadTexto}</div>
+              <div class="qa-val">${d.familiaresProductosEntidad ? "Sí." : "No."}</div>
+            </div>
+          </div>
+
+          <div class="qa-item">
+            <div class="qa-label">Tipos de productos</div>
+            <div class="qa-val">${d.productosEntidad ? v(d.tiposProductosEntidad, "Caja de ahorro / Tarjetas.") : "No."}</div>
+          </div>
+
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Ingresos Familiares</div>
+              <div class="qa-val">${v(d.ingresosFamiliares, "No declarado.")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Otros ingresos del entrevistado</div>
+              <div class="qa-val">${v(d.otrosIngresos, "No refiere.")}</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="qa-item">
+              <div class="qa-label">Egresos mensuales</div>
+              <div class="qa-val">${v(d.egresosMensuales, "No declarado.")}</div>
+            </div>
+            <div class="qa-item">
+              <div class="qa-label">Posee préstamo a su nombre</div>
+              <div class="qa-val">${siNo(d.prestamos, d.prestamosDetalle)}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    ${pageFooter(4)}
+  </section>
 
-    <div class="footer">
-      <div>Fecha de Visita: <strong>${fechaTexto}</strong></div>
-      <div>Evaluador Responsable: <strong>${evaluadorTexto}</strong></div>
+  <!-- ==================== PÁGINA 5: OBSERVACIONES Y FIRMA DEL PERITO ==================== -->
+  <section class="a4-page">
+    ${waveBgSvg}
+    ${pageHeader(5, "V. Conclusión y Firma")}
+    <div class="page-content">
+      <div class="section-box">
+        <div class="section-header">Observaciones Durante la Entrevista</div>
+        <div class="section-body qa-list">
+          <div class="qa-item">
+            <div class="qa-label">Concepto General y Desenvolvimiento</div>
+            <div class="qa-val">${v(
+              d.observacionesEntrevista,
+              "Se muestra como una persona amable y cooperadora durante el relevamiento."
+            )}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Personas Presentes en el Momento de la Visita</div>
+            <div class="qa-val">${v(
+              d.quienesPresentes,
+              "En el momento de la visita, se encontraba en la vivienda."
+            )}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Dicción y Comunicación</div>
+            <div class="qa-val">Dicción: ${diccionTexto}.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">Otras Observaciones y Constatación del Inmueble</div>
+        <div class="section-body qa-list">
+          <div class="qa-item">
+            <div class="qa-label">Orden, Limpieza y Entorno</div>
+            <div class="qa-val">${v(d.otrasObservaciones, otrasObsFallback)}</div>
+          </div>
+          <div class="qa-item">
+            <div class="qa-label">Visita realizada en</div>
+            <div class="qa-val">${fechaVisitaTexto}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signature-area">
+        <div class="signature-box">
+          <svg width="210" height="72" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto;">
+            <path d="M28 54C52 38 68 14 78 16C86 18 62 58 68 60C74 62 94 34 102 36C108 38 96 54 106 54C118 54 148 20 160 22C170 24 134 66 122 68C112 70 142 46 182 44C204 43 220 41 226 40" stroke="#2c3a58" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 48C78 44 156 42 230 42" stroke="#536c45" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.75"/>
+          </svg>
+          <div class="signature-line">Realizado por ${evaluadorTexto}</div>
+          <div class="signature-role">Jerovia Consultora · Verificación Socioambiental</div>
+        </div>
+      </div>
     </div>
-  </div>
+    ${pageFooter(5)}
+  </section>
 </body>
 </html>`;
 
