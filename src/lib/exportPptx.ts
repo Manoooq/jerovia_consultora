@@ -13,7 +13,7 @@ export async function generarPptxInforme(entrevista: EntrevistaRecord): Promise<
   // Paleta corporativa
   const COLOR_BG = "0D0D11";
   const COLOR_CARD = "16161D";
-  const COLOR_GOLD = "65A30D";
+  const COLOR_GOLD = "536C45";
   const COLOR_TEXT = "E2E8F0";
   const COLOR_MUTED = "94A3B8";
   const COLOR_LINE = "2D2D3A";

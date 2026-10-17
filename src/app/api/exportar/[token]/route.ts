@@ -186,7 +186,7 @@ export async function GET(
       gap: 12px;
     }
     .toolbar button {
-      background: #65a30d;
+      background: #85987a;
       color: #000000;
       border: none;
       padding: 8px 16px;
@@ -196,7 +196,7 @@ export async function GET(
       cursor: pointer;
     }
     .header {
-      border-bottom: 2px solid #4d7c0f;
+      border-bottom: 2px solid #536c45;
       padding-bottom: 12px;
       margin-bottom: 18px;
       display: flex;
@@ -205,7 +205,7 @@ export async function GET(
       gap: 16px;
     }
     .brand { font-size: 16pt; font-weight: 900; color: #0f172a; letter-spacing: 0.5px; }
-    .brand span { color: #4d7c0f; }
+    .brand span { color: #536c45; }
     .badge {
       display: inline-block;
       font-size: 7.5pt;
@@ -229,7 +229,7 @@ export async function GET(
     .card-title {
       font-size: 9.5pt;
       font-weight: 800;
-      color: #4d7c0f;
+      color: #536c45;
       border-bottom: 1px solid #e2e8f0;
       padding-bottom: 5px;
       margin-bottom: 10px;
@@ -244,7 +244,7 @@ export async function GET(
     .full { grid-column: 1 / -1; }
     .obs-box {
       background: #f8fafc;
-      border-left: 3px solid #4d7c0f;
+      border-left: 3px solid #536c45;
       padding: 10px 12px;
       font-size: 9.5pt;
       color: #1e293b;

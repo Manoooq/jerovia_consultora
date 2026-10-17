@@ -62,7 +62,7 @@ export function ParaguayOperationalMap() {
             d="M 210 45 L 290 75 L 330 155 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 245 Q 225 145 210 45 Z"
             fill="currentColor"
             className="text-surface1"
-            stroke="rgba(101, 163, 13, 0.55)"
+            stroke="rgba(83, 108, 69, 0.55)"
             strokeWidth="2"
           />
 
@@ -73,7 +73,7 @@ export function ParaguayOperationalMap() {
               y1={hq.y}
               x2={z.coords.x}
               y2={z.coords.y}
-              stroke="rgba(101, 163, 13, 0.4)"
+              stroke="rgba(83, 108, 69, 0.4)"
               strokeWidth="1.5"
               strokeDasharray="4 4"
             />
@@ -92,15 +92,15 @@ export function ParaguayOperationalMap() {
                   cx={z.coords.x}
                   cy={z.coords.y}
                   r={active ? "13" : "8"}
-                  fill={active ? "rgba(101, 163, 13, 0.3)" : "rgba(16, 185, 129, 0.2)"}
-                  stroke={active ? "#65a30d" : "#10b981"}
+                  fill={active ? "rgba(83, 108, 69, 0.3)" : "rgba(133, 152, 122, 0.2)"}
+                  stroke={active ? "#536c45" : "#85987a"}
                   strokeWidth="2"
                 />
                 <circle
                   cx={z.coords.x}
                   cy={z.coords.y}
                   r="4"
-                  fill={active ? "#65a30d" : "#10b981"}
+                  fill={active ? "#536c45" : "#85987a"}
                 />
               </g>
             );
