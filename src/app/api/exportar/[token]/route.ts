@@ -25,6 +25,16 @@ function v(val: unknown, fallback = "N/A"): string {
   return escapeHtml(fallback);
 }
 
+function isSafeImageSrc(src: unknown): boolean {
+  if (typeof src !== "string") return false;
+  return (
+    src.startsWith("data:image/jpeg;base64,") ||
+    src.startsWith("data:image/png;base64,") ||
+    src.startsWith("data:image/webp;base64,") ||
+    src.startsWith("https://")
+  );
+}
+
 function calcularEdad(fechaNac?: string): string {
   if (!fechaNac) return "N/A";
   let year = 0;
@@ -126,7 +136,9 @@ export async function GET(
   const idiomasTexto =
     Array.isArray(d.idiomas) && d.idiomas.length > 0
       ? d.idiomas
-          .map((i) => v(i.idioma, "Idioma") + " (" + v(i.nivel, "intermedio") + ")")
+          .map(
+            (i) => v(i.idioma, "Idioma") + " (" + v(i.nivel, "intermedio") + ")"
+          )
           .join(", ")
       : "Español";
 
@@ -177,6 +189,57 @@ export async function GET(
     v(d.estadoVivienda, "bueno") +
     ", en orden y limpieza.";
 
+  // Fotografías verificadas para incrustar en Página 1 y Página 4
+  const fotosSeguras = Array.isArray(d.fotosVivienda)
+    ? d.fotosVivienda.filter(isSafeImageSrc)
+    : [];
+
+  const galeriaPagina4Html =
+    fotosSeguras.length > 0
+      ? `<div class="section-box">
+          <div class="section-header">Registro Fotográfico de la Vivienda Verificada</div>
+          <div class="section-body photo-grid">
+            ${fotosSeguras
+              .slice(0, 4)
+              .map(
+                (src, idx) =>
+                  `<div class="photo-frame"><img src="${src}" alt="Evidencia ${
+                    idx + 1
+                  }" /><span>Fotografía In Situ #${idx + 1}</span></div>`
+              )
+              .join("")}
+          </div>
+        </div>`
+      : "";
+
+  // Firma digitalizada en Página 5 (Firma dibujada en Pad o Firma Oficial de Michelle Romero)
+  const firmaSvgOrImg = isSafeImageSrc(d.firmaEvaluador)
+    ? `<img src="${d.firmaEvaluador}" alt="Firma del Perito" style="height: 68px; width: auto; margin: 0 auto; display: block;" />`
+    : `<svg width="210" height="72" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto; display: block;">
+        <path d="M28 54C52 38 68 14 78 16C86 18 62 58 68 60C74 62 94 34 102 36C108 38 96 54 106 54C118 54 148 20 160 22C170 24 134 66 122 68C112 70 142 46 182 44C204 43 220 41 226 40" stroke="#2c3a58" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 48C78 44 156 42 230 42" stroke="#536c45" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.75"/>
+      </svg>`;
+
+  // Logo Original de Jerovia Consultora sin fondo en cada cabecera de página
+  const jeroviaOriginalLogoSvg = `<svg viewBox="0 0 350 118" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: auto; color: #1a2216;">
+    <g transform="translate(212, 4)">
+      <circle cx="46" cy="10" r="6.5" fill="#536c45" />
+      <path d="M33 25C33 19.5 38.8 16.5 46 16.5C53.2 16.5 59 19.5 59 25" fill="#536c45" />
+      <circle cx="20" cy="24" r="7.5" fill="#536c45" />
+      <path d="M5 44C5 36.5 11.5 32.5 20 32.5C26.5 32.5 31.5 35 33.5 39.5H5V44Z" fill="#536c45" />
+      <circle cx="72" cy="24" r="7.5" fill="#536c45" />
+      <path d="M58.5 39.5C60.5 35 65.5 32.5 72 32.5C80.5 32.5 87 36.5 87 44H58.5V39.5Z" fill="#536c45" />
+      <circle cx="46" cy="35" r="16.5" stroke="#1a2216" stroke-width="5" />
+      <circle cx="46" cy="30.5" r="5.5" fill="#1a2216" />
+      <path d="M35.5 44.5C36.8 39.2 40.8 37 46 37C51.2 37 55.2 39.2 56.5 44.5H35.5Z" fill="#1a2216" />
+      <path d="M59 47.5L75 63.5" stroke="#1a2216" stroke-width="6.5" stroke-linecap="round" />
+      <circle cx="26" cy="49" r="10.5" fill="#536c45" stroke="#ffffff" stroke-width="2" />
+      <path d="M21.2 49.2L24.6 52.5L31.2 45.5" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <text x="4" y="56" fill="#1a2216" font-family="Georgia, serif" font-weight="700" font-size="54">Jerovia</text>
+    <text x="4" y="105" fill="#1a2216" font-family="Georgia, serif" font-weight="700" font-size="55">Consultora</text>
+  </svg>`;
+
   const waveBgSvg = `<svg class="page-waves" viewBox="0 0 800 1130" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
     <path d="M800 0C680 340 520 720 140 1130H800V0Z" fill="#85987a" fill-opacity="0.08"/>
     <path d="M800 220C690 520 560 840 280 1130H800V220Z" fill="#536c45" fill-opacity="0.09"/>
@@ -188,10 +251,10 @@ export async function GET(
   const pageHeader = (pageNum: number, sectionTitle: string) => `
     <div class="page-header">
       <div class="brand-wrap">
-        <div class="brand-badge">J</div>
-        <div>
-          <div class="brand-name">JEROVIA <span>CONSULTORA</span></div>
-          <div class="brand-sub">INFORME CONFIDENCIAL DE VISITA DOMICILIARIA · ${entidadTexto}</div>
+        ${jeroviaOriginalLogoSvg}
+        <div style="border-left: 1.5px solid #85987a; padding-left: 10px;">
+          <div class="brand-sub">INFORME CONFIDENCIAL DE VISITA DOMICILIARIA</div>
+          <div style="font-size: 8.5pt; font-weight: 800; color: #536c45;">SOLICITANTE: ${entidadTexto}</div>
         </div>
       </div>
       <div class="page-meta">
@@ -224,7 +287,7 @@ export async function GET(
       margin: 0;
       padding: 24px 12px;
       font-size: 10.5pt;
-      line-height: 1.5;
+      line-height: 1.48;
     }
     .toolbar {
       max-width: 210mm;
@@ -258,7 +321,7 @@ export async function GET(
       min-height: 297mm;
       margin: 0 auto 24px auto;
       background: #ffffff;
-      padding: 18mm 18mm 16mm 18mm;
+      padding: 16mm 18mm 14mm 18mm;
       border-radius: 6px;
       box-shadow: 0 12px 36px rgba(26, 34, 22, 0.14);
       overflow: hidden;
@@ -286,7 +349,7 @@ export async function GET(
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .page-header {
@@ -296,26 +359,11 @@ export async function GET(
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #536c45;
-      padding-bottom: 12px;
-      margin-bottom: 18px;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
     }
-    .brand-wrap { display: flex; align-items: center; gap: 10px; }
-    .brand-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      background: #536c45;
-      color: #ffffff;
-      font-family: Georgia, serif;
-      font-weight: 900;
-      font-size: 15pt;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .brand-name { font-size: 13pt; font-weight: 900; letter-spacing: 0.8px; color: #1a2216; }
-    .brand-name span { color: #536c45; }
-    .brand-sub { font-size: 7.5pt; font-weight: 700; color: #52634b; letter-spacing: 0.5px; margin-top: 2px; }
+    .brand-wrap { display: flex; align-items: center; gap: 12px; }
+    .brand-sub { font-size: 7.5pt; font-weight: 700; color: #52634b; letter-spacing: 0.5px; }
     .page-meta { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .page-pill {
       background: #eaefe7;
@@ -334,12 +382,12 @@ export async function GET(
       background: linear-gradient(135deg, #536c45 0%, #485536 100%);
       color: #ffffff;
       border-radius: 12px;
-      padding: 18px 22px;
+      padding: 16px 20px;
       border: 1px solid #85987a;
       box-shadow: 0 6px 18px rgba(83, 108, 69, 0.18);
     }
     .hero-name {
-      font-size: 18pt;
+      font-size: 17pt;
       font-weight: 900;
       letter-spacing: 0.3px;
       margin: 0 0 10px 0;
@@ -375,14 +423,14 @@ export async function GET(
     .section-header {
       background: #536c45;
       color: #ffffff;
-      font-size: 9.5pt;
+      font-size: 9pt;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      padding: 8px 16px;
+      padding: 7px 16px;
     }
     .section-body {
-      padding: 14px 16px;
+      padding: 12px 16px;
     }
 
     .two-col {
@@ -393,18 +441,18 @@ export async function GET(
     .qa-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
     .qa-item {
       border-bottom: 1px dashed #cbd5c5;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
     .qa-item:last-child {
       border-bottom: none;
       padding-bottom: 0;
     }
     .qa-label {
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 800;
       color: #485536;
       text-transform: uppercase;
@@ -412,7 +460,7 @@ export async function GET(
       margin-bottom: 2px;
     }
     .qa-val {
-      font-size: 10.5pt;
+      font-size: 10pt;
       font-weight: 600;
       color: #1a2216;
       white-space: pre-line;
@@ -422,30 +470,56 @@ export async function GET(
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .comp-pill {
       background: #f2f5f0;
       border: 1px solid #85987a;
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 6px 8px;
       text-align: center;
     }
     .comp-pill span {
       display: block;
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       color: #52634b;
     }
     .comp-pill strong {
-      font-size: 11pt;
+      font-size: 10.5pt;
       color: #1a2216;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .photo-frame {
+      border: 1px solid #85987a;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f8faf7;
+      text-align: center;
+    }
+    .photo-frame img {
+      width: 100%;
+      height: 115px;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-frame span {
+      display: block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #485536;
+      padding: 3px 6px;
     }
 
     .signature-area {
       margin-top: auto;
-      padding-top: 24px;
+      padding-top: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -456,7 +530,7 @@ export async function GET(
       background: #f8faf7;
       border: 1.5px solid #85987a;
       border-radius: 14px;
-      padding: 20px 44px;
+      padding: 18px 44px;
       min-width: 320px;
     }
     .signature-line {
@@ -480,8 +554,8 @@ export async function GET(
       position: relative;
       z-index: 2;
       border-top: 1px solid #cbd5c5;
-      padding-top: 10px;
-      margin-top: 16px;
+      padding-top: 8px;
+      margin-top: 12px;
       display: flex;
       justify-content: space-between;
       font-size: 8pt;
@@ -729,7 +803,7 @@ Contacto: ${v(d.telefonoMadre)}.</div>
     ${pageFooter(3)}
   </section>
 
-  <!-- ==================== PÁGINA 4: VIVIENDA (ARRIBA) Y ECONOMÍA (ABAJO) ==================== -->
+  <!-- ==================== PÁGINA 4: VIVIENDA, FOTOS Y ECONOMÍA ==================== -->
   <section class="a4-page">
     ${waveBgSvg}
     ${pageHeader(4, "IV. Vivienda y Balance Económico")}
@@ -780,6 +854,8 @@ Contacto: ${v(d.telefonoMadre)}.</div>
           </div>
         </div>
       </div>
+
+      ${galeriaPagina4Html}
 
       <div class="section-box">
         <div class="section-header">Situación Bancaria y Flujo Económico Mensual</div>
@@ -872,10 +948,7 @@ Contacto: ${v(d.telefonoMadre)}.</div>
 
       <div class="signature-area">
         <div class="signature-box">
-          <svg width="210" height="72" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto;">
-            <path d="M28 54C52 38 68 14 78 16C86 18 62 58 68 60C74 62 94 34 102 36C108 38 96 54 106 54C118 54 148 20 160 22C170 24 134 66 122 68C112 70 142 46 182 44C204 43 220 41 226 40" stroke="#2c3a58" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M18 48C78 44 156 42 230 42" stroke="#536c45" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.75"/>
-          </svg>
+          ${firmaSvgOrImg}
           <div class="signature-line">Realizado por ${evaluadorTexto}</div>
           <div class="signature-role">Jerovia Consultora · Verificación Socioambiental</div>
         </div>

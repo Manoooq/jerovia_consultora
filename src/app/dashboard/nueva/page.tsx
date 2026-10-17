@@ -8,6 +8,7 @@ import { Input, Select } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
+import { QrCodeBox } from "@/components/ui/QrCodeModal";
 import {
   ArrowLeft,
   PlusCircle,
@@ -174,6 +175,7 @@ export default function NuevaVisitaPage() {
                   </p>
                 </div>
 
+                <QrCodeBox url={interviewUrl} title={candidatoNombre} />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
                   <Button type="button" variant="secondary" onClick={handleCopy}>
                     {copied ? (

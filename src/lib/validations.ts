@@ -15,6 +15,7 @@ export const paso1Schema = z.object({
   tipoMovilidad: z.string().optional(),
   vinculosFamiliares: z.boolean().optional().default(false),
   vinculosFamiliaresDetalle: z.string().optional(),
+  fotoCandidato: z.string().optional(),
 });
 
 export const paso2Schema = z.object({
@@ -142,6 +143,7 @@ export const paso9Schema = z.object({
   otrasObservaciones: z.string().optional(),
   fechaVisita: z.string().min(1, "Fecha de visita requerida"),
   consultorNombre: z.string().trim().min(2, "Nombre del evaluador requerido"),
+  firmaEvaluador: z.string().optional(),
 });
 
 export const formularioCompletoSchema = z.object({
