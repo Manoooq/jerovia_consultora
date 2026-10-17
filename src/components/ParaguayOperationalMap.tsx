@@ -49,22 +49,21 @@ export function ParaguayOperationalMap() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-      {/* Mapa Vectorial en Cavidad Hundida */}
       <div className="lg:col-span-5 recessed-well rounded-3xl p-6 flex items-center justify-center">
-        <svg viewBox="0 0 400 420" className="w-full max-w-[300px] h-auto">
+        <svg viewBox="0 0 400 420" className="w-full max-w-[290px] h-auto">
           <path
             d="M 110 35 L 210 45 L 230 135 L 195 245 L 115 215 L 65 155 Z"
             fill="currentColor"
-            className="text-surface1"
-            stroke="rgba(148, 163, 184, 0.22)"
+            className="text-surface0"
+            stroke="rgba(100, 116, 139, 0.35)"
             strokeWidth="1.5"
           />
           <path
             d="M 210 45 L 290 75 L 330 155 L 350 240 L 310 320 L 240 370 L 190 380 L 175 320 L 195 245 Q 225 145 210 45 Z"
             fill="currentColor"
-            className="text-surface2"
-            stroke="rgba(212, 175, 55, 0.45)"
-            strokeWidth="1.8"
+            className="text-surface1"
+            stroke="rgba(37, 99, 235, 0.55)"
+            strokeWidth="2"
           />
 
           {ZONAS.slice(1).map((z) => (
@@ -74,7 +73,7 @@ export function ParaguayOperationalMap() {
               y1={hq.y}
               x2={z.coords.x}
               y2={z.coords.y}
-              stroke="rgba(212, 175, 55, 0.3)"
+              stroke="rgba(37, 99, 235, 0.4)"
               strokeWidth="1.5"
               strokeDasharray="4 4"
             />
@@ -93,15 +92,15 @@ export function ParaguayOperationalMap() {
                   cx={z.coords.x}
                   cy={z.coords.y}
                   r={active ? "13" : "8"}
-                  fill={active ? "rgba(212, 175, 55, 0.3)" : "rgba(16, 185, 129, 0.2)"}
-                  stroke={active ? "#d4af37" : "#10b981"}
+                  fill={active ? "rgba(37, 99, 235, 0.3)" : "rgba(16, 185, 129, 0.2)"}
+                  stroke={active ? "#2563eb" : "#10b981"}
                   strokeWidth="2"
                 />
                 <circle
                   cx={z.coords.x}
                   cy={z.coords.y}
                   r="4"
-                  fill={active ? "#d4af37" : "#10b981"}
+                  fill={active ? "#2563eb" : "#10b981"}
                 />
               </g>
             );
@@ -109,7 +108,6 @@ export function ParaguayOperationalMap() {
         </svg>
       </div>
 
-      {/* 4 Tarjetas Regionales que brillan y se hunden */}
       <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {ZONAS.map((z) => {
           const active = selectedId === z.id;
@@ -121,7 +119,7 @@ export function ParaguayOperationalMap() {
               onClick={() => setSelectedId(z.id)}
               onMouseEnter={() => setSelectedId(z.id)}
               className={`p-5 flex flex-col justify-between ${
-                active ? "border-gold/80 bg-surface1/80" : ""
+                active ? "tactile-card-selected" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -135,7 +133,7 @@ export function ParaguayOperationalMap() {
                 {z.ciudades.map((c) => (
                   <span
                     key={c}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-crust/70 border border-overlay0 text-[11px] font-medium text-subtext1"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-surface1 border border-overlay0 text-[11px] font-semibold text-subtext1"
                   >
                     <MapPin className="h-2.5 w-2.5 text-gold" />
                     {c}

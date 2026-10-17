@@ -11,14 +11,9 @@ interface Particle {
   baseVy: number;
   size: number;
   alpha: number;
-  isGold: boolean;
+  isPrimary: boolean;
 }
 
-/**
- * Fondo interactivo de partículas y filamentos (estética Antigravity)
- * optimizado a 60 FPS: usa distancias al cuadrado (sin Math.sqrt en bucles internos),
- * recorte de área en el gradiente del cursor y pausa automática en pestañas inactivas.
- */
 export function AntigravityBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -47,11 +42,11 @@ export function AntigravityBackground() {
     };
 
     const isMobile = width < 768;
-    const count = prefersReducedMotion ? 18 : isMobile ? 26 : 56;
+    const count = prefersReducedMotion ? 16 : isMobile ? 24 : 52;
 
     const particles: Particle[] = Array.from({ length: count }, () => {
-      const baseVx = (Math.random() - 0.5) * 0.28;
-      const baseVy = -Math.random() * 0.35 - 0.1;
+      const baseVx = (Math.random() - 0.5) * 0.26;
+      const baseVy = -Math.random() * 0.32 - 0.08;
       return {
         x: Math.random() * width,
         y: Math.random() * height,
@@ -61,7 +56,7 @@ export function AntigravityBackground() {
         baseVy,
         size: Math.random() * 1.8 + 1,
         alpha: Math.random() * 0.45 + 0.2,
-        isGold: Math.random() > 0.35,
+        isPrimary: Math.random() > 0.35,
       };
     });
 
@@ -100,13 +95,12 @@ export function AntigravityBackground() {
       ctx.clearRect(0, 0, width, height);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const goldRgb = isDark ? "229, 192, 123" : "146, 108, 21";
-      const slateRgb = isDark ? "148, 163, 184" : "71, 85, 105";
+      const primaryRgb = isDark ? "59, 130, 246" : "29, 78, 216";
+      const slateRgb = isDark ? "148, 163, 184" : "100, 116, 139";
 
       mouse.x += (mouse.targetX - mouse.x) * 0.15;
       mouse.y += (mouse.targetY - mouse.y) * 0.15;
 
-      // Halo optimizado: solo pinta el cuadro de 480x480 alrededor del cursor, no toda la pantalla
       if (mouse.active && mouse.x > -200) {
         const r = 240;
         const grad = ctx.createRadialGradient(
@@ -117,7 +111,7 @@ export function AntigravityBackground() {
           mouse.y,
           r
         );
-        grad.addColorStop(0, `rgba(${goldRgb}, ${isDark ? 0.1 : 0.06})`);
+        grad.addColorStop(0, `rgba(${primaryRgb}, ${isDark ? 0.12 : 0.07})`);
         grad.addColorStop(1, "rgba(0, 0, 0, 0)");
         ctx.fillStyle = grad;
         ctx.fillRect(mouse.x - r, mouse.y - r, r * 2, r * 2);
@@ -150,13 +144,12 @@ export function AntigravityBackground() {
           if (p.x < -10) p.x = width + 10;
           else if (p.x > width + 10) p.x = -10;
 
-          // Filamento magnético al cursor
           if (distSq < mouse.radiusSq) {
-            const cAlpha = (1 - distSq / mouse.radiusSq) * 0.32;
+            const cAlpha = (1 - distSq / mouse.radiusSq) * 0.34;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = `rgba(${goldRgb}, ${cAlpha})`;
+            ctx.strokeStyle = `rgba(${primaryRgb}, ${cAlpha})`;
             ctx.lineWidth = 0.85;
             ctx.stroke();
           }
@@ -164,10 +157,11 @@ export function AntigravityBackground() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.isGold ? goldRgb : slateRgb}, ${p.alpha})`;
+        ctx.fillStyle = `rgba(${
+          p.isPrimary ? primaryRgb : slateRgb
+        }, ${p.alpha})`;
         ctx.fill();
 
-        // Conexiones entre nodos cercanos usando distancia al cuadrado (sin Math.sqrt)
         for (let j = i + 1; j < count; j++) {
           const p2 = particles[j];
           const ldx = p.x - p2.x;
@@ -176,12 +170,12 @@ export function AntigravityBackground() {
 
           if (ldistSq < maxLinkDistSq) {
             const lineAlpha =
-              (1 - ldistSq / maxLinkDistSq) * (isDark ? 0.15 : 0.1);
+              (1 - ldistSq / maxLinkDistSq) * (isDark ? 0.16 : 0.1);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = `rgba(${
-              p.isGold ? goldRgb : slateRgb
+              p.isPrimary ? primaryRgb : slateRgb
             }, ${lineAlpha})`;
             ctx.lineWidth = 0.65;
             ctx.stroke();

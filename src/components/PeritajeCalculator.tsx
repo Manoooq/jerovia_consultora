@@ -64,10 +64,9 @@ export function PeritajeCalculator() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-      {/* Controles en Cavidad Hundida */}
       <div className="lg:col-span-7 recessed-well rounded-3xl p-5 sm:p-6 space-y-5">
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-widest text-subtext1 block mb-2.5">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-gold block mb-2.5">
             01 // MODALIDAD
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -80,9 +79,7 @@ export function PeritajeCalculator() {
                   sinkIntensity={5}
                   pressable
                   onClick={() => setTipo(item.id)}
-                  className={`p-3.5 ${
-                    active ? "border-gold/80 bg-gold/10" : ""
-                  }`}
+                  className={`p-3.5 ${active ? "tactile-card-selected" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2.5 text-xs font-bold text-text">
@@ -100,7 +97,7 @@ export function PeritajeCalculator() {
         </div>
 
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-widest text-subtext1 block mb-2.5">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-gold block mb-2.5">
             02 // ZONA GEOGRÁFICA
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -112,9 +109,7 @@ export function PeritajeCalculator() {
                   sinkIntensity={5}
                   pressable
                   onClick={() => setZona(item.id)}
-                  className={`p-3 ${
-                    active ? "border-gold/80 bg-gold/10" : ""
-                  }`}
+                  className={`p-3 ${active ? "tactile-card-selected" : ""}`}
                 >
                   <p className="text-xs font-bold text-text truncate">{item.name}</p>
                   <p className="text-[11px] font-mono text-subtext1 mt-0.5 tabular-nums">
@@ -127,7 +122,7 @@ export function PeritajeCalculator() {
         </div>
 
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-widest text-subtext1 block mb-2.5">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-gold block mb-2.5">
             03 // PLAZO DE ENTREGA
           </span>
           <div className="grid grid-cols-3 gap-2.5">
@@ -139,9 +134,7 @@ export function PeritajeCalculator() {
                   sinkIntensity={5}
                   pressable
                   onClick={() => setUrgencia(item.id)}
-                  className={`p-3 text-center ${
-                    active ? "border-gold/80 bg-gold/10" : ""
-                  }`}
+                  className={`p-3 text-center ${active ? "tactile-card-selected" : ""}`}
                 >
                   <p className="text-xs font-bold text-text">{item.name}</p>
                   <p className="text-[11px] font-mono font-bold text-gold mt-0.5 tabular-nums">
@@ -154,7 +147,6 @@ export function PeritajeCalculator() {
         </div>
       </div>
 
-      {/* Panel de Liquidación */}
       <div className="lg:col-span-5">
         <SpotlightCard sinkIntensity={3.5} className="p-6 sm:p-7 flex flex-col justify-between">
           <div className="space-y-4">
@@ -180,7 +172,7 @@ export function PeritajeCalculator() {
               </motion.div>
             </AnimatePresence>
 
-            <div className="space-y-2 text-xs font-mono pt-4 border-t border-overlay0/60 text-subtext1 tabular-nums">
+            <div className="space-y-2 text-xs font-mono pt-4 border-t border-overlay0 text-subtext1 tabular-nums">
               <div className="flex justify-between">
                 <span>Arancel Neto</span>
                 <span className="text-text font-bold">
@@ -193,7 +185,7 @@ export function PeritajeCalculator() {
                   Gs. {calculo.iva.toLocaleString("es-PY")}
                 </span>
               </div>
-              <div className="flex justify-between pt-2 border-t border-overlay0/40">
+              <div className="flex justify-between pt-2 border-t border-overlay0">
                 <span>Entregable</span>
                 <span className="text-gold font-bold">5 Láminas (.PPTX + PDF)</span>
               </div>
@@ -211,7 +203,7 @@ export function PeritajeCalculator() {
             </button>
             <Link
               href="/entrevista/demo"
-              className="min-h-[44px] w-full rounded-xl bg-gold text-black font-bold text-xs hover:bg-gold-light flex items-center justify-center gap-2 transition-colors"
+              className="min-h-[44px] w-full rounded-xl bg-gold hover:bg-gold-light font-bold text-xs flex items-center justify-center gap-2 transition-colors"
             >
               <span>Iniciar Relevamiento</span>
               <ArrowRight className="h-3.5 w-3.5" />
