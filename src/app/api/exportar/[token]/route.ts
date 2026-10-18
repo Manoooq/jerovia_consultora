@@ -63,6 +63,16 @@ export async function GET(
   const url = new URL(req.url);
   const formato = url.searchParams.get("formato") ?? "pptx";
 
+  const session = await getSession();
+  if (token !== "demo" && !session) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set(
+      "redirect",
+      `/api/exportar/${encodeURIComponent(token)}?formato=${encodeURIComponent(formato)}`
+    );
+    return NextResponse.redirect(loginUrl);
+  }
+
   await syncStoreFromCloud(token);
   const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
@@ -79,7 +89,6 @@ export async function GET(
   const cleanFileName =
     nombreCandidato.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60) || "Informe";
 
-  const session = await getSession();
   if (session) {
     registrarEventoAuditoria({
       userId: session.userId,

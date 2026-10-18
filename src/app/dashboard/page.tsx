@@ -615,12 +615,22 @@ function DashboardContent() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {esAdmin && (
+              <a
+                href="/api/backup"
+                className="min-h-[40px] text-xs sm:text-sm font-bold px-3.5 py-2 rounded-xl border border-gold/50 bg-gold/10 hover:bg-gold/20 text-text transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Descargar respaldo completo de todos los expedientes en formato JSON"
+              >
+                <Download className="h-4 w-4 text-gold" aria-hidden="true" />
+                <span>Respaldo Completo (.JSON)</span>
+              </a>
+            )}
             <button
               type="button"
               onClick={handleExportCarteraCsv}
-              className="min-h-[38px] text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-overlay0/80 bg-surface1 hover:border-gold text-text transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[40px] text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl border border-overlay0/80 bg-surface1 hover:border-gold text-text transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+              <Download className="h-4 w-4 text-gold" aria-hidden="true" />
               <span>Exportar Cartera CSV</span>
             </button>
           </div>

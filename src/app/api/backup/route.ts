@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { listarEntrevistas, actualizarEntrevista, crearEntrevista } from "@/lib/store";
+import {
+  listarEntrevistas,
+  actualizarEntrevista,
+  crearEntrevista,
+  syncStoreFromCloud,
+  syncStoreToCloud,
+} from "@/lib/store";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { getClientIp, parseSafeJson } from "@/lib/apiSecurity";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -10,6 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
+  await syncStoreFromCloud();
   const entrevistas = listarEntrevistas();
   registrarEventoAuditoria({
     userId: session.userId,
@@ -49,6 +58,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado." }, { status: 403 });
   }
 
+  await syncStoreFromCloud();
+
   const { data: body, errorResponse } = await parseSafeJson<{
     entrevistas?: Array<{
       token: string;
@@ -79,7 +90,7 @@ export async function POST(req: NextRequest) {
     crearEntrevista(
       item.entidadSolicitante,
       item.token,
-      item.evaluadorAsignado || "Michelle Romero",
+      item.evaluadorAsignado || "Lic. Michelle Romero",
       session.username
     );
     actualizarEntrevista(item.token, {
@@ -94,6 +105,8 @@ export async function POST(req: NextRequest) {
     });
     restored++;
   }
+
+  await syncStoreToCloud();
 
   registrarEventoAuditoria({
     userId: session.userId,
