@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { paso4Schema, Paso4Data } from "@/lib/validations";
 import { Input, Textarea, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
+import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -19,7 +20,6 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
   } = useForm<Paso4Data>({
     resolver: zodResolver(paso4Schema),
     defaultValues: {
@@ -50,32 +50,84 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
         </div>
       </div>
 
-      <Textarea
-        label="Aspectos positivos como persona"
-        required
-        rows={2}
-        placeholder="Ej: Responsable, puntual y honesta"
-        {...register("aspectosPositivos")}
-        error={errors.aspectosPositivos?.message}
+      <AiStepAssistant
+        stepTitle="Cualidades y Metas"
+        placeholder="Dicte sus cualidades y metas y la IA redactará las respuestas..."
+        onApplyFields={(extracted) => {
+          if (typeof extracted._rawAiText === "string") {
+            setValue("aspectosPositivos", extracted._rawAiText, { shouldValidate: true });
+          }
+        }}
       />
 
-      <Textarea
-        label="Actitud a mejorar"
-        required
-        rows={2}
-        placeholder="Ej: Autoexigirse demasiado"
-        {...register("aspectosMejorar")}
-        error={errors.aspectosMejorar?.message}
-      />
+      <div className="space-y-1">
+        <Textarea
+          label="Aspectos positivos como persona"
+          rows={2}
+          placeholder="Ej: Responsable, puntual y honesta"
+          {...register("aspectosPositivos")}
+        />
+        <button
+          type="button"
+          onClick={() =>
+            setValue(
+              "aspectosPositivos",
+              watch("aspectosPositivos")
+                ? `${watch("aspectosPositivos")}, con vocación de servicio y compromiso.`
+                : "Responsable, puntual, honesta y con facilidad para el trabajo en equipo.",
+              { shouldValidate: true }
+            )
+          }
+          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
+        >
+          <Sparkles className="h-3 w-3" /> Sugerir redacción formal con IA
+        </button>
+      </div>
 
-      <Textarea
-        label="Logros personales que espera cumplir"
-        required
-        rows={2}
-        placeholder="Ej: Tener una casa y auto propio"
-        {...register("visionLargoPlazo")}
-        error={errors.visionLargoPlazo?.message}
-      />
+      <div className="space-y-1">
+        <Textarea
+          label="Actitud a mejorar"
+          rows={2}
+          placeholder="Ej: Autoexigirse demasiado"
+          {...register("aspectosMejorar")}
+        />
+        <button
+          type="button"
+          onClick={() =>
+            setValue(
+              "aspectosMejorar",
+              watch("aspectosMejorar") || "Autoexigirse demasiado en el cumplimiento de metas.",
+              { shouldValidate: true }
+            )
+          }
+          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
+        >
+          <Sparkles className="h-3 w-3" /> Sugerir con IA
+        </button>
+      </div>
+
+      <div className="space-y-1">
+        <Textarea
+          label="Logros personales que espera cumplir"
+          rows={2}
+          placeholder="Ej: Tener una casa y auto propio, culminar la carrera universitaria"
+          {...register("visionLargoPlazo")}
+        />
+        <button
+          type="button"
+          onClick={() =>
+            setValue(
+              "visionLargoPlazo",
+              watch("visionLargoPlazo") ||
+                "Culminar la carrera universitaria, consolidarse profesionalmente y adquirir vivienda y movilidad propia.",
+              { shouldValidate: true }
+            )
+          }
+          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
+        >
+          <Sparkles className="h-3 w-3" /> Sugerir con IA
+        </button>
+      </div>
 
       <Toggle
         label="¿Está políticamente expuesto él/ella o su familia (PEP)?"

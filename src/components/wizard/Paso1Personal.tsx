@@ -6,6 +6,7 @@ import { paso1Schema, Paso1Data } from "@/lib/validations";
 import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { FotoUploader } from "@/components/FotoUploader";
+import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { User, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -59,18 +60,29 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 01 DE 09 // IDENTIFICACIÓN Y TRASLADO
+            MÓDULO 01 DE 09 // DATOS PERSONALES
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Datos Personales del Postulante
+            Identificación, Traslado y Redes
           </h2>
         </div>
       </div>
 
-      {/* Fotografía del Postulante */}
+      <AiStepAssistant
+        stepTitle="Datos Personales"
+        placeholder="Ej: Me llamo Stefanie Lovera, CI 6260899, teléfono 0983603215..."
+        onApplyFields={(extracted) => {
+          Object.entries(extracted).forEach(([k, v]) => {
+            if (typeof v === "string" && k !== "_rawAiText") {
+              setValue(k as keyof Paso1Data, v as never, { shouldValidate: true });
+            }
+          });
+        }}
+      />
+
       <div className="space-y-1.5">
         <span className="text-xs font-bold text-text block">
-          Fotografía del Postulante (Frente)
+          Fotografía del Postulante (Opcional)
         </span>
         <FotoUploader
           fotos={fotoActual ? [fotoActual] : []}
@@ -108,9 +120,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         <Input
           label="Fecha de Nacimiento"
           type="date"
-          required
           {...register("fechaNacimiento")}
-          error={errors.fechaNacimiento?.message}
         />
         <Input
           label="Número de Teléfono"
@@ -125,7 +135,6 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Estado Civil"
-          required
           options={[
             { value: "soltero", label: "Soltero/a" },
             { value: "casado", label: "Casado/a" },
@@ -134,14 +143,12 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
             { value: "viudo", label: "Viudo/a" },
           ]}
           {...register("estadoCivil")}
-          error={errors.estadoCivil?.message}
         />
         <Input
           label="Correo Electrónico (Opcional)"
           type="email"
           placeholder="postulante@correo.com"
           {...register("email")}
-          error={errors.email?.message}
         />
       </div>
 
@@ -221,28 +228,34 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Red social que más utiliza"
-          options={[
-            { value: "Instagram", label: "Instagram" },
-            { value: "Facebook", label: "Facebook" },
-            { value: "TikTok", label: "TikTok" },
-            { value: "LinkedIn", label: "LinkedIn" },
-            { value: "Ninguna", label: "No utiliza" },
-          ]}
-          {...register("redSocialPlataforma")}
-        />
-        <Input
-          label="Usuario en red social"
-          placeholder="Ej: Stefani-lovera"
-          {...register("redSocial")}
-        />
+      {/* Campo solicitado: "¿Red social que más uses?" */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <span className="text-xs font-mono font-bold uppercase text-gold block">
+          ¿RED SOCIAL QUE MÁS USES?
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="¿Red social que más uses?"
+            options={[
+              { value: "Instagram", label: "Instagram" },
+              { value: "Facebook", label: "Facebook" },
+              { value: "TikTok", label: "TikTok" },
+              { value: "LinkedIn", label: "LinkedIn" },
+              { value: "Ninguna", label: "No utilizo redes sociales" },
+            ]}
+            {...register("redSocialPlataforma")}
+          />
+          <Input
+            label="Tu usuario o perfil en esa red social"
+            placeholder="Ej: Stefani-lovera"
+            {...register("redSocial")}
+          />
+        </div>
       </div>
 
       <div className="flex justify-end pt-4 border-t border-overlay0">
         <Button type="submit" size="lg" className="w-full sm:w-auto">
-          <span>Siguiente: Estudios</span>
+          <span>Siguiente: Estudios e Idiomas</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

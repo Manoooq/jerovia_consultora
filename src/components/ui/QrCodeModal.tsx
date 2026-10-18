@@ -1,7 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { QrCode, X, Copy, Check, ExternalLink, Download } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  QrCode,
+  X,
+  Copy,
+  Check,
+  ExternalLink,
+  Download,
+  Share2,
+} from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 interface QrCodeBoxProps {
@@ -10,54 +18,306 @@ interface QrCodeBoxProps {
   subtitle?: string;
 }
 
+/**
+ * Dibuja el emblema original de Jerovia (3 personas + lupa central + check) en el Canvas
+ */
+function drawOriginalJeroviaEmblem(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  scale = 1,
+  color = "#485536"
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+
+  // Silueta superior
+  ctx.beginPath();
+  ctx.arc(0, -18, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -4, 11, Math.PI, 0, false);
+  ctx.fill();
+
+  // Silueta izquierda
+  ctx.beginPath();
+  ctx.arc(-20, -6, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-20, 10, 12, Math.PI, 0, false);
+  ctx.fill();
+
+  // Silueta derecha
+  ctx.beginPath();
+  ctx.arc(20, -6, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(20, 10, 12, Math.PI, 0, false);
+  ctx.fill();
+
+  // Fondo blanco del aro de la lupa
+  ctx.beginPath();
+  ctx.arc(0, 4, 15, 0, Math.PI * 2);
+  ctx.fillStyle = "#f4f6f2";
+  ctx.fill();
+
+  // Aro de la lupa
+  ctx.beginPath();
+  ctx.arc(0, 4, 13.5, 0, Math.PI * 2);
+  ctx.lineWidth = 4.2;
+  ctx.strokeStyle = color;
+  ctx.stroke();
+
+  // Persona dentro de la lupa
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(0, 0, 4.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 12, 9.5, Math.PI, 0, false);
+  ctx.fill();
+
+  // Mango de la lupa
+  ctx.beginPath();
+  ctx.moveTo(10, 14);
+  ctx.lineTo(23, 27);
+  ctx.lineWidth = 5.5;
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  // Círculo de check abajo a la izquierda
+  ctx.beginPath();
+  ctx.arc(-15, 16, 8.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#536c45";
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#f4f6f2";
+  ctx.stroke();
+
+  // Trazo del check
+  ctx.beginPath();
+  ctx.moveTo(-19, 16);
+  ctx.lineTo(-16, 19);
+  ctx.lineTo(-11, 13);
+  ctx.lineWidth = 2.2;
+  ctx.strokeStyle = "#ffffff";
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
   const [copied, setCopied] = useState(false);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // QR en color Verde Oliva Oficial (#364228) con corrección de errores alta (ECC=H) para alojar el emblema central
-  const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&ecc=H&margin=8&color=364228&bgcolor=f4f6f2&data=${encodeURIComponent(
+  // QR 100% en color Verde Oliva (#485536) sobre fondo crema salvia (#f4f6f2)
+  const qrRawUrl = `https://api.qrserver.com/v1/create-qr-code/?size=520x520&ecc=H&margin=2&color=485536&bgcolor=f4f6f2&data=${encodeURIComponent(
     url
   )}`;
 
-  function handleCopy() {
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const W = 560;
+      const H = 680;
+      canvas.width = W;
+      canvas.height = H;
+
+      // 1. Fondo general de la tarjeta en Verde Oliva Profundo (#485536 -> #536c45)
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+      bgGrad.addColorStop(0, "#536c45");
+      bgGrad.addColorStop(1, "#38492f");
+      roundRectPath(ctx, 0, 0, W, H, 36);
+      ctx.fillStyle = bgGrad;
+      ctx.fill();
+
+      // Borde interior fino en Salvia (#85987a)
+      roundRectPath(ctx, 12, 12, W - 24, H - 24, 28);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(213, 221, 209, 0.45)";
+      ctx.stroke();
+
+      // 2. Cabecera con el Logo Original de Jerovia Consultora (Tipografía Serif + Personas y Lupa)
+      ctx.fillStyle = "#f4f6f2";
+      ctx.font = "bold 36px Georgia, 'Times New Roman', serif";
+      ctx.textAlign = "left";
+      ctx.fillText("Jerovia", 135, 62);
+      ctx.fillText("Consultora", 135, 100);
+
+      // Emblema original a la derecha de "Jerovia"
+      drawOriginalJeroviaEmblem(ctx, 325, 54, 0.85, "#f4f6f2");
+
+      // 3. Contenedor redondeado crema salvia para el QR Verde Oliva
+      roundRectPath(ctx, 50, 126, 460, 440, 28);
+      ctx.fillStyle = "#f4f6f2";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#85987a";
+      ctx.stroke();
+
+      // Dibujar el QR en Verde Oliva
+      ctx.save();
+      roundRectPath(ctx, 70, 146, 420, 400, 18);
+      ctx.clip();
+      ctx.drawImage(img, 70, 141, 420, 410);
+      ctx.restore();
+
+      // Esquinas decorativas redondeadas en Verde Oliva
+      ctx.strokeStyle = "#536c45";
+      ctx.lineWidth = 5;
+      const corners = [
+        [66, 142, 1, 1],
+        [494, 142, -1, 1],
+        [66, 550, 1, -1],
+        [494, 550, -1, -1],
+      ];
+      corners.forEach(([cx, cy, dx, dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + dy * 24);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx + dx * 24, cy);
+        ctx.stroke();
+      });
+
+      // 4. Medallón central con el Logo Original de Jerovia Consultora (sin "J" suelta)
+      roundRectPath(ctx, 212, 294, 136, 104, 22);
+      ctx.fillStyle = "#f4f6f2";
+      ctx.fill();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "#536c45";
+      ctx.stroke();
+
+      drawOriginalJeroviaEmblem(ctx, 280, 327, 0.72, "#485536");
+      ctx.fillStyle = "#1a2216";
+      ctx.font = "bold 15px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Jerovia", 280, 372);
+      ctx.fillStyle = "#536c45";
+      ctx.font = "bold 11px Georgia, serif";
+      ctx.fillText("Consultora", 280, 386);
+
+      // 5. Pie de la tarjeta con el nombre del postulante
+      ctx.fillStyle = "#f4f6f2";
+      ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "center";
+      const displayTitle = (title || "Cuestionario Socioambiental").slice(0, 34);
+      ctx.fillText(displayTitle, W / 2, 608);
+
+      ctx.fillStyle = "#d5ddd1";
+      ctx.font = "600 13px monospace";
+      ctx.fillText("ESCANEE PARA COMPLETAR SUS DATOS", W / 2, 638);
+
+      setReady(true);
+    };
+    img.src = qrRawUrl;
+  }, [qrRawUrl, title]);
+
+  function handleCopyLink() {
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function handleDownloadCard() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `QR_Jerovia_${(title || "Postulante").replace(/\s+/g, "_")}.png`;
+    a.click();
+  }
+
+  async function handleShareCustomQr() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const fileName = `QR_Jerovia_${(title || "Postulante").replace(/\s+/g, "_")}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      const textMsg = `Estimado/a ${
+        title || "postulante"
+      }, le saluda Jerovia Consultora. Escanee este código QR o ingrese al enlace para completar sus datos: ${url}`;
+
+      // 1. En celulares (iPhone / Android): Abre el menú nativo enviando LA IMAGEN QR PERSONALIZADA + el enlace
+      if (
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            title: `Jerovia Consultora - ${title || "Cuestionario"}`,
+            text: textMsg,
+            files: [file],
+          });
+          return;
+        } catch {}
+      }
+
+      // 2. En PC: Copia la imagen del QR personalizado al portapapeles para pegarla (Ctrl+V) en WhatsApp Web y la descarga
+      try {
+        if (typeof ClipboardItem !== "undefined") {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+          setShareMsg(
+            "¡Imagen del QR Verde Oliva copiada! Solo presione Pegar (Ctrl+V) en el chat de WhatsApp."
+          );
+          setTimeout(() => setShareMsg(null), 5000);
+        }
+      } catch {
+        handleDownloadCard();
+        setShareMsg("Tarjeta QR descargada lista para adjuntar en WhatsApp.");
+        setTimeout(() => setShareMsg(null), 4000);
+      }
+    }, "image/png");
+  }
+
   return (
-    <div className="rounded-2xl border border-[#85987a]/60 bg-gradient-to-br from-[#f4f6f2] to-[#e4ece0] dark:from-[#161d14] dark:to-[#1f291c] p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-5 shadow-md">
-      {/* Marco QR Personalizado con Emblema Central de Jerovia */}
-      <div className="relative p-3 rounded-2xl bg-[#f4f6f2] border-2 border-[#536c45] shadow-md shrink-0 flex flex-col items-center">
-        <div className="relative h-[148px] w-[148px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrImgSrc}
-            alt={`Código QR Jerovia para ${title || "postulante"}`}
-            width={148}
-            height={148}
-            className="h-[148px] w-[148px] object-contain rounded-lg block"
-          />
-          {/* Insignia Central Jerovia */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="h-10 w-10 rounded-xl bg-[#536c45] border-2 border-[#f4f6f2] shadow-md flex flex-col items-center justify-center text-white">
-              <span className="font-serif font-black text-sm leading-none">J</span>
-              <span className="text-[6px] font-mono uppercase tracking-tighter leading-none mt-0.5">
-                JEROVIA
-              </span>
-            </div>
-          </div>
-        </div>
-        <span className="mt-2 text-[9px] font-mono font-bold uppercase tracking-widest text-[#485536]">
-          VERIFICACIÓN OFICIAL
-        </span>
+    <div className="rounded-3xl border border-[#85987a]/60 bg-gradient-to-br from-[#f4f6f2] to-[#e4ece0] dark:from-[#161d14] dark:to-[#1f291c] p-4 sm:p-5 flex flex-col md:flex-row items-center gap-5 shadow-md">
+      {/* Tarjeta QR Verde Oliva renderizada con el Logo Original de Jerovia */}
+      <div className="shrink-0 flex flex-col items-center">
+        <canvas
+          ref={canvasRef}
+          className="w-[210px] h-[255px] rounded-2xl shadow-lg border border-[#536c45]/40 bg-[#536c45]"
+        />
       </div>
 
-      {/* Información y Acciones del Enlace */}
-      <div className="space-y-2.5 text-center sm:text-left flex-1 min-w-0">
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+      {/* Controles y Envío Directo de la Tarjeta QR */}
+      <div className="space-y-3 text-center md:text-left flex-1 min-w-0">
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
           <Logo size="sm" />
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#536c45]/15 border border-[#536c45]/40 text-[10px] font-mono font-bold uppercase text-gold">
-            <QrCode className="h-3 w-3" /> QR Personalizado
+            <QrCode className="h-3 w-3" /> QR Oficial Verde Oliva
           </span>
         </div>
 
@@ -69,42 +329,57 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
 
         <p className="text-xs text-subtext1 leading-relaxed">
           {subtitle ||
-            "Envíe este enlace o código QR al postulante o evaluador para completar la ficha socioambiental desde el celular."}
+            "Al presionar 'Enviar QR Personalizado', se envía o copia directamente esta tarjeta QR en Verde Oliva con el logo original de Jerovia."}
         </p>
 
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+        {shareMsg && (
+          <div className="p-2.5 rounded-xl bg-[#536c45]/15 border border-[#536c45] text-xs font-bold text-gold">
+            ✓ {shareMsg}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
           <button
             type="button"
-            onClick={handleCopy}
-            className="min-h-[36px] px-3.5 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-xs font-bold text-text inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+            disabled={!ready}
+            onClick={handleShareCustomQr}
+            className="min-h-[40px] px-4 rounded-xl bg-[#536c45] hover:bg-[#485536] text-white text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer transition-all"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Enviar QR Personalizado</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={!ready}
+            onClick={handleDownloadCard}
+            className="min-h-[40px] px-3.5 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-xs font-bold text-text inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <Download className="h-3.5 w-3.5 text-gold" />
+            <span>Descargar Imagen QR</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="min-h-[40px] px-3.5 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-xs font-bold text-text inline-flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-green" />
             ) : (
               <Copy className="h-3.5 w-3.5 text-gold" />
             )}
-            <span>{copied ? "Enlace Copiado" : "Copiar Enlace"}</span>
+            <span>{copied ? "Link Copiado" : "Copiar Link"}</span>
           </button>
-
-          <a
-            href={qrImgSrc}
-            download={`QR_Jerovia_${(title || "Expediente").replace(/\s+/g, "_")}.png`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="min-h-[36px] px-3.5 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-xs font-bold text-text inline-flex items-center gap-1.5 transition-colors"
-          >
-            <Download className="h-3.5 w-3.5 text-gold" />
-            <span>Guardar QR</span>
-          </a>
 
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="min-h-[36px] px-3.5 rounded-xl bg-gold text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+            className="min-h-[40px] px-3.5 rounded-xl border border-overlay1 bg-surface0 hover:border-gold text-xs font-bold text-text inline-flex items-center gap-1.5 transition-colors"
           >
-            <span>Abrir Link</span>
-            <ExternalLink className="h-3.5 w-3.5" />
+            <span>Abrir</span>
+            <ExternalLink className="h-3.5 w-3.5 text-gold" />
           </a>
         </div>
       </div>
@@ -130,12 +405,12 @@ export function QrModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg recessed-well rounded-3xl p-3"
+        className="w-full max-w-xl recessed-well rounded-3xl p-3"
       >
         <div className="tactile-card rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-overlay0 pb-3">
             <span className="text-xs font-black uppercase tracking-wider text-text">
-              Código QR Oficial Jerovia Consultora
+              Tarjeta QR Oficial Jerovia Consultora
             </span>
             <button
               type="button"

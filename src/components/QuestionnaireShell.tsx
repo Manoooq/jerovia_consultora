@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,8 +7,6 @@ import { AntigravityBackground } from "@/components/ui/AntigravityBackground";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import {
   ShieldCheck,
-  Wifi,
-  WifiOff,
   Lock,
   Save,
   Smartphone,
@@ -30,26 +27,10 @@ export function QuestionnaireShell({
   evaluadorAsignado,
   children,
 }: QuestionnaireShellProps) {
-  const [isOnline, setIsOnline] = useState(true);
-
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
   return (
     <div className="relative min-h-screen bg-base text-text flex flex-col justify-between overflow-x-hidden">
       <AntigravityBackground />
 
-      {/* Cabecera Institucional Jerovia Consultora */}
       <header className="glass-panel sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-3.5 sm:px-6 h-16 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -57,26 +38,9 @@ export function QuestionnaireShell({
           </Link>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div
-              role="status"
-              aria-live="polite"
-              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1.5 ${
-                isOnline
-                  ? "bg-[#536c45]/15 border-[#536c45]/40 text-gold"
-                  : "bg-red/15 border-red/40 text-red animate-pulse"
-              }`}
-            >
-              {isOnline ? (
-                <>
-                  <Wifi className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span className="hidden sm:inline">CONECTADO</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>SIN SEÑAL (GUARDADO LOCAL)</span>
-                </>
-              )}
+            <div className="px-2.5 py-1 rounded-lg border bg-[#536c45]/15 border-[#536c45]/40 text-gold text-[11px] font-mono font-bold flex items-center gap-1.5">
+              <Save className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">AUTOGUARDADO ACTIVO</span>
             </div>
 
             <ThemeToggle />
@@ -84,13 +48,11 @@ export function QuestionnaireShell({
         </div>
       </header>
 
-      {/* Cuerpo del Cuestionario con Bienvenida Corporativa Verde Oliva */}
       <main
         id="main-content"
         tabIndex={-1}
         className="relative z-10 w-full max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-7 outline-none space-y-4 flex-1"
       >
-        {/* Banner de Identidad Jerovia para el Postulante / Evaluador */}
         <div className="rounded-2xl bg-gradient-to-r from-[#536c45] via-[#485536] to-[#364228] text-white p-4 sm:p-5 shadow-md border border-[#85987a]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#d5ddd1]">
@@ -125,7 +87,6 @@ export function QuestionnaireShell({
         </div>
       </main>
 
-      {/* Pie de Garantías */}
       <footer className="relative z-10 border-t border-overlay0/40 bg-mantle/90 backdrop-blur-md py-4 px-4">
         <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] font-mono text-subtext1">
           <span className="flex items-center gap-1.5">
@@ -134,11 +95,11 @@ export function QuestionnaireShell({
           </span>
           <span className="flex items-center gap-1.5">
             <Save className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-            Autoguardado Automático
+            Memoria Persistente en Celular y Servidor
           </span>
           <span className="flex items-center gap-1.5">
             <Smartphone className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-            Optimizado para Celular y PC
+            Compatible con iPhone, Android y PC
           </span>
         </div>
       </footer>
