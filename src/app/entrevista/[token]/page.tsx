@@ -53,6 +53,27 @@ export default function EntrevistaWizardPage({
 
   const totalSteps: 8 | 9 = isEvaluator ? 9 : 8;
 
+  // Forzar siempre el inicio desde arriba al cambiar de pestaña
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    const resetScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    resetScroll();
+    const rafId = requestAnimationFrame(resetScroll);
+    const timerId = setTimeout(resetScroll, 60);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
+  }, [paso, completado]);
+
+
   const saveLocalDraft = useCallback(
     (
       nextDatos: Partial<FormularioCompleto>,

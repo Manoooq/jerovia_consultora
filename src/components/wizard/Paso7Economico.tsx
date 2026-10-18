@@ -112,7 +112,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-mono font-bold uppercase text-gold">
-            CANTIDAD DE EGRESOS A NOMBRE DEL ENTREVISTADO/A ({egresosFields.length})
+            INDICA CUÁLES SERÍAN TUS GASTOS ({egresosFields.length})
           </span>
           <Button
             type="button"
@@ -124,7 +124,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
             }}
           >
             <Plus className="h-3.5 w-3.5 text-gold" />
-            <span>Agregar Egreso</span>
+            <span>Agregar Gasto</span>
           </Button>
         </div>
 
