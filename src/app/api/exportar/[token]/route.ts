@@ -117,10 +117,8 @@ export async function GET(
     : "Castellano, Guaraní";
 
   const tatuajesTexto =
-    d.tieneTatuajes === "si_no_visibles"
-      ? "Sí - No son visibles"
-      : d.tieneTatuajes === "si_visibles"
-      ? "Sí - Visibles"
+    d.tieneTatuajes && d.tieneTatuajes !== "no"
+      ? "Sí (" + (d.tatuajesVisibles === "visibles" ? "Visibles" : "No son visibles") + ")"
       : "No";
 
   const redSocialTexto = d.redSocial
@@ -470,7 +468,7 @@ export async function GET(
             <div class="qa-item"><div class="qa-label">Alguna condición especial (Discapacidad, impedimentos físicos)</div><div class="qa-val">${siNo(d.enfermedadBase, d.enfermedadBaseDetalle)}</div></div>
             <div class="qa-item"><div class="qa-label">Consume medicamento cognitivo, tranquilizante u hormonal</div><div class="qa-val">${siNo(d.consumeMedicamentos, d.consumeMedicamentosDetalle)}</div></div>
             <div class="qa-item"><div class="qa-label">Tiene fobias, pánicos, claustrofobias, etc.</div><div class="qa-val">${siNo(d.tieneFobias, d.tieneFobiasDetalle)}</div></div>
-            <div class="qa-item"><div class="qa-label">Posee seguro médico</div><div class="qa-val">${v(d.seguroMedico ? d.seguroMedico.toUpperCase() : "IPS")}</div></div>
+            <div class="qa-item"><div class="qa-label">Posee seguro médico</div><div class="qa-val">${v(d.seguroMedico ? d.seguroMedico.toUpperCase() : "Ninguno")} ${d.seguroMedicoDetalle ? "— " + v(d.seguroMedicoDetalle) : ""}</div></div>
             <div class="qa-item"><div class="qa-label">Realiza algún tratamiento médico</div><div class="qa-val">${siNo(d.tratamientos, d.tratamientosDetalle)}</div></div>
           </div>
           <div class="qa-list">
@@ -605,7 +603,7 @@ export async function GET(
             <div class="qa-item"><div class="qa-label">Antigüedad</div><div class="qa-val">Actual: ${v(d.antiguedad)} · Anterior: ${v(d.antiguedadAnterior, "-")}</div></div>
           </div>
           <div class="two-col">
-            <div class="qa-item"><div class="qa-label">Salario actual</div><div class="qa-val">Salario Bruto: Gs. ${v(d.salarioBruto, String(d.salarioAnterior || "0"))} · Salario Neto: Gs. ${v(d.salarioNeto, "-")}</div></div>
+            <div class="qa-item"><div class="qa-label">Salario (Gs.)</div><div class="qa-val">Gs. ${v(d.salarioBruto, String(d.salarioAnterior || "No especificado"))}</div></div>
             <div class="qa-item"><div class="qa-label">Aportes / Descuentos</div><div class="qa-val">${v(d.aportesDescuentos, "IPS")}</div></div>
           </div>
           <div class="two-col">

@@ -9,6 +9,7 @@ import {
 } from "@/lib/store";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { enforceRateLimit, getClientIp, parseSafeJson } from "@/lib/apiSecurity";
+import type { FormularioCompleto } from "@/lib/validations";
 
 export async function GET() {
   const session = await getSession();
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
     telefono?: string;
     ciudad?: string;
     evaluadorAsignado?: string;
-  }>(req, 32_768);
+    datosAdicionales?: Partial<FormularioCompleto>;
+  }>(req, 64_000);
   if (errorResponse) return errorResponse;
 
   const entidad = (body?.entidadSolicitante || "").trim();
@@ -56,8 +58,29 @@ export async function POST(req: NextRequest) {
 
   const cedula = (body?.cedula || "").trim();
   const telefono = (body?.telefono || "").trim();
-  const ciudad = (body?.ciudad || "Asunción").trim();
+  const ciudad = (body?.ciudad || "").trim();
   const evaluador = (body?.evaluadorAsignado || session.name).trim();
+
+  const parts = candidato.split(/\s+/);
+  const nombre = parts.slice(0, Math.max(1, parts.length - 1)).join(" ");
+  const apellido = parts.length > 1 ? parts.slice(-1).join(" ") : "";
+
+  const datosIniciales: Partial<FormularioCompleto> = {
+    ...(body?.datosAdicionales || {}),
+  };
+  if (nombre) datosIniciales.nombre = nombre;
+  if (apellido) datosIniciales.apellido = apellido;
+  if (cedula) datosIniciales.cedula = cedula;
+  if (telefono) datosIniciales.telefono = telefono;
+  if (ciudad) datosIniciales.ciudad = ciudad;
+
+  // Registrar exactamente qué campos fueron pre-llenados por el evaluador para no mostrárselos al postulante
+  const camposPrellenados = Object.entries(datosIniciales)
+    .filter(([, val]) => val !== undefined && val !== null && String(val).trim() !== "")
+    .map(([key]) => key);
+
+  datosIniciales.entrevistadorNombre = evaluador;
+  datosIniciales.consultorNombre = evaluador;
 
   const token = encodeSmartToken({
     e: entidad,
@@ -66,29 +89,20 @@ export async function POST(req: NextRequest) {
     t: telefono,
     l: ciudad,
     v: evaluador,
+    d: datosIniciales,
+    p: camposPrellenados,
   });
 
   crearEntrevista(entidad, token, evaluador, session.username);
 
-  const parts = candidato.split(/\s+/);
-  const nombre = parts.slice(0, Math.max(1, parts.length - 1)).join(" ");
-  const apellido = parts.length > 1 ? parts.slice(-1).join(" ") : "";
-
   const updated = actualizarEntrevista(token, {
     candidatoNombre: candidato,
-    cedula,
-    telefono,
-    ciudad,
+    cedula: cedula || undefined,
+    telefono: telefono || undefined,
+    ciudad: ciudad || undefined,
     evaluadorAsignado: evaluador,
-    datos: {
-      nombre,
-      apellido,
-      cedula,
-      telefono,
-      ciudad,
-      entrevistadorNombre: evaluador,
-      consultorNombre: evaluador,
-    },
+    datos: datosIniciales,
+    camposPrellenados,
   });
 
   registrarEventoAuditoria({
@@ -96,7 +110,7 @@ export async function POST(req: NextRequest) {
     userName: session.name,
     userRole: session.role,
     action: "CREATE_VISITA",
-    detail: `Habilitación de expediente para ${candidato} (${entidad}).`,
+    detail: `Habilitación de expediente para ${candidato} (${entidad}) con ${camposPrellenados.length} campos pre-llenados.`,
     ip: getClientIp(req),
   });
 

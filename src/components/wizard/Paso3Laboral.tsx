@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paso3Schema, Paso3Data } from "@/lib/validations";
 import { Input, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
+import { useInterviewMode } from "@/components/InterviewModeContext";
 import {
   Briefcase,
   ArrowLeft,
@@ -14,6 +16,7 @@ import {
   Clock,
   GraduationCap,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 interface Props {
@@ -26,7 +29,7 @@ const OPCIONES_OCUPACIONALES = [
   {
     id: "empleado",
     title: "Actualmente estoy trabajando",
-    subtitle: "Indicar dónde estás trabajando actualmente y tu puesto",
+    subtitle: "Indicar dónde estás trabajando actualmente y tu cargo",
     icon: Building2,
   },
   {
@@ -38,12 +41,15 @@ const OPCIONES_OCUPACIONALES = [
   {
     id: "pasantia",
     title: "Solo realicé pasantía",
-    subtitle: "Indicar dónde realizaste tu pasantía y tareas desempeñadas",
+    subtitle: "Indicar los datos de la pasantía realizada",
     icon: GraduationCap,
   },
 ];
 
 export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
+  const { shouldHideField } = useInterviewMode();
+  const [improvingField, setImprovingField] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -59,12 +65,9 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
       antiguedad: defaultValues.antiguedad || "",
       antiguedadAnterior: defaultValues.antiguedadAnterior || "",
       salarioBruto: defaultValues.salarioBruto || "",
-      salarioNeto: defaultValues.salarioNeto || "",
-      aportesDescuentos: defaultValues.aportesDescuentos || "IPS",
-      cargoPostula: defaultValues.cargoPostula || "Atención al cliente",
-      pretensionSalarial:
-        defaultValues.pretensionSalarial ||
-        "4.917.731 (salario mínimo bancario)",
+      aportesDescuentos: defaultValues.aportesDescuentos || "",
+      cargoPostula: defaultValues.cargoPostula || "",
+      pretensionSalarial: defaultValues.pretensionSalarial || "",
       motivoEleccionEntidad: defaultValues.motivoEleccionEntidad || "",
       objetivosProfesionales: defaultValues.objetivosProfesionales || "",
       ambienteLaboralIdeal: defaultValues.ambienteLaboralIdeal || "",
@@ -76,32 +79,38 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
   const situacion = watch("situacionActual") || "empleado";
   const famEntidad = watch("familiarEnEntidad");
 
-  function mejorarTextoLaboral(campo: "motivoEleccionEntidad" | "objetivosProfesionales" | "ambienteLaboralIdeal") {
-    const val = (watch(campo) || "").trim();
-    if (campo === "motivoEleccionEntidad") {
-      setValue(
-        campo,
-        val
-          ? `${val}. Por su solidez institucional y las oportunidades de crecimiento laboral y profesional.`
-          : "Por el prestigio de la institución y las oportunidades de crecimiento laboral y profesional.",
-        { shouldValidate: true }
-      );
-    } else if (campo === "objetivosProfesionales") {
-      setValue(
-        campo,
-        val
-          ? `${val}, aportando compromiso y eficiencia al equipo.`
-          : "Desarrollar carrera dentro del área comercial y operativa, cumpliendo las metas institucionales.",
-        { shouldValidate: true }
-      );
-    } else {
-      setValue(
-        campo,
-        val
-          ? `${val}, basado en el respeto mutuo y trabajo en equipo.`
-          : "Un ambiente organizado, tranquilo, con buena comunicación y trabajo en equipo.",
-        { shouldValidate: true }
-      );
+  async function mejorarConIA(
+    campo:
+      | "motivoEleccionEntidad"
+      | "objetivosProfesionales"
+      | "ambienteLaboralIdeal"
+  ) {
+    setImprovingField(campo);
+    const actual = (watch(campo) || "").trim();
+    const baseText =
+      actual ||
+      (campo === "motivoEleccionEntidad"
+        ? "Oportunidades de crecimiento laboral y desarrollo profesional"
+        : campo === "objetivosProfesionales"
+        ? "Desempeñarme con responsabilidad y crecer dentro de la institución"
+        : "Un ambiente organizado, respetuoso y con buena comunicación");
+
+    try {
+      const res = await fetch("/api/ai/extraer-campos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: baseText, modo: "mejorar", campo }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.textoMejorado) {
+          setValue(campo, data.textoMejorado, { shouldValidate: true });
+        }
+      }
+    } catch {
+      setValue(campo, baseText, { shouldValidate: true });
+    } finally {
+      setImprovingField(null);
     }
   }
 
@@ -113,17 +122,18 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 03 DE 09 // CONDICIÓN OCUPACIONAL
+            MÓDULO 03 // CONDICIÓN OCUPACIONAL
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Situación Laboral y Postulación
+            Situación Laboral, Salario y Postulación
           </h2>
         </div>
       </div>
 
       <AiStepAssistant
-        stepTitle="Situación Laboral"
-        placeholder="Ej: Actualmente estoy trabajando en Negocios y Servicios hace 5 meses como Pago de salarios, gano 3.044.000..."
+        stepNumber={3}
+        stepTitle="Condición Ocupacional"
+        placeholder="Dicte o escriba dónde trabaja o su última experiencia laboral y salario..."
         onApplyFields={(extracted) => {
           Object.entries(extracted).forEach(([k, v]) => {
             if (typeof v === "string" && k !== "_rawAiText") {
@@ -133,231 +143,267 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
         }}
       />
 
-      {/* Selector visual de las 3 opciones ocupacionales solicitadas */}
-      <div className="space-y-2">
-        <span className="text-xs font-bold text-text block">
-          Seleccione su condición ocupacional actual:
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {OPCIONES_OCUPACIONALES.map((op) => {
-            const Icon = op.icon;
-            const active = situacion === op.id;
-            return (
-              <button
-                key={op.id}
-                type="button"
-                onClick={() => setValue("situacionActual", op.id, { shouldValidate: true })}
-                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
-                  active
-                    ? "bg-[#536c45] text-white border-[#536c45] shadow-md"
-                    : "bg-surface0 text-text border-overlay1 hover:border-gold"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <Icon className={`h-5 w-5 ${active ? "text-[#d5ddd1]" : "text-gold"}`} />
-                  <span
-                    className={`h-3 w-3 rounded-full border ${
-                      active ? "bg-white border-white" : "border-overlay2"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm font-black leading-snug">
-                    {op.title}
-                  </p>
-                  <p
-                    className={`text-[11px] mt-1 leading-snug ${
-                      active ? "text-[#e2e8de]" : "text-subtext1"
-                    }`}
-                  >
-                    {op.subtitle}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+      {!shouldHideField("situacionActual") && (
+        <div className="space-y-2">
+          <span className="text-xs font-bold text-text block">
+            Seleccione su condición ocupacional actual:
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {OPCIONES_OCUPACIONALES.map((op) => {
+              const Icon = op.icon;
+              const active = situacion === op.id;
+              return (
+                <button
+                  key={op.id}
+                  type="button"
+                  onClick={() =>
+                    setValue("situacionActual", op.id, { shouldValidate: true })
+                  }
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                    active
+                      ? "bg-[#536c45] text-white border-[#536c45] shadow-md"
+                      : "bg-surface0 text-text border-overlay1 hover:border-gold"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon
+                      className={`h-5 w-5 ${
+                        active ? "text-[#d5ddd1]" : "text-gold"
+                      }`}
+                    />
+                    <span
+                      className={`h-3 w-3 rounded-full border ${
+                        active ? "bg-white border-white" : "border-overlay2"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-black leading-snug">
+                      {op.title}
+                    </p>
+                    <p
+                      className={`text-[11px] mt-1 leading-snug ${
+                        active ? "text-[#e2e8de]" : "text-subtext1"
+                      }`}
+                    >
+                      {op.subtitle}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* OPCIÓN 1: ACTUALMENTE ESTOY TRABAJANDO */}
+      {/* 1. ACTUALMENTE ESTOY TRABAJANDO */}
       {situacion === "empleado" && (
         <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-4">
           <span className="text-xs font-mono font-bold uppercase text-gold block">
-            DATOS DE TU TRABAJO ACTUAL
+            ACTUALMENTE ESTOY TRABAJANDO — DATOS DEL EMPLEO ACTUAL
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="¿Dónde estás trabajando actualmente? (Empresa / Lugar)"
-              placeholder="Ej: Negocios y servicios"
-              {...register("empresaAnterior")}
-            />
-            <Input
-              label="Cargo que ocupas actualmente"
-              placeholder="Ej: Pago de salarios / Atención al cliente"
-              {...register("cargoAnterior")}
-            />
+            {!shouldHideField("empresaAnterior") && (
+              <Input
+                label="¿Dónde estás trabajando actualmente?"
+                placeholder="Nombre de la empresa o institución"
+                {...register("empresaAnterior")}
+              />
+            )}
+            {!shouldHideField("cargoAnterior") && (
+              <Input
+                label="Cargo que ocupas actualmente"
+                placeholder="Indique su puesto o función"
+                {...register("cargoAnterior")}
+              />
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Antigüedad en tu empleo actual"
-              placeholder="Ej: 5 meses"
+              label="Antigüedad actual"
+              placeholder="Tiempo en el empleo actual"
               {...register("antiguedad")}
             />
             <Input
-              label="Antigüedad en empleo anterior (si tuviste)"
-              placeholder="Ej: 1 año 7 meses"
+              label="Antigüedad anterior (si estaba trabajando antes)"
+              placeholder="Tiempo en su empleo previo"
               {...register("antiguedadAnterior")}
-            />
-            <Input
-              label="Motivo por el que deseas cambiar de empleo"
-              placeholder="Ej: Para formar parte del plantel del Banco"
-              {...register("motivoSalida")}
             />
           </div>
 
+          {/* Un único campo de Salario como solicitó Michi */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
-              label="Salario Bruto (sin descuentos)"
-              placeholder="Ej: 3.044.000"
-              {...register("salarioBruto")}
-            />
-            <Input
-              label="Salario Neto (con descuentos)"
-              placeholder="Ej: 2.770.040"
-              {...register("salarioNeto")}
-            />
+            {!shouldHideField("salarioBruto") && (
+              <Input
+                label="Salario (Gs.)"
+                placeholder="Ingrese monto mensual en Gs."
+                {...register("salarioBruto")}
+              />
+            )}
             <Input
               label="Aportes / Descuentos"
-              placeholder="Ej: IPS / Factura"
+              placeholder="IPS / Factura / Otro"
               {...register("aportesDescuentos")}
+            />
+            <Input
+              label="Motivo por el que quiere cambiar de empleo"
+              placeholder="Indique el motivo"
+              {...register("motivoSalida")}
             />
           </div>
         </div>
       )}
 
-      {/* OPCIÓN 2: ACTUALMENTE NO ESTOY TRABAJANDO (Pide última experiencia laboral) */}
+      {/* 2. ACTUALMENTE NO ESTOY TRABAJANDO */}
       {situacion === "desempleado" && (
         <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-4">
           <span className="text-xs font-mono font-bold uppercase text-gold block">
-            DATOS DE TU ÚLTIMA EXPERIENCIA LABORAL
+            ACTUALMENTE NO ESTOY TRABAJANDO — ÚLTIMA EXPERIENCIA LABORAL
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="¿Dónde trabajaste por última vez? (Última empresa o lugar)"
-              placeholder="Ej: Comercio / Estudio Contable (o 'Sin experiencia previa')"
+              label="Último lugar de empleo"
+              placeholder="Nombre de la última empresa donde trabajó"
               {...register("empresaAnterior")}
             />
             <Input
-              label="Último cargo desempeñado"
-              placeholder="Ej: Auxiliar administrativo / Ventas"
+              label="Último cargo ocupado"
+              placeholder="Puesto o función desempeñada"
               {...register("cargoAnterior")}
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Tiempo que trabajaste allí (Antigüedad)"
-              placeholder="Ej: 1 año 2 meses"
+              label="Antigüedad en su último empleo"
+              placeholder="Tiempo que trabajó allí"
               {...register("antiguedadAnterior")}
             />
             <Input
-              label="Último salario percibido (Gs.)"
-              placeholder="Ej: 2.800.000"
+              label="Último Salario (Gs.)"
+              placeholder="Monto mensual que percibía"
               {...register("salarioBruto")}
             />
             <Input
-              label="Motivo de salida de tu último empleo"
-              placeholder="Ej: Finalización de contrato / Estudios"
+              label="Motivo de salida de su anterior empleo"
+              placeholder="Indique el motivo de desvinculación"
               {...register("motivoSalida")}
             />
           </div>
         </div>
       )}
 
-      {/* OPCIÓN 3: SOLO REALICÉ PASANTÍA */}
+      {/* 3. SOLO REALICÉ PASANTÍA */}
       {situacion === "pasantia" && (
         <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-4">
           <span className="text-xs font-mono font-bold uppercase text-gold block">
-            DATOS DE TU PASANTÍA REALIZADA
+            SOLO REALICÉ PASANTÍA — DATOS DE LA PASANTÍA
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Empresa o Institución donde realizaste la pasantía"
-              placeholder="Ej: Cooperativa / Municipalidad / Empresa"
+              label="Empresa o institución de la pasantía"
+              placeholder="Dónde realizó la pasantía"
               {...register("empresaAnterior")}
             />
             <Input
-              label="Área o tareas desempeñadas en la pasantía"
-              placeholder="Ej: Auxiliar contable / Atención"
+              label="Área o tareas realizadas"
+              placeholder="Funciones desempeñadas"
               {...register("cargoAnterior")}
             />
             <Input
               label="Duración de la pasantía"
-              placeholder="Ej: 3 meses / 240 horas"
+              placeholder="Tiempo o cantidad de horas"
               {...register("antiguedad")}
             />
           </div>
+          <Input
+            label="Salario o ayuda económica recibida (Gs. - Opcional)"
+            placeholder="Monto en Gs. (o 0 si fue ad honorem)"
+            {...register("salarioBruto")}
+          />
         </div>
       )}
 
-      {/* Datos de Postulación a la Entidad */}
+      {/* Datos de Postulación */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Cargo al que postula"
-          placeholder="Ej: Atención al cliente"
-          {...register("cargoPostula")}
-        />
-        <Input
-          label="Pretensión salarial o monto acordado con RRHH"
-          placeholder="Ej: 4.917.731 (salario mínimo bancario)"
-          {...register("pretensionSalarial")}
-        />
+        {!shouldHideField("cargoPostula") && (
+          <Input
+            label="Cargo al que postula"
+            placeholder="Indique el puesto al que postula"
+            {...register("cargoPostula")}
+          />
+        )}
+        {!shouldHideField("pretensionSalarial") && (
+          <Input
+            label="Pretensión salarial o monto acordado con RRHH"
+            placeholder="Ingrese monto en Gs."
+            {...register("pretensionSalarial")}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1">
           <Input
-            label="¿Por qué eligió esta entidad para trabajar?"
-            placeholder="Ej: Oportunidades de crecimiento"
+            label="¿Por qué eligió esta institución para trabajar?"
+            placeholder="Escriba su motivación"
             {...register("motivoEleccionEntidad")}
           />
           <button
             type="button"
-            onClick={() => mejorarTextoLaboral("motivoEleccionEntidad")}
+            disabled={improvingField === "motivoEleccionEntidad"}
+            onClick={() => mejorarConIA("motivoEleccionEntidad")}
             className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
-            <Sparkles className="h-3 w-3" /> Completar con IA
+            {improvingField === "motivoEleccionEntidad" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            <span>Mejorar redacción con IA</span>
           </button>
         </div>
 
         <div className="space-y-1">
           <Input
             label="Objetivos profesionales si se incorpora"
-            placeholder="Ej: Trabajar en el área comercial"
+            placeholder="Indique sus metas laborales"
             {...register("objetivosProfesionales")}
           />
           <button
             type="button"
-            onClick={() => mejorarTextoLaboral("objetivosProfesionales")}
+            disabled={improvingField === "objetivosProfesionales"}
+            onClick={() => mejorarConIA("objetivosProfesionales")}
             className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
-            <Sparkles className="h-3 w-3" /> Completar con IA
+            {improvingField === "objetivosProfesionales" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            <span>Mejorar redacción con IA</span>
           </button>
         </div>
 
         <div className="space-y-1">
           <Input
             label="¿Cómo sería su ambiente laboral ideal?"
-            placeholder="Ej: Tranquilo y con buena comunicación"
+            placeholder="Describa su entorno ideal"
             {...register("ambienteLaboralIdeal")}
           />
           <button
             type="button"
-            onClick={() => mejorarTextoLaboral("ambienteLaboralIdeal")}
+            disabled={improvingField === "ambienteLaboralIdeal"}
+            onClick={() => mejorarConIA("ambienteLaboralIdeal")}
             className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
           >
-            <Sparkles className="h-3 w-3" /> Completar con IA
+            {improvingField === "ambienteLaboralIdeal" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            <span>Mejorar redacción con IA</span>
           </button>
         </div>
       </div>
@@ -370,7 +416,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
       {famEntidad && (
         <Input
           label="Indique nombre y parentesco/vínculo en la entidad"
-          placeholder="Ej: Primo en sucursal centro"
+          placeholder="Detalle nombre y área"
           {...register("familiarEnEntidadDetalle")}
         />
       )}

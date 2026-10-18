@@ -23,25 +23,20 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
   } = useForm<Paso7Data>({
     resolver: zodResolver(paso7Schema),
     defaultValues: {
-      productosEntidad: defaultValues.productosEntidad ?? true,
-      tiposProductosEntidad:
-        defaultValues.tiposProductosEntidad ||
-        "Tarjeta de débito, Tarjeta de crédito",
+      productosEntidad: defaultValues.productosEntidad ?? false,
+      tiposProductosEntidad: defaultValues.tiposProductosEntidad || "",
       ingresosCubrenDeudas: defaultValues.ingresosCubrenDeudas ?? true,
       tieneDependientesEconomicos:
         defaultValues.tieneDependientesEconomicos ?? false,
       dependientesEconomicosDetalle:
         defaultValues.dependientesEconomicosDetalle || "",
-      ingresosFamiliares: defaultValues.ingresosFamiliares || "3.044.000",
+      ingresosFamiliares: defaultValues.ingresosFamiliares || "",
       otrosIngresos: defaultValues.otrosIngresos || "",
-      egresosMensuales: defaultValues.egresosMensuales || "1.181.000",
+      egresosMensuales: defaultValues.egresosMensuales || "",
       cantidadEgresos:
         defaultValues.cantidadEgresos ??
         (defaultValues.listaEgresos?.length || 0),
-      listaEgresos: defaultValues.listaEgresos || [
-        { empresa: "Facultad", monto: "490.000" },
-        { empresa: "Plan Telefonía", monto: "91.000" },
-      ],
+      listaEgresos: defaultValues.listaEgresos || [],
       prestamos: defaultValues.prestamos ?? false,
       cantidadPrestamos:
         defaultValues.cantidadPrestamos ??
@@ -79,7 +74,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 07 DE 09 // DATOS ECONÓMICOS DE LA PERSONA
+            MÓDULO 07 // DATOS ECONÓMICOS DE LA PERSONA
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
             Productos Bancarios, Egresos y Préstamos
@@ -89,14 +84,14 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
 
       <div className="space-y-3">
         <Toggle
-          label="¿La persona entrevistada posee algún producto del Banco / Entidad?"
+          label="¿La persona entrevistada posee algún producto de la entidad solicitante?"
           checked={Boolean(poseeProductos)}
           onChange={(val) => setValue("productosEntidad", val)}
         />
         {poseeProductos && (
           <Input
             label="Tipo/s de producto/s"
-            placeholder="Ej: Tarjeta de débito, Tarjeta de crédito"
+            placeholder="Indique tarjeta de débito, crédito, cuenta, etc."
             {...register("tiposProductosEntidad")}
           />
         )}
@@ -114,7 +109,6 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
         />
       </div>
 
-      {/* Desglose de Egresos Mensuales */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-mono font-bold uppercase text-gold">
@@ -143,14 +137,14 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
               <div className="sm:col-span-6">
                 <Input
                   label={`${idx + 1}. Empresa / Concepto`}
-                  placeholder="Ej: Facultad / Plan Telefonía / Bristol"
+                  placeholder="Indique concepto o empresa"
                   {...register(`listaEgresos.${idx}.empresa`)}
                 />
               </div>
               <div className="sm:col-span-5">
                 <Input
                   label="Monto del pago mensual (Gs.)"
-                  placeholder="Ej: 490.000"
+                  placeholder="Ingrese monto mensual"
                   {...register(`listaEgresos.${idx}.monto`)}
                 />
               </div>
@@ -159,7 +153,10 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
                   type="button"
                   onClick={() => {
                     removeEgreso(idx);
-                    setValue("cantidadEgresos", Math.max(0, egresosFields.length - 1));
+                    setValue(
+                      "cantidadEgresos",
+                      Math.max(0, egresosFields.length - 1)
+                    );
                   }}
                   className="min-h-[42px] min-w-[42px] rounded-xl border border-overlay1 hover:border-red text-subtext1 hover:text-red flex items-center justify-center cursor-pointer"
                 >
@@ -171,7 +168,6 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {/* Desglose de Préstamos */}
       <div className="space-y-3">
         <Toggle
           label="¿Tiene préstamos a su nombre?"
@@ -179,7 +175,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
           onChange={(val) => {
             setValue("prestamos", val);
             if (val && prestamosFields.length === 0) {
-              appendPrestamo({ entidad: "Credimarket", cuota: "500.000" });
+              appendPrestamo({ entidad: "", cuota: "" });
               setValue("cantidadPrestamos", 1);
             }
           }}
@@ -214,14 +210,14 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
                   <div className="sm:col-span-6">
                     <Input
                       label={`${idx + 1}. Nombre del Banco / Entidad`}
-                      placeholder="Ej: Credimarket"
+                      placeholder="Indique banco o financiera"
                       {...register(`listaPrestamos.${idx}.entidad`)}
                     />
                   </div>
                   <div className="sm:col-span-5">
                     <Input
                       label="Valor de la cuota en Gs."
-                      placeholder="Ej: 500.000"
+                      placeholder="Ingrese monto de la cuota"
                       {...register(`listaPrestamos.${idx}.cuota`)}
                     />
                   </div>
@@ -253,7 +249,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
           <span>Anterior</span>
         </Button>
         <Button type="submit" size="lg" className="w-full sm:w-auto">
-          <span>Siguiente: Vivienda y GPS</span>
+          <span>Siguiente: Datos de la Vivienda</span>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>

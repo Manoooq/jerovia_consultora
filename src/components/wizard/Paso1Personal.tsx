@@ -7,6 +7,7 @@ import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { FotoUploader } from "@/components/FotoUploader";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
+import { useInterviewMode } from "@/components/InterviewModeContext";
 import { User, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function Paso1Personal({ defaultValues, onNext }: Props) {
+  const { isEvaluator, shouldHideField } = useInterviewMode();
+
   const {
     register,
     handleSubmit,
@@ -38,9 +41,10 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       licenciaConducir: defaultValues.licenciaConducir ?? false,
       movilidadPropia: defaultValues.movilidadPropia ?? false,
       tipoMovilidad: defaultValues.tipoMovilidad || "",
-      medioTransporteSucursal: defaultValues.medioTransporteSucursal || "Ómnibus",
-      tiempoViajeSucursal: defaultValues.tiempoViajeSucursal || "30 Minutos",
+      medioTransporteSucursal: defaultValues.medioTransporteSucursal || "",
+      tiempoViajeSucursal: defaultValues.tiempoViajeSucursal || "",
       tieneTatuajes: defaultValues.tieneTatuajes || "no",
+      tatuajesVisibles: defaultValues.tatuajesVisibles || "no_visibles",
       zonaTatuada: defaultValues.zonaTatuada || "",
       redSocialPlataforma: defaultValues.redSocialPlataforma || "Instagram",
       redSocial: defaultValues.redSocial || "",
@@ -60,7 +64,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 01 DE 09 // DATOS PERSONALES
+            MÓDULO 01 // DATOS PERSONALES
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
             Identificación, Traslado y Redes
@@ -69,87 +73,111 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       </div>
 
       <AiStepAssistant
+        stepNumber={1}
         stepTitle="Datos Personales"
-        placeholder="Ej: Me llamo Stefanie Lovera, CI 6260899, teléfono 0983603215..."
+        placeholder="Dicte o escriba sus datos personales para autocompletar las casillas..."
         onApplyFields={(extracted) => {
           Object.entries(extracted).forEach(([k, v]) => {
-            if (typeof v === "string" && k !== "_rawAiText") {
+            if (v !== undefined && k !== "_rawAiText") {
               setValue(k as keyof Paso1Data, v as never, { shouldValidate: true });
             }
           });
         }}
       />
 
-      <div className="space-y-1.5">
-        <span className="text-xs font-bold text-text block">
-          Fotografía del Postulante (Opcional)
-        </span>
-        <FotoUploader
-          fotos={fotoActual ? [fotoActual] : []}
-          onChange={(arr) => setValue("fotoCandidato", arr[0] || "")}
-          maxFotos={1}
-        />
-      </div>
+      {/* La fotografía solo puede verla y subirla el Evaluador */}
+      {isEvaluator && (
+        <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
+          <span className="text-xs font-mono font-bold uppercase text-gold block">
+            FOTOGRAFÍA DEL POSTULANTE (EXCLUSIVO EVALUADOR)
+          </span>
+          <FotoUploader
+            fotos={fotoActual ? [fotoActual] : []}
+            onChange={(arr) => setValue("fotoCandidato", arr[0] || "")}
+            maxFotos={1}
+          />
+        </div>
+      )}
+
+      {(!shouldHideField("nombre") || !shouldHideField("apellido")) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {!shouldHideField("nombre") && (
+            <Input
+              label="Nombres"
+              required
+              placeholder="Ingrese sus nombres"
+              {...register("nombre")}
+              error={errors.nombre?.message}
+            />
+          )}
+          {!shouldHideField("apellido") && (
+            <Input
+              label="Apellidos"
+              required
+              placeholder="Ingrese sus apellidos"
+              {...register("apellido")}
+              error={errors.apellido?.message}
+            />
+          )}
+        </div>
+      )}
+
+      {(!shouldHideField("cedula") ||
+        !shouldHideField("fechaNacimiento") ||
+        !shouldHideField("telefono")) && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {!shouldHideField("cedula") && (
+            <Input
+              label="Número de Cédula"
+              required
+              inputMode="numeric"
+              placeholder="Ingrese número de documento"
+              {...register("cedula")}
+              error={errors.cedula?.message}
+            />
+          )}
+          {!shouldHideField("fechaNacimiento") && (
+            <Input
+              label="Fecha de Nacimiento"
+              type="date"
+              {...register("fechaNacimiento")}
+            />
+          )}
+          {!shouldHideField("telefono") && (
+            <Input
+              label="Número de Teléfono"
+              type="tel"
+              required
+              placeholder="Ingrese número de contacto"
+              {...register("telefono")}
+              error={errors.telefono?.message}
+            />
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Nombres"
-          required
-          placeholder="Ej: Stefanie Raquel"
-          {...register("nombre")}
-          error={errors.nombre?.message}
-        />
-        <Input
-          label="Apellidos"
-          required
-          placeholder="Ej: Lovera Ruíz Díaz"
-          {...register("apellido")}
-          error={errors.apellido?.message}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="Número de Cédula"
-          required
-          inputMode="numeric"
-          placeholder="Ej: 6.260.899"
-          {...register("cedula")}
-          error={errors.cedula?.message}
-        />
-        <Input
-          label="Fecha de Nacimiento"
-          type="date"
-          {...register("fechaNacimiento")}
-        />
-        <Input
-          label="Número de Teléfono"
-          type="tel"
-          required
-          placeholder="Ej: 0983 603215"
-          {...register("telefono")}
-          error={errors.telefono?.message}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Estado Civil"
-          options={[
-            { value: "soltero", label: "Soltero/a" },
-            { value: "casado", label: "Casado/a" },
-            { value: "conviviente", label: "Conviviente / Unión Libre" },
-            { value: "divorciado", label: "Divorciado/a" },
-            { value: "viudo", label: "Viudo/a" },
-          ]}
-          {...register("estadoCivil")}
-        />
-        <Input
-          label="Correo Electrónico (Opcional)"
-          type="email"
-          placeholder="postulante@correo.com"
-          {...register("email")}
-        />
+        {!shouldHideField("estadoCivil") && (
+          <Select
+            label="Estado Civil"
+            options={[
+              { value: "soltero", label: "Soltero/a" },
+              { value: "casado", label: "Casado/a" },
+              { value: "conviviente", label: "Conviviente / Unión Libre" },
+              { value: "divorciado", label: "Divorciado/a" },
+              { value: "viudo", label: "Viudo/a" },
+            ]}
+            {...register("estadoCivil")}
+          />
+        )}
+        {!shouldHideField("email") && (
+          <Input
+            label="Correo Electrónico"
+            type="email"
+            placeholder="Ingrese correo electrónico"
+            {...register("email")}
+          />
+        )}
       </div>
 
       <div className="space-y-3">
@@ -159,7 +187,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
           onChange={(val) => setValue("hijos", val)}
         />
         {tieneHijos && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-2 border-l-2 border-gold">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-3 border-l-2 border-gold">
             <Input
               label="Cantidad de hijos/as"
               type="number"
@@ -168,7 +196,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
             />
             <Input
               label="Edades de los hijos/as"
-              placeholder="Ej: 4 y 7 años"
+              placeholder="Indique las edades"
               {...register("edadesHijos")}
             />
           </div>
@@ -191,7 +219,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       {movilidad && (
         <Input
           label="Tipo y características de su movilidad propia"
-          placeholder="Ej: Automóvil Toyota Allion / Motocicleta"
+          placeholder="Indique tipo de vehículo y modelo"
           {...register("tipoMovilidad")}
         />
       )}
@@ -199,36 +227,52 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="¿Con qué medio irá generalmente a la sucursal asignada?"
-          placeholder="Ej: Ómnibus / Vehículo propio"
+          placeholder="Indique medio de transporte habitual"
           {...register("medioTransporteSucursal")}
         />
         <Input
           label="¿Cuánto tiempo le toma ir de su casa a la sucursal asignada?"
-          placeholder="Ej: 30 Minutos"
+          placeholder="Indique tiempo estimado de viaje"
           {...register("tiempoViajeSucursal")}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
+      {/* Bloque completo de preguntas sobre Tatuajes */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <span className="text-xs font-mono font-bold uppercase text-gold block">
+          TATUAJES
+        </span>
+        <Toggle
           label="¿Tiene tatuajes?"
-          options={[
-            { value: "no", label: "No" },
-            { value: "si_no_visibles", label: "Sí - No son visibles" },
-            { value: "si_visibles", label: "Sí - Son visibles" },
-          ]}
-          {...register("tieneTatuajes")}
+          checked={tatuajes !== "no"}
+          onChange={(val) => {
+            setValue("tieneTatuajes", val ? "si" : "no");
+            if (!val) {
+              setValue("zonaTatuada", "");
+            }
+          }}
         />
+
         {tatuajes !== "no" && (
-          <Input
-            label="Zona tatuada"
-            placeholder="Ej: Hombro y antebrazo"
-            {...register("zonaTatuada")}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-overlay0">
+            <Select
+              label="¿Los tatuajes son visibles con vestimenta formal?"
+              options={[
+                { value: "no_visibles", label: "No son visibles" },
+                { value: "visibles", label: "Sí, son visibles" },
+              ]}
+              {...register("tatuajesVisibles")}
+            />
+            <Input
+              label="¿En qué zona tiene los tatuajes?"
+              placeholder="Indique la zona tatuada"
+              {...register("zonaTatuada")}
+            />
+          </div>
         )}
       </div>
 
-      {/* Campo solicitado: "¿Red social que más uses?" */}
+      {/* ¿Red social que más uses? */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
         <span className="text-xs font-mono font-bold uppercase text-gold block">
           ¿RED SOCIAL QUE MÁS USES?
@@ -241,13 +285,14 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               { value: "Facebook", label: "Facebook" },
               { value: "TikTok", label: "TikTok" },
               { value: "LinkedIn", label: "LinkedIn" },
+              { value: "Otra", label: "Otra red social" },
               { value: "Ninguna", label: "No utilizo redes sociales" },
             ]}
             {...register("redSocialPlataforma")}
           />
           <Input
-            label="Tu usuario o perfil en esa red social"
-            placeholder="Ej: Stefani-lovera"
+            label="Usuario o nombre de perfil"
+            placeholder="Ingrese su usuario"
             {...register("redSocial")}
           />
         </div>

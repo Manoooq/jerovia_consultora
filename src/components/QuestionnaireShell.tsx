@@ -8,8 +8,6 @@ import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import {
   ShieldCheck,
   Lock,
-  Save,
-  Smartphone,
   Building2,
   UserCheck,
 } from "lucide-react";
@@ -18,6 +16,7 @@ interface QuestionnaireShellProps {
   entidadSolicitante: string;
   candidatoNombre?: string;
   evaluadorAsignado?: string;
+  isEvaluator?: boolean;
   children: React.ReactNode;
 }
 
@@ -25,6 +24,7 @@ export function QuestionnaireShell({
   entidadSolicitante,
   candidatoNombre,
   evaluadorAsignado,
+  isEvaluator = false,
   children,
 }: QuestionnaireShellProps) {
   return (
@@ -33,16 +33,19 @@ export function QuestionnaireShell({
 
       <header className="glass-panel sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-3.5 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
+          <Link href={isEvaluator ? "/dashboard" : "/"} className="flex items-center gap-2 shrink-0">
             <Logo size="sm" />
           </Link>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="px-2.5 py-1 rounded-lg border bg-[#536c45]/15 border-[#536c45]/40 text-gold text-[11px] font-mono font-bold flex items-center gap-1.5">
-              <Save className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden sm:inline">AUTOGUARDADO ACTIVO</span>
-            </div>
-
+            {isEvaluator && (
+              <Link
+                href="/dashboard"
+                className="px-3 py-1.5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-xs font-bold text-text"
+              >
+                Panel Evaluador
+              </Link>
+            )}
             <ThemeToggle />
           </div>
         </div>
@@ -57,12 +60,16 @@ export function QuestionnaireShell({
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#d5ddd1]">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>FORMULARIO OFICIAL SOCIOAMBIENTAL</span>
+              <span>
+                {isEvaluator
+                  ? "MODO EVALUADOR (ACCESO COMPLETO + FOTOS Y CIERRE)"
+                  : "FORMULARIO SOCIOAMBIENTAL"}
+              </span>
             </div>
             <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
               {candidatoNombre
                 ? `Postulante: ${candidatoNombre}`
-                : "Relevamiento de Datos del Postulante"}
+                : "Relevamiento de Datos"}
             </h1>
           </div>
 
@@ -88,19 +95,9 @@ export function QuestionnaireShell({
       </main>
 
       <footer className="relative z-10 border-t border-overlay0/40 bg-mantle/90 backdrop-blur-md py-4 px-4">
-        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] font-mono text-subtext1">
-          <span className="flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-            Jerovia Consultora · Datos Confidenciales
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Save className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-            Memoria Persistente en Celular y Servidor
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Smartphone className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
-            Compatible con iPhone, Android y PC
-          </span>
+        <div className="max-w-3xl mx-auto flex items-center justify-center gap-2 text-xs font-mono text-subtext1">
+          <Lock className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+          <span>Jerovia Consultora · Información Confidencial</span>
         </div>
       </footer>
     </div>

@@ -32,13 +32,13 @@ export const prestamoItemSchema = z.object({
 });
 
 export const paso1Schema = z.object({
-  nombre: z.string().trim().min(2, "Ingrese su nombre"),
-  apellido: z.string().trim().min(2, "Ingrese su apellido"),
+  nombre: z.string().trim().min(2, "Ingrese nombres"),
+  apellido: z.string().trim().min(2, "Ingrese apellidos"),
   fotoCandidato: safeStr(""),
   fechaNacimiento: safeStr(""),
-  cedula: z.string().trim().min(3, "Ingrese su número de cédula"),
+  cedula: z.string().trim().min(3, "Ingrese número de cédula"),
   estadoCivil: safeStr("soltero"),
-  telefono: z.string().trim().min(5, "Ingrese su número de teléfono"),
+  telefono: z.string().trim().min(5, "Ingrese número de teléfono"),
   email: safeStr(""),
   hijos: z.boolean().optional().default(false),
   cantidadHijos: safeNum(0),
@@ -46,9 +46,10 @@ export const paso1Schema = z.object({
   licenciaConducir: z.boolean().optional().default(false),
   movilidadPropia: z.boolean().optional().default(false),
   tipoMovilidad: safeStr(""),
-  medioTransporteSucursal: safeStr("Ómnibus"),
-  tiempoViajeSucursal: safeStr("30 Minutos"),
+  medioTransporteSucursal: safeStr(""),
+  tiempoViajeSucursal: safeStr(""),
   tieneTatuajes: safeStr("no"),
+  tatuajesVisibles: safeStr("no_visibles"),
   zonaTatuada: safeStr(""),
   redSocialPlataforma: safeStr("Instagram"),
   redSocial: safeStr(""),
@@ -57,13 +58,13 @@ export const paso1Schema = z.object({
 });
 
 export const paso2Schema = z.object({
-  profesion: safeStr("Estudiante Activo"),
+  profesion: safeStr(""),
   carrera: safeStr(""),
-  cursoActual: safeStr("2do año"),
-  aniosEstudio: safeNum(2),
+  cursoActual: safeStr(""),
+  aniosEstudio: safeNum(0),
   universidad: safeStr(""),
   estadoEstudios: safeStr("en_curso"),
-  idiomasTexto: safeStr("Castellano, Guaraní"),
+  idiomasTexto: safeStr(""),
   idiomas: z
     .array(
       z.object({
@@ -86,8 +87,8 @@ export const paso3Schema = z.object({
   salarioBruto: safeStr(""),
   salarioNeto: safeStr(""),
   salarioAnterior: safeNum(0),
-  aportesDescuentos: safeStr("IPS"),
-  cargoPostula: safeStr("Atención al cliente"),
+  aportesDescuentos: safeStr(""),
+  cargoPostula: safeStr(""),
   disponibilidad: safeStr("inmediata"),
   pretensionSalarial: safeStr(""),
   motivoEleccionEntidad: safeStr(""),
@@ -107,7 +108,7 @@ export const paso4Schema = z.object({
 });
 
 export const paso5Schema = z.object({
-  relacionPadres: safeStr("separados"),
+  relacionPadres: safeStr("casados"),
   estructuraFamiliar: safeStr(""),
   nombreMadre: safeStr(""),
   edadMadre: safeNum(0),
@@ -145,7 +146,8 @@ export const paso6Schema = z.object({
   consumeMedicamentosDetalle: safeStr(""),
   tieneFobias: z.boolean().optional().default(false),
   tieneFobiasDetalle: safeStr(""),
-  seguroMedico: safeStr("ips"),
+  seguroMedico: safeStr("ninguno"),
+  seguroMedicoDetalle: safeStr(""),
   consumoAlcohol: safeStr("no"),
   consumoTabaco: z.boolean().optional().default(false),
   familiaresEnfermedad: z.boolean().optional().default(false),
@@ -173,13 +175,13 @@ export const paso7Schema = z.object({
 });
 
 export const paso8Schema = z.object({
-  ciudad: safeStr("Asunción"),
+  ciudad: safeStr(""),
   barrio: safeStr(""),
   direccion: safeStr(""),
   coordenadas: safeStr(""),
   plusCode: safeStr(""),
-  tipoCamino: safeStr("empedrado"),
-  tenenciaVivienda: safeStr("familiar"),
+  tipoCamino: safeStr("asfalto"),
+  tenenciaVivienda: safeStr("propia"),
   costoAlquiler: safeNum(0),
   cantidadPersonas: safeNum(1),
   quienesVivenCasa: safeStr(""),
@@ -191,26 +193,26 @@ export const paso8Schema = z.object({
   sala: z.boolean().optional().default(true),
   plantas: safeNum(1),
   paredes: safeStr("ladrillo"),
-  paredesDetalle: safeStr("Ladrillos revocados"),
+  paredesDetalle: safeStr(""),
   techo: safeStr("tejas"),
-  techoDetalle: safeStr("Teja"),
+  techoDetalle: safeStr(""),
   pisos: safeStr("ceramica"),
-  pisosDetalle: safeStr("Baldosa"),
+  pisosDetalle: safeStr(""),
   fotosVivienda: z.array(z.string()).optional().default([]),
 });
 
 export const paso9Schema = z.object({
   limpiezaOrdenVivienda: safeStr("Ordenada y limpia"),
   quienesPresentes: safeStr("Ninguno"),
-  vocabularioEntrevistado: safeStr("Respetuosa y acorde a la situación"),
+  vocabularioEntrevistado: safeStr("Respetuoso y acorde a la situación"),
   zonaFacilAcceso: z.boolean().optional().default(true),
   observacionesEntrevista: safeStr(""),
   diccion: safeStr("fluida"),
   estadoVivienda: safeStr("bueno"),
   otrasObservaciones: safeStr("Ninguna"),
-  entrevistadorNombre: safeStr("Michelle Romero"),
+  entrevistadorNombre: safeStr(""),
   fechaVisita: safeStr(new Date().toISOString().slice(0, 10)),
-  horaVisita: safeStr("19:00"),
+  horaVisita: safeStr(""),
   consultorNombre: safeStr("Lic. Michelle Romero"),
   firmaEvaluador: safeStr(""),
 });

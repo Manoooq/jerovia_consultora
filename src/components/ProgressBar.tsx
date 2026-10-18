@@ -1,117 +1,80 @@
 "use client";
 
-import { Check, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
-export const PASOS_CONFIG = [
-  { id: 1, label: "Personal", desc: "Identificación y contacto" },
-  { id: 2, label: "Académico", desc: "Formación y estudios" },
-  { id: 3, label: "Laboral", desc: "Trayectoria y referencias" },
-  { id: 4, label: "Perfil", desc: "Evaluación psicosocial" },
-  { id: 5, label: "Familia", desc: "Composición del hogar" },
-  { id: 6, label: "Salud", desc: "Antecedentes médicos" },
-  { id: 7, label: "Economía", desc: "Ingresos, egresos y deudas" },
-  { id: 8, label: "Vivienda", desc: "Inspección in situ y GPS" },
-  { id: 9, label: "Dictamen", desc: "Conclusión pericial" },
+const ALL_STEPS = [
+  { num: 1, label: "Personal" },
+  { num: 2, label: "Académico" },
+  { num: 3, label: "Laboral" },
+  { num: 4, label: "Cualidades" },
+  { num: 5, label: "Familiar" },
+  { num: 6, label: "Salud" },
+  { num: 7, label: "Económico" },
+  { num: 8, label: "Vivienda" },
+  { num: 9, label: "Evaluador" },
 ];
 
 interface ProgressBarProps {
-  pasoActual: number;
-  maxPasoAlcanzado?: number;
-  onStepSelect?: (paso: number) => void;
-  className?: string;
+  currentStep: number;
+  maxReachedStep?: number;
+  totalSteps?: 8 | 9;
+  onStepSelect?: (step: number) => void;
 }
 
 export function ProgressBar({
-  pasoActual,
-  maxPasoAlcanzado = pasoActual,
+  currentStep,
+  maxReachedStep = currentStep,
+  totalSteps = 9,
   onStepSelect,
-  className,
 }: ProgressBarProps) {
-  const progreso = Math.round(((pasoActual - 1) / (PASOS_CONFIG.length - 1)) * 100);
-  const currentStepObj = PASOS_CONFIG[pasoActual - 1] || PASOS_CONFIG[0];
+  const steps = ALL_STEPS.slice(0, totalSteps);
+  const progressPercent = Math.round(((currentStep - 1) / (totalSteps - 1)) * 100);
 
   return (
-    <div className={cn("w-full select-none space-y-3", className)}>
-      {/* Cabecera de progreso con números tabulares */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold text-xs font-mono font-bold tabular-nums shrink-0">
-            {pasoActual} / {PASOS_CONFIG.length}
-          </span>
-          <span className="text-xs sm:text-sm font-bold text-text truncate">
-            {currentStepObj.label}
-          </span>
-          <span className="hidden sm:inline text-xs text-subtext0 truncate">
-            • {currentStepObj.desc}
-          </span>
-        </div>
-
-        <span className="text-xs font-mono font-bold text-gold tabular-nums shrink-0">
-          {progreso}%
-        </span>
-      </div>
-
-      {/* Barra lineal continua */}
-      <div
-        role="progressbar"
-        aria-valuenow={progreso}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Progreso del relevamiento: módulo ${pasoActual} de ${PASOS_CONFIG.length}`}
-        className="relative h-1.5 w-full rounded-full bg-surface2 overflow-hidden"
-      >
+    <div className="space-y-2.5">
+      <div className="h-2 w-full rounded-full bg-surface2 overflow-hidden">
         <div
-          className="h-full rounded-full bg-gold transition-all duration-300 ease-out"
-          style={{ width: `${progreso}%` }}
+          className="h-full bg-gold transition-all duration-300 rounded-full"
+          style={{ width: `${Math.max(6, progressPercent)}%` }}
         />
       </div>
 
-      {/* Selector horizontal deslizable (Funciona en Celular y en PC) */}
-      <nav
-        aria-label="Módulos del cuestionario"
-        className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar"
+      <div
+        className={`grid gap-1.5 ${
+          totalSteps === 8 ? "grid-cols-4 sm:grid-cols-8" : "grid-cols-3 sm:grid-cols-9"
+        }`}
       >
-        {PASOS_CONFIG.map((paso) => {
-          const completado = paso.id < pasoActual;
-          const activo = paso.id === pasoActual;
-          const desbloqueado = paso.id <= Math.max(pasoActual, maxPasoAlcanzado);
+        {steps.map((s) => {
+          const isCurrent = s.num === currentStep;
+          const isCompleted = s.num < currentStep;
+          const isClickable = s.num <= Math.max(currentStep, maxReachedStep);
 
           return (
             <button
-              key={paso.id}
+              key={s.num}
               type="button"
-              disabled={!desbloqueado || !onStepSelect}
-              onClick={() => desbloqueado && onStepSelect?.(paso.id)}
-              aria-current={activo ? "step" : undefined}
-              title={`${paso.id}. ${paso.label}: ${paso.desc}`}
-              className={cn(
-                "min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 border transition-all",
-                activo &&
-                  "bg-gold text-white border-gold font-bold shadow-2xs cursor-default",
-                !activo &&
-                  completado &&
-                  "bg-green/10 text-green border-green/30 hover:bg-green/20 cursor-pointer",
-                !activo &&
-                  !completado &&
-                  desbloqueado &&
-                  "bg-surface1 text-text border-overlay0/70 hover:border-gold/50 cursor-pointer",
-                !desbloqueado &&
-                  "bg-surface1/40 text-subtext0/50 border-overlay0/30 cursor-not-allowed"
-              )}
+              disabled={!isClickable}
+              onClick={() => isClickable && onStepSelect?.(s.num)}
+              className={`min-h-[34px] px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                isCurrent
+                  ? "bg-gold text-white border-gold shadow-xs"
+                  : isCompleted
+                  ? "bg-[#536c45]/15 text-gold border-[#536c45]/40 cursor-pointer"
+                  : isClickable
+                  ? "bg-surface0 text-text border-overlay1 cursor-pointer"
+                  : "bg-surface1/50 text-subtext0 border-overlay0 opacity-60 cursor-not-allowed"
+              }`}
             >
-              {completado ? (
-                <Check className="h-3 w-3 shrink-0" aria-hidden="true" />
-              ) : !desbloqueado ? (
-                <Lock className="h-2.5 w-2.5 shrink-0 opacity-60" aria-hidden="true" />
+              {isCompleted ? (
+                <Check className="h-3 w-3 shrink-0" />
               ) : (
-                <span className="font-mono text-[11px] tabular-nums">{paso.id}.</span>
+                <span className="font-mono">{s.num}.</span>
               )}
-              <span>{paso.label}</span>
+              <span className="truncate">{s.label}</span>
             </button>
           );
         })}
-      </nav>
+      </div>
     </div>
   );
 }

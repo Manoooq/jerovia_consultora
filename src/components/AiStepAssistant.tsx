@@ -11,77 +11,16 @@ import {
 } from "lucide-react";
 
 interface AiStepAssistantProps {
+  stepNumber?: number;
   stepTitle: string;
   placeholder?: string;
   onApplyFields: (extracted: Record<string, unknown>) => void;
 }
 
-/**
- * Extractor inteligente local + IA que convierte frases dictadas o escritas
- * en campos del formulario al instante, funcionando incluso en iPhone y con señal baja.
- */
-function parseSmartTextLocally(text: string): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  const clean = text.trim();
-  if (!clean) return out;
-
-  // Cédula
-  const ciMatch = clean.match(/(?:ci|c[eé]dula|documento)[:\s]*([0-9.]{5,12})/i);
-  if (ciMatch) out.cedula = ciMatch[1];
-
-  // Teléfono
-  const telMatch = clean.match(/(09[6789][0-9\s.-]{6,10})/);
-  if (telMatch) out.telefono = telMatch[1].trim();
-
-  // Idiomas
-  const langs: string[] = [];
-  if (/castellano|espa[ñn]ol/i.test(clean)) langs.push("Castellano");
-  if (/guaran[ií]/i.test(clean)) langs.push("Guaraní");
-  if (/ingl[eé]s/i.test(clean)) langs.push("Inglés");
-  if (/portugu[eé]s/i.test(clean)) langs.push("Portugués");
-  if (langs.length > 0) out.idiomasTexto = langs.join(", ");
-
-  // Condición ocupacional
-  if (/no estoy trabajando|desemplead/i.test(clean)) {
-    out.situacionActual = "desempleado";
-  } else if (/pasant[ií]a|pasante/i.test(clean)) {
-    out.situacionActual = "pasantia";
-  } else if (/estoy trabajando|trabajo en|emplead/i.test(clean)) {
-    out.situacionActual = "empleado";
-  }
-
-  // Empresa / Lugar de trabajo
-  const empMatch = clean.match(/(?:trabajo en|empresa|en)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]{2,30}?)(?:,|\.|hace|como|ganando|$)/i);
-  if (empMatch && empMatch[1]) {
-    out.empresaAnterior = empMatch[1].trim();
-  }
-
-  // Cargo
-  const cargoMatch = clean.match(/(?:como|cargo de|puesto de|en el [aá]rea de)\s+([A-Za-záéíóúñ\s]{3,28}?)(?:,|\.|hace|ganando|$)/i);
-  if (cargoMatch && cargoMatch[1]) {
-    out.cargoAnterior = cargoMatch[1].trim();
-  }
-
-  // Antigüedad
-  const antMatch = clean.match(/(?:hace|antig[üu]edad de)\s+([0-9]+\s*(?:meses|mes|a[ñn]os|a[ñn]o))/i);
-  if (antMatch) out.antiguedad = antMatch[1].trim();
-
-  // Salario
-  const salMatch = clean.match(/(?:gano|salario de|sueldo de|cobro)\s*(?:gs\.?)?\s*([0-9.]{5,12})/i);
-  if (salMatch) out.salarioBruto = salMatch[1].trim();
-
-  // Carrera / Universidad
-  const carrMatch = clean.match(/(?:estudio|carrera de)\s+([A-Za-záéíóúñ\s]{3,35}?)(?:\s+en\s+|,|\.|$)/i);
-  if (carrMatch) out.carrera = carrMatch[1].trim();
-  const uniMatch = clean.match(/universidad\s+([A-Za-záéíóúñ\s]{2,30}?)(?:,|\.|$)/i);
-  if (uniMatch) out.universidad = "Universidad " + uniMatch[1].trim();
-
-  return out;
-}
-
 export function AiStepAssistant({
+  stepNumber = 1,
   stepTitle,
-  placeholder = "Dicte por voz o escriba aquí con sus palabras y la IA completará las casillas automáticamente...",
+  placeholder = "Dicte por voz o escriba aquí con sus palabras y la IA completará los campos automáticamente...",
   onApplyFields,
 }: AiStepAssistantProps) {
   const [quickText, setQuickText] = useState("");
@@ -98,19 +37,34 @@ export function AiStepAssistant({
     setProcessing(true);
     setDoneMsg(null);
 
-    // 1. Aplicar extracción inteligente instantánea
-    const localExtracted = parseSmartTextLocally(textToUse);
-    if (Object.keys(localExtracted).length > 0) {
-      onApplyFields(localExtracted);
-    } else {
-      // Si el usuario escribió una frase general, enviarla también como texto útil
+    try {
+      const res = await fetch("/api/ai/extraer-campos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texto: textToUse,
+          paso: stepNumber,
+          modo: "extraer",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.campos && Object.keys(data.campos).length > 0) {
+          onApplyFields(data.campos);
+        } else {
+          onApplyFields({ _rawAiText: textToUse });
+        }
+      } else {
+        onApplyFields({ _rawAiText: textToUse });
+      }
+    } catch {
       onApplyFields({ _rawAiText: textToUse });
+    } finally {
+      setProcessing(false);
+      setQuickText("");
+      setDoneMsg("¡Campos completados con IA!");
+      setTimeout(() => setDoneMsg(null), 3500);
     }
-
-    setProcessing(false);
-    setQuickText("");
-    setDoneMsg("¡Datos completados por la IA!");
-    setTimeout(() => setDoneMsg(null), 3500);
   }
 
   async function toggleMic() {
@@ -120,7 +74,6 @@ export function AiStepAssistant({
       return;
     }
 
-    // Intentar primero Web Speech API nativa (instantánea en iPhone Safari y Chrome)
     const SpeechRecognition =
       (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
         .SpeechRecognition ||
@@ -149,7 +102,6 @@ export function AiStepAssistant({
       } catch {}
     }
 
-    // Fallback a MediaRecorder + /api/ai/transcribir
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = MediaRecorder.isTypeSupported("audio/webm")
@@ -179,7 +131,7 @@ export function AiStepAssistant({
             if (res.ok) {
               const data = await res.json();
               onApplyFields(data);
-              setDoneMsg("¡Dictado aplicado a las casillas!");
+              setDoneMsg("¡Dictado aplicado!");
               setTimeout(() => setDoneMsg(null), 3500);
             }
             setProcessing(false);
@@ -206,7 +158,7 @@ export function AiStepAssistant({
             <Sparkles className="h-3.5 w-3.5" />
           </div>
           <span className="text-xs font-extrabold text-text">
-            Asistente IA Rápido — {stepTitle}
+            Asistente IA — {stepTitle}
           </span>
         </div>
         {doneMsg && (
@@ -245,7 +197,7 @@ export function AiStepAssistant({
           {recording ? (
             <>
               <Square className="h-3.5 w-3.5" />
-              <span>Parar</span>
+              <span>Detener</span>
             </>
           ) : (
             <>

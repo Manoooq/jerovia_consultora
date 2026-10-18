@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { paso6Schema, Paso6Data } from "@/lib/validations";
 import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
+import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { HeartPulse, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -28,7 +29,8 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
       consumeMedicamentosDetalle: defaultValues.consumeMedicamentosDetalle || "",
       tieneFobias: defaultValues.tieneFobias ?? false,
       tieneFobiasDetalle: defaultValues.tieneFobiasDetalle || "",
-      seguroMedico: defaultValues.seguroMedico || "ips",
+      seguroMedico: defaultValues.seguroMedico || "ninguno",
+      seguroMedicoDetalle: defaultValues.seguroMedicoDetalle || "",
       consumoAlcohol: defaultValues.consumoAlcohol || "no",
       consumoTabaco: defaultValues.consumoTabaco ?? false,
       familiaresEnfermedad: defaultValues.familiaresEnfermedad ?? false,
@@ -42,6 +44,8 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
   const condEspecial = watch("enfermedadBase");
   const medicamentos = watch("consumeMedicamentos");
   const fobias = watch("tieneFobias");
+  const seguro = watch("seguroMedico");
+  const tieneSeguroPrivado = seguro === "privado" || seguro === "ambos";
   const famSalud = watch("familiaresEnfermedad");
   const tratamiento = watch("tratamientos");
 
@@ -53,13 +57,26 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 06 DE 09 // DATOS DE LA SALUD
+            MÓDULO 06 // DATOS DE LA SALUD
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
             Condiciones Médicas, Cobertura y Hábitos
           </h2>
         </div>
       </div>
+
+      <AiStepAssistant
+        stepNumber={6}
+        stepTitle="Datos de la Salud"
+        placeholder="Dicte su cobertura médica o antecedentes de salud..."
+        onApplyFields={(extracted) => {
+          Object.entries(extracted).forEach(([k, v]) => {
+            if (typeof v === "string" && k !== "_rawAiText") {
+              setValue(k as keyof Paso6Data, v as never, { shouldValidate: true });
+            }
+          });
+        }}
+      />
 
       <div className="space-y-3">
         <Toggle
@@ -70,6 +87,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         {condEspecial && (
           <Input
             label="Especifique la condición especial o impedimento"
+            placeholder="Detalle la condición"
             {...register("enfermedadBaseDetalle")}
           />
         )}
@@ -82,6 +100,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         {medicamentos && (
           <Input
             label="Indique qué medicamento consume"
+            placeholder="Detalle el medicamento"
             {...register("consumeMedicamentosDetalle")}
           />
         )}
@@ -94,32 +113,44 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         {fobias && (
           <Input
             label="Especifique el tipo de fobia o pánico"
+            placeholder="Detalle cuál"
             {...register("tieneFobiasDetalle")}
           />
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Posee seguro médico"
-          options={[
-            { value: "ips", label: "IPS" },
-            { value: "privado", label: "Seguro Privado" },
-            { value: "ambos", label: "IPS + Privado" },
-            { value: "ninguno", label: "No posee" },
-          ]}
-          {...register("seguroMedico")}
-        />
-        <Select
-          label="Consume bebidas alcohólicas"
-          options={[
-            { value: "no", label: "No" },
-            { value: "ocasional", label: "Ocasionalmente" },
-            { value: "social", label: "Socialmente" },
-            { value: "frecuente", label: "Frecuentemente" },
-          ]}
-          {...register("consumoAlcohol")}
-        />
+      {/* Seguro Médico: Si coloca Seguro Privado, permite escribir cuál es */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="¿Posee seguro médico?"
+            options={[
+              { value: "ninguno", label: "No posee" },
+              { value: "ips", label: "IPS" },
+              { value: "privado", label: "Seguro Privado" },
+              { value: "ambos", label: "IPS + Seguro Privado" },
+            ]}
+            {...register("seguroMedico")}
+          />
+          <Select
+            label="¿Consume bebidas alcohólicas?"
+            options={[
+              { value: "no", label: "No" },
+              { value: "ocasional", label: "Ocasionalmente" },
+              { value: "social", label: "Socialmente" },
+              { value: "frecuente", label: "Frecuentemente" },
+            ]}
+            {...register("consumoAlcohol")}
+          />
+        </div>
+
+        {tieneSeguroPrivado && (
+          <Input
+            label="¿Cuál seguro médico privado posee?"
+            placeholder="Escriba el nombre de su seguro médico privado"
+            {...register("seguroMedicoDetalle")}
+          />
+        )}
       </div>
 
       <Toggle
@@ -137,7 +168,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         {famSalud && (
           <Input
             label="Especifique familiar y problema de salud"
-            placeholder="Ej: Padre con diabetes"
+            placeholder="Indique parentesco y condición de salud"
             {...register("familiaresEnfermedadDetalle")}
           />
         )}
@@ -145,7 +176,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
 
       <Input
         label="¿En la vivienda hay alguna persona que tenga alguna condición diferente (intelectual, física, etc.)?"
-        placeholder="Ej: Ninguno"
+        placeholder="Indique Ninguno o especifique"
         {...register("condicionDiferenteVivienda")}
       />
 
@@ -158,6 +189,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
         {tratamiento && (
           <Input
             label="Detalle el tratamiento médico"
+            placeholder="Especifique el tratamiento"
             {...register("tratamientosDetalle")}
           />
         )}

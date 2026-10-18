@@ -7,7 +7,9 @@ import { Input, Select } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { GeoCapture } from "@/components/GeoCapture";
 import { FotoUploader } from "@/components/FotoUploader";
-import { Home, ArrowLeft, ArrowRight } from "lucide-react";
+import { AiStepAssistant } from "@/components/AiStepAssistant";
+import { useInterviewMode } from "@/components/InterviewModeContext";
+import { Home, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface Props {
   defaultValues: Partial<Paso8Data>;
@@ -16,6 +18,8 @@ interface Props {
 }
 
 export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
+  const { isEvaluator, shouldHideField } = useInterviewMode();
+
   const {
     register,
     handleSubmit,
@@ -25,24 +29,23 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
   } = useForm<Paso8Data>({
     resolver: zodResolver(paso8Schema),
     defaultValues: {
-      ciudad: defaultValues.ciudad || "Asunción",
+      ciudad: defaultValues.ciudad || "",
       barrio: defaultValues.barrio || "",
       direccion: defaultValues.direccion || "",
       coordenadas: defaultValues.coordenadas || "",
       plusCode: defaultValues.plusCode || "",
-      tipoCamino: defaultValues.tipoCamino || "empedrado",
-      tenenciaVivienda: defaultValues.tenenciaVivienda || "familiar",
-      cantidadPersonas: defaultValues.cantidadPersonas ?? 4,
-      quienesVivenCasa:
-        defaultValues.quienesVivenCasa || "Padre, madrastra y hermanos",
-      habitaciones: defaultValues.habitaciones ?? 3,
+      tipoCamino: defaultValues.tipoCamino || "asfalto",
+      tenenciaVivienda: defaultValues.tenenciaVivienda || "propia",
+      cantidadPersonas: defaultValues.cantidadPersonas ?? 1,
+      quienesVivenCasa: defaultValues.quienesVivenCasa || "",
+      habitaciones: defaultValues.habitaciones ?? 1,
       salaCantidad: defaultValues.salaCantidad ?? 1,
-      banos: defaultValues.banos ?? 2,
+      banos: defaultValues.banos ?? 1,
       cocinaCantidad: defaultValues.cocinaCantidad ?? 1,
       plantas: defaultValues.plantas ?? 1,
-      paredesDetalle: defaultValues.paredesDetalle || "Ladrillos revocados",
-      techoDetalle: defaultValues.techoDetalle || "Teja",
-      pisosDetalle: defaultValues.pisosDetalle || "Baldosa",
+      paredesDetalle: defaultValues.paredesDetalle || "",
+      techoDetalle: defaultValues.techoDetalle || "",
+      pisosDetalle: defaultValues.pisosDetalle || "",
       fotosVivienda: defaultValues.fotosVivienda || [],
     },
   });
@@ -57,13 +60,26 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 08 DE 09 // DATOS DE LA VIVIENDA
+            MÓDULO 08 // DATOS DE LA VIVIENDA
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Ubicación GPS, Fachada y Dependencias
+            Ubicación, Dependencias y Materiales
           </h2>
         </div>
       </div>
+
+      <AiStepAssistant
+        stepNumber={8}
+        stepTitle="Datos de la Vivienda"
+        placeholder="Dicte su ciudad, barrio, dirección y con quiénes vive..."
+        onApplyFields={(extracted) => {
+          Object.entries(extracted).forEach(([k, v]) => {
+            if (typeof v === "string" && k !== "_rawAiText") {
+              setValue(k as keyof Paso8Data, v as never, { shouldValidate: true });
+            }
+          });
+        }}
+      />
 
       <GeoCapture
         coordenadas={watch("coordenadas")}
@@ -77,35 +93,38 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="Ciudad"
-          required
-          placeholder="Ej: Asunción"
-          {...register("ciudad")}
-          error={errors.ciudad?.message}
-        />
-        <Input
-          label="Barrio"
-          required
-          placeholder="Ej: Hipódromo"
-          {...register("barrio")}
-          error={errors.barrio?.message}
-        />
-        <Input
-          label="Dirección"
-          required
-          placeholder="Ej: Calle Encarnación #1143"
-          {...register("direccion")}
-          error={errors.direccion?.message}
-        />
+        {!shouldHideField("ciudad") && (
+          <Input
+            label="Ciudad"
+            placeholder="Ingrese ciudad"
+            {...register("ciudad")}
+            error={errors.ciudad?.message}
+          />
+        )}
+        {!shouldHideField("barrio") && (
+          <Input
+            label="Barrio"
+            placeholder="Ingrese barrio"
+            {...register("barrio")}
+            error={errors.barrio?.message}
+          />
+        )}
+        {!shouldHideField("direccion") && (
+          <Input
+            label="Dirección"
+            placeholder="Ingrese calle y número"
+            {...register("direccion")}
+            error={errors.direccion?.message}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
           label="Trayecto a la vivienda"
           options={[
-            { value: "empedrado", label: "Camino empedrado" },
             { value: "asfalto", label: "Camino asfaltado" },
+            { value: "empedrado", label: "Camino empedrado" },
             { value: "tierra", label: "Camino de tierra" },
           ]}
           {...register("tipoCamino")}
@@ -113,8 +132,8 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         <Select
           label="Propiedad de la vivienda"
           options={[
-            { value: "familiar", label: "De un familiar" },
             { value: "propia", label: "Propia" },
+            { value: "familiar", label: "De un familiar" },
             { value: "alquilada", label: "Alquilada" },
             { value: "prestada", label: "Prestada / Cedida" },
           ]}
@@ -130,11 +149,10 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
 
       <Input
         label="¿Quién vive en la casa junto a la persona entrevistada?"
-        placeholder="Ej: Padre, madrastra y hermanos"
+        placeholder="Indique quiénes habitan en la vivienda"
         {...register("quienesVivenCasa")}
       />
 
-      {/* Dependencias de la vivienda */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
         <span className="text-xs font-mono font-bold uppercase text-gold block">
           DEPENDENCIAS DE LA VIVIENDA Y PISOS
@@ -148,36 +166,37 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {/* Materiales constructivos */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
           label="Material de las paredes"
-          placeholder="Ej: Ladrillos revocados"
+          placeholder="Indique material de paredes"
           {...register("paredesDetalle")}
         />
         <Input
           label="Material del techo"
-          placeholder="Ej: Teja"
+          placeholder="Indique material del techo"
           {...register("techoDetalle")}
         />
         <Input
           label="Material del piso"
-          placeholder="Ej: Baldosa"
+          placeholder="Indique material del piso"
           {...register("pisosDetalle")}
         />
       </div>
 
-      {/* Fotografías de la fachada y croquis satelital */}
-      <div className="space-y-2">
-        <span className="text-xs font-bold text-text block">
-          Fotografías de la Fachada y Captura Satelital de Ubicación
-        </span>
-        <FotoUploader
-          fotos={fotos}
-          onChange={(nuevas) => setValue("fotosVivienda", nuevas)}
-          maxFotos={4}
-        />
-      </div>
+      {/* REGLA: Las fotografías solo puede verlas y subirlas el Evaluador */}
+      {isEvaluator && (
+        <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
+          <span className="text-xs font-mono font-bold uppercase text-gold block">
+            FOTOGRAFÍAS DE LA VIVIENDA Y UBICACIÓN (EXCLUSIVO EVALUADOR)
+          </span>
+          <FotoUploader
+            fotos={fotos}
+            onChange={(nuevas) => setValue("fotosVivienda", nuevas)}
+            maxFotos={4}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-overlay0">
         <Button type="button" variant="secondary" onClick={onBack} className="w-full sm:w-auto">
@@ -185,8 +204,17 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
           <span>Anterior</span>
         </Button>
         <Button type="submit" size="lg" className="w-full sm:w-auto">
-          <span>Siguiente: Observaciones y Firma</span>
-          <ArrowRight className="h-4 w-4" />
+          {isEvaluator ? (
+            <>
+              <span>Siguiente: Observaciones del Evaluador</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Finalizar y Enviar Mis Datos</span>
+            </>
+          )}
         </Button>
       </div>
     </form>

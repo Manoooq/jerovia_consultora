@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { paso5Schema, Paso5Data } from "@/lib/validations";
 import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
+import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { Users, Plus, Trash2, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -23,7 +24,7 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
   } = useForm<Paso5Data>({
     resolver: zodResolver(paso5Schema),
     defaultValues: {
-      relacionPadres: defaultValues.relacionPadres || "separados",
+      relacionPadres: defaultValues.relacionPadres || "casados",
       estructuraFamiliar: defaultValues.estructuraFamiliar || "",
       nombreMadre: defaultValues.nombreMadre || "",
       edadMadre: defaultValues.edadMadre ?? 0,
@@ -60,6 +61,9 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
     name: "listaHermanos",
   });
 
+  const relacionPadres = watch("relacionPadres");
+  const padresEstanSeparados =
+    relacionPadres === "separados" || relacionPadres === "divorciados";
   const tieneParejaCasa = watch("parejaPadreMadreViveCasa");
   const tieneHermanos = watch("tieneHermanos");
   const famProductos = watch("familiaresProductosEntidad");
@@ -72,25 +76,45 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 05 DE 09 // DATOS FAMILIARES
+            MÓDULO 05 // DATOS FAMILIARES
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Padres, Pareja Conviviente y Hermanos
+            Padres y Grupo Familiar
           </h2>
         </div>
       </div>
 
+      <AiStepAssistant
+        stepNumber={5}
+        stepTitle="Datos Familiares"
+        placeholder="Dicte los datos de sus padres o hermanos para autocompletar..."
+        onApplyFields={(extracted) => {
+          Object.entries(extracted).forEach(([k, v]) => {
+            if (typeof v === "string" && k !== "_rawAiText") {
+              setValue(k as keyof Paso5Data, v as never, { shouldValidate: true });
+            }
+          });
+        }}
+      />
+
       <Select
         label="Relación de sus padres"
         options={[
-          { value: "separados", label: "Separados" },
           { value: "casados", label: "Casados" },
+          { value: "separados", label: "Separados" },
           { value: "divorciados", label: "Divorciados" },
           { value: "union_libre", label: "Unión libre" },
           { value: "fallecidos", label: "Fallecidos" },
           { value: "otro", label: "Otro" },
         ]}
-        {...register("relacionPadres")}
+        {...register("relacionPadres", {
+          onChange: (e) => {
+            const val = e.target.value;
+            if (val !== "separados" && val !== "divorciados") {
+              setValue("parejaPadreMadreViveCasa", false);
+            }
+          },
+        })}
       />
 
       {/* Ficha de la Madre */}
@@ -99,13 +123,13 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           DATOS DE LA MADRE
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input label="Su madre es la Sra." placeholder="Ej: Raquel Ruiz Diaz" {...register("nombreMadre")} />
+          <Input label="Nombre y apellido de la madre" placeholder="Ingrese nombre y apellido" {...register("nombreMadre")} />
           <Input label="Edad en años" type="number" {...register("edadMadre")} />
-          <Input label="Ocupación" placeholder="Ej: Enfermera" {...register("ocupacionMadre")} />
-          <Input label="Empresa o Institución" placeholder="Ej: Independiente" {...register("empresaMadre")} />
-          <Input label="Salario aproximado" placeholder="Ej: 4.000.000" {...register("salarioMadre")} />
-          <Input label="Vive en (Ciudad)" placeholder="Ej: Villa Elisa" {...register("ciudadMadre")} />
-          <Input label="Teléfono" placeholder="Ej: 0981 661702" {...register("telefonoMadre")} />
+          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionMadre")} />
+          <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaMadre")} />
+          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioMadre")} />
+          <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadMadre")} />
+          <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoMadre")} />
         </div>
       </div>
 
@@ -115,40 +139,42 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           DATOS DEL PADRE
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input label="Su padre es el Sr." placeholder="Ej: Miguel Lovera" {...register("nombrePadre")} />
+          <Input label="Nombre y apellido del padre" placeholder="Ingrese nombre y apellido" {...register("nombrePadre")} />
           <Input label="Edad en años" type="number" {...register("edadPadre")} />
-          <Input label="Ocupación" placeholder="Ej: Empleado Público" {...register("ocupacionPadre")} />
-          <Input label="Empresa o Institución" placeholder="Ej: ANDE" {...register("empresaPadre")} />
-          <Input label="Salario aproximado" placeholder="Ej: 15.000.000" {...register("salarioPadre")} />
-          <Input label="Vive en (Ciudad)" placeholder="Ej: Asunción" {...register("ciudadPadre")} />
-          <Input label="Teléfono" placeholder="Ej: 0981 448401" {...register("telefonoPadre")} />
+          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPadre")} />
+          <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaPadre")} />
+          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPadre")} />
+          <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPadre")} />
+          <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPadre")} />
         </div>
       </div>
 
-      {/* Pareja del Padre/Madre */}
-      <div className="space-y-3">
-        <Toggle
-          label="¿Su padre/madre tiene pareja viviendo en la casa?"
-          checked={Boolean(tieneParejaCasa)}
-          onChange={(val) => setValue("parejaPadreMadreViveCasa", val)}
-        />
-        {tieneParejaCasa && (
-          <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-            <span className="text-xs font-mono font-bold uppercase text-gold block">
-              DATOS DE LA PAREJA DEL PADRE / MADRE
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input label="Nombre y Apellido" placeholder="Ej: Silvana Rios" {...register("nombrePareja")} />
-              <Input label="Edad en años" type="number" {...register("edadPareja")} />
-              <Input label="Ocupación" placeholder="Ej: Abogada" {...register("ocupacionPareja")} />
-              <Input label="Empresa o Institución" placeholder="Ej: ANDE" {...register("empresaPareja")} />
-              <Input label="Salario aproximado" placeholder="Ej: 15.000.000" {...register("salarioPareja")} />
-              <Input label="Vive en (Ciudad)" placeholder="Ej: Asunción" {...register("ciudadPareja")} />
-              <Input label="Teléfono" placeholder="Ej: 0981 200456" {...register("telefonoPareja")} />
+      {/* REGLA DE MICHI: Solo aparece si la persona dice que sus padres están separados (o divorciados) */}
+      {padresEstanSeparados && (
+        <div className="space-y-3">
+          <Toggle
+            label="¿Su padre o madre tiene pareja viviendo en la casa?"
+            checked={Boolean(tieneParejaCasa)}
+            onChange={(val) => setValue("parejaPadreMadreViveCasa", val)}
+          />
+          {tieneParejaCasa && (
+            <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+              <span className="text-xs font-mono font-bold uppercase text-gold block">
+                DATOS DE LA PAREJA DEL PADRE / MADRE
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Input label="Nombre y Apellido" placeholder="Ingrese nombre y apellido" {...register("nombrePareja")} />
+                <Input label="Edad en años" type="number" {...register("edadPareja")} />
+                <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPareja")} />
+                <Input label="Empresa o Institución" placeholder="Ingrese empresa" {...register("empresaPareja")} />
+                <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPareja")} />
+                <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPareja")} />
+                <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPareja")} />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Hermanos */}
       <div className="space-y-3">
@@ -166,7 +192,7 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-mono font-bold uppercase text-gold">
-                NÓMINA DE HERMANOS ({fields.length})
+                HERMANOS/AS ({fields.length})
               </span>
               <Button
                 type="button"
@@ -191,35 +217,35 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
                   <div className="sm:col-span-3">
                     <Input
                       label={`#${idx + 1} Nombre y apellido`}
-                      placeholder="Ej: José Lovera"
+                      placeholder="Nombre y apellido"
                       {...register(`listaHermanos.${idx}.nombre`)}
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <Input
                       label="Edad"
-                      placeholder="Ej: 23"
+                      placeholder="Edad"
                       {...register(`listaHermanos.${idx}.edad`)}
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <Input
                       label="Ocupación"
-                      placeholder="Ej: Estudiante"
+                      placeholder="Ocupación"
                       {...register(`listaHermanos.${idx}.ocupacion`)}
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <Input
                       label="Empresa/Inst."
-                      placeholder="Ej: BMW"
+                      placeholder="Lugar"
                       {...register(`listaHermanos.${idx}.empresa`)}
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <Input
                       label="Domicilio"
-                      placeholder="Ej: Asunción"
+                      placeholder="Ciudad"
                       {...register(`listaHermanos.${idx}.domicilio`)}
                     />
                   </div>
@@ -243,17 +269,17 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         )}
       </div>
 
-      {/* Productos de familiares en el Banco */}
+      {/* Productos de familiares */}
       <div className="space-y-3">
         <Toggle
-          label="¿Algún/os miembro/s de la familia tiene/n productos del Banco / Entidad?"
+          label="¿Algún/os miembro/s de la familia tiene/n productos de la entidad solicitante?"
           checked={Boolean(famProductos)}
           onChange={(val) => setValue("familiaresProductosEntidad", val)}
         />
         {famProductos && (
           <Input
             label="Familiar con producto/s y tipo de producto"
-            placeholder="Ej: Padre, Madre - Tarjeta de débito"
+            placeholder="Indique parentesco y tipo de producto"
             {...register("familiarConProductosDetalle")}
           />
         )}
