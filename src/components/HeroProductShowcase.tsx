@@ -123,8 +123,8 @@ export function HeroProductShowcase() {
                 onClick={() => setSelectedIdx(idx)}
                 className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all cursor-pointer border flex items-center justify-center gap-2 ${
                   isSelected
-                    ? "bg-gold border-gold shadow-sm"
-                    : "bg-surface0 text-subtext1 border-overlay1 hover:border-gold/60 hover:text-text"
+                    ? "bg-gold border-gold text-white shadow-sm"
+                    : "bg-surface0 text-text border-overlay1 hover:border-gold hover:text-gold"
                 }`}
               >
                 <span>{pag.short}</span>
@@ -178,7 +178,7 @@ export function HeroProductShowcase() {
                     </h3>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-subtext1 bg-surface1 px-2.5 py-1 rounded-lg border border-overlay0">
+                <span className="text-xs font-mono font-bold text-text bg-surface1 px-2.5 py-1 rounded-lg border border-overlay0">
                   A4 Retrato + PPTX
                 </span>
               </div>

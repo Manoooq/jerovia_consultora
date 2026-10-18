@@ -13,6 +13,7 @@ import {
   X,
   Lock,
   FileSpreadsheet,
+  ChevronDown,
 } from "lucide-react";
 
 const LAUREL_BADGES = [
@@ -207,6 +208,40 @@ export function CinematicHero() {
             </div>
           ))}
         </motion.div>
+      </div>
+
+      {/* 4. Degradado arquitectónico que funde la portada con la sección inferior */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-36 sm:h-52 z-20"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(25, 34, 21, 0) 0%, color-mix(in srgb, var(--bg-base) 50%, transparent) 55%, var(--bg-base) 100%)",
+        }}
+      />
+
+      <div className="relative z-30 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 pb-4 pt-1 flex items-center justify-between text-xs sm:text-sm text-white">
+        <div className="flex items-center gap-4 drop-shadow">
+          <Link
+            href="/entrevista/demo"
+            className="font-bold text-white hover:text-[#b4c6aa] underline underline-offset-4"
+          >
+            Probar Cuestionario Demo
+          </Link>
+          <span className="hidden sm:inline text-white/50">|</span>
+          <span className="hidden sm:inline font-medium text-[#e2e8de]">
+            Asunción, Paraguay
+          </span>
+        </div>
+
+        <a
+          href="#showcase"
+          aria-label="Deslizar hacia el dossier"
+          className="inline-flex items-center gap-1.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-white hover:text-[#b4c6aa] transition-colors drop-shadow cursor-pointer"
+        >
+          <span>Explorar</span>
+          <ChevronDown className="h-4 w-4 animate-bounce text-[#b4c6aa]" />
+        </a>
       </div>
     </section>
   );
