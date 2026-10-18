@@ -1,54 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAuthToken, AUTH_COOKIE } from "@/lib/auth";
-
-function isSafeRedirectPath(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
-}
+import { AUTH_COOKIE, verifyAuthToken } from "@/lib/auth";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const sessionCookie = req.cookies.get(AUTH_COOKIE)?.value;
 
-  if (pathname.startsWith("/api/usuarios") || pathname.startsWith("/api/audit")) {
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "No autenticado." }, { status: 401 });
-    }
-    const session = await verifyAuthToken(sessionCookie);
-    if (!session || session.role !== "admin") {
-      return NextResponse.json(
-        { error: "Acceso denegado: se requieren privilegios de administrador." },
-        { status: 403 }
-      );
-    }
+  // Las rutas de entrevista (/entrevista/* y /api/entrevista/[token]) son públicas para que el postulante pueda rellenar sus datos
+  if (
+    pathname.startsWith("/entrevista") ||
+    pathname.startsWith("/api/entrevista/") ||
+    pathname.startsWith("/api/exportar/") ||
+    pathname.startsWith("/api/ai/")
+  ) {
     return NextResponse.next();
   }
 
   if (pathname.startsWith("/dashboard")) {
-    const safeRedirect = isSafeRedirectPath(pathname) ? pathname : "/dashboard";
+    const token = req.cookies.get(AUTH_COOKIE)?.value;
+    const session = token ? await verifyAuthToken(token) : null;
 
-    if (!sessionCookie) {
+    if (!session) {
       const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("redirect", safeRedirect);
+      loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    const session = await verifyAuthToken(sessionCookie);
-    if (!session) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("redirect", safeRedirect);
-      const res = NextResponse.redirect(loginUrl);
-      res.cookies.delete(AUTH_COOKIE);
-      return res;
-    }
-
-    const esAdmin = session.role === "admin";
     if (
-      (pathname.startsWith("/dashboard/nueva") || pathname.startsWith("/dashboard/usuarios")) &&
-      !esAdmin
+      (pathname.startsWith("/dashboard/nueva") ||
+        pathname.startsWith("/dashboard/usuarios")) &&
+      session.role !== "admin"
     ) {
-      const dashboardUrl = new URL("/dashboard", req.url);
-      dashboardUrl.searchParams.set("error", "unauthorized_role");
-      return NextResponse.redirect(dashboardUrl);
+      return NextResponse.redirect(
+        new URL("/dashboard?error=unauthorized_role", req.url)
+      );
     }
   }
 
@@ -56,5 +39,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/usuarios/:path*", "/api/audit/:path*"],
+  matcher: ["/dashboard/:path*"],
 };
