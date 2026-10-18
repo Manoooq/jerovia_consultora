@@ -1,10 +1,11 @@
 import pptxgen from "pptxgenjs";
 import { EntrevistaRecord } from "./store";
+import { convertirATerceraPersona } from "./textProcessor";
 
 function v(val: unknown, fallback = "No especificado"): string {
   if (val !== undefined && val !== null) {
     const s = String(val).trim();
-    if (s.length > 0) return s;
+    if (s.length > 0) return convertirATerceraPersona(s);
   }
   return fallback;
 }
@@ -12,7 +13,7 @@ function v(val: unknown, fallback = "No especificado"): string {
 function siNo(val: unknown, detalle?: unknown): string {
   if (val === true || val === "si" || val === "Sí") {
     const det = String(detalle ?? "").trim();
-    return det ? `Sí - ${det}` : "Sí";
+    return det ? `Sí - ${convertirATerceraPersona(det)}` : "Sí";
   }
   return "No";
 }

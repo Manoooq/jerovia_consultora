@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { enforceRateLimit, parseSafeJson } from "@/lib/apiSecurity";
+import { corregirOrtografiaTexto } from "@/lib/textProcessor";
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
   const { data: body, errorResponse } = await parseSafeJson<{
     texto?: string;
     paso?: number;
-    modo?: "extraer" | "mejorar";
+    modo?: "extraer" | "mejorar" | "corregir";
     campo?: string;
   }>(req, 64_000);
   if (errorResponse) return errorResponse;
@@ -166,27 +167,38 @@ export async function POST(req: NextRequest) {
   const modo = body?.modo || "extraer";
 
   if (!texto) {
-    return NextResponse.json({ campos: {} });
+    return NextResponse.json({ campos: {}, textoCorregido: "" });
   }
 
-  // Modo: Mejorar redacción de un campo abierto
-  if (modo === "mejorar") {
-    if (genAI) {
+  // Modo: Corrector ortográfico puro (sin cambiar las palabras ni inventar contenido del postulante)
+  if (modo === "corregir" || modo === "mejorar") {
+    const localFixed = corregirOrtografiaTexto(texto);
+    if (genAI && texto.length >= 12) {
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `Reescribe de manera formal, breve y profesional para un informe socioambiental laboral en Paraguay la siguiente respuesta del postulante (sin inventar datos falsos ni agregar saludos): "${texto}"`;
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+          generationConfig: { temperature: 0.0, maxOutputTokens: 300 },
+        });
+        const prompt = `Corrige ÚNICAMENTE los errores ortográficos, tildes faltantes y signos de puntuación del siguiente texto escrito en español (Paraguay).
+REGLA ESTRICTA: NO cambies las palabras del autor, NO agregues frases nuevas, NO inventes información y NO cambies el tono. Devuelve exactamente el mismo texto pero sin faltas de ortografía:
+"${localFixed}"`;
         const res = await model.generateContent(prompt);
-        const mejorado = res.response.text().trim();
-        if (mejorado) {
-          return NextResponse.json({ textoMejorado: mejorado });
+        const limpio = res.response
+          .text()
+          .trim()
+          .replace(/^["«]|["»]$/g, "");
+        if (limpio && Math.abs(limpio.length - localFixed.length) < 25) {
+          return NextResponse.json({
+            textoCorregido: limpio,
+            textoMejorado: limpio,
+          });
         }
       } catch {}
     }
 
-    const cap = texto.charAt(0).toUpperCase() + texto.slice(1);
-    const punto = cap.endsWith(".") ? cap : `${cap}.`;
     return NextResponse.json({
-      textoMejorado: `${punto} Demuestra compromiso personal, responsabilidad y orientación al cumplimiento de objetivos.`,
+      textoCorregido: localFixed,
+      textoMejorado: localFixed,
     });
   }
 

@@ -16,8 +16,6 @@ import {
   Clock,
   GraduationCap,
   Rocket,
-  Sparkles,
-  Loader2,
 } from "lucide-react";
 
 interface Props {
@@ -55,7 +53,6 @@ const OPCIONES_OCUPACIONALES = [
 
 export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
   const { shouldHideField } = useInterviewMode();
-  const [improvingField, setImprovingField] = useState<string | null>(null);
 
   const {
     register,
@@ -86,41 +83,6 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
 
   const situacion = watch("situacionActual") || "empleado";
   const famEntidad = watch("familiarEnEntidad");
-
-  async function mejorarConIA(
-    campo:
-      | "motivoEleccionEntidad"
-      | "objetivosProfesionales"
-      | "ambienteLaboralIdeal"
-  ) {
-    setImprovingField(campo);
-    const actual = (watch(campo) || "").trim();
-    const baseText =
-      actual ||
-      (campo === "motivoEleccionEntidad"
-        ? "Por las oportunidades de crecimiento laboral y desarrollo profesional"
-        : campo === "objetivosProfesionales"
-        ? "Desempeñarme con responsabilidad y crecer dentro de la institución"
-        : "Un ambiente organizado, respetuoso y con buena comunicación");
-
-    try {
-      const res = await fetch("/api/ai/extraer-campos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: baseText, modo: "mejorar", campo }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.textoMejorado) {
-          setValue(campo, data.textoMejorado, { shouldValidate: true });
-        }
-      }
-    } catch {
-      setValue(campo, baseText, { shouldValidate: true });
-    } finally {
-      setImprovingField(null);
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-5" noValidate>
@@ -379,71 +341,26 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="space-y-1">
-          <Input
-            label="¿Por qué eligió este Banco para trabajar?"
-            placeholder="Escriba su motivación"
-            {...register("motivoEleccionEntidad")}
-            error={errors.motivoEleccionEntidad?.message}
-          />
-          <button
-            type="button"
-            disabled={improvingField === "motivoEleccionEntidad"}
-            onClick={() => mejorarConIA("motivoEleccionEntidad")}
-            className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-          >
-            {improvingField === "motivoEleccionEntidad" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Sparkles className="h-3 w-3" />
-            )}
-            <span>Mejorar redacción con IA</span>
-          </button>
-        </div>
+        <Input
+          label="¿Por qué eligió este Banco para trabajar?"
+          placeholder="Escriba su motivación"
+          {...register("motivoEleccionEntidad")}
+          error={errors.motivoEleccionEntidad?.message}
+        />
 
-        <div className="space-y-1">
-          <Input
-            label="Objetivos profesionales si se incorpora"
-            placeholder="Indique sus metas laborales"
-            {...register("objetivosProfesionales")}
-            error={errors.objetivosProfesionales?.message}
-          />
-          <button
-            type="button"
-            disabled={improvingField === "objetivosProfesionales"}
-            onClick={() => mejorarConIA("objetivosProfesionales")}
-            className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-          >
-            {improvingField === "objetivosProfesionales" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Sparkles className="h-3 w-3" />
-            )}
-            <span>Mejorar redacción con IA</span>
-          </button>
-        </div>
+        <Input
+          label="Objetivos profesionales si se incorpora"
+          placeholder="Indique sus metas laborales"
+          {...register("objetivosProfesionales")}
+          error={errors.objetivosProfesionales?.message}
+        />
 
-        <div className="space-y-1">
-          <Input
-            label="¿Cómo sería su ambiente laboral ideal?"
-            placeholder="Describa su entorno ideal"
-            {...register("ambienteLaboralIdeal")}
-            error={errors.ambienteLaboralIdeal?.message}
-          />
-          <button
-            type="button"
-            disabled={improvingField === "ambienteLaboralIdeal"}
-            onClick={() => mejorarConIA("ambienteLaboralIdeal")}
-            className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-          >
-            {improvingField === "ambienteLaboralIdeal" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Sparkles className="h-3 w-3" />
-            )}
-            <span>Mejorar redacción con IA</span>
-          </button>
-        </div>
+        <Input
+          label="¿Cómo sería su ambiente laboral ideal?"
+          placeholder="Describa su entorno ideal"
+          {...register("ambienteLaboralIdeal")}
+          error={errors.ambienteLaboralIdeal?.message}
+        />
       </div>
 
       <Toggle

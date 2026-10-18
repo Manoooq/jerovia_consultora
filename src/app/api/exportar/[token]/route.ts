@@ -4,6 +4,10 @@ import { generarPptxInforme } from "@/lib/exportPptx";
 import { getSession } from "@/lib/auth";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { enforceRateLimit, getClientIp } from "@/lib/apiSecurity";
+import {
+  convertirATerceraPersona,
+  corregirOrtografiaTexto,
+} from "@/lib/textProcessor";
 
 function escapeHtml(val: unknown): string {
   const str = String(val ?? "");
@@ -19,7 +23,17 @@ function v(val: unknown, fallback = "No especificado"): string {
   if (val !== undefined && val !== null) {
     const trimmed = String(val).trim();
     if (trimmed.length > 0) {
-      return escapeHtml(trimmed);
+      return escapeHtml(convertirATerceraPersona(trimmed));
+    }
+  }
+  return escapeHtml(fallback);
+}
+
+function vRaw(val: unknown, fallback = "No especificado"): string {
+  if (val !== undefined && val !== null) {
+    const trimmed = String(val).trim();
+    if (trimmed.length > 0) {
+      return escapeHtml(corregirOrtografiaTexto(trimmed));
     }
   }
   return escapeHtml(fallback);
@@ -33,7 +47,7 @@ function isSafeImageSrc(src: unknown): boolean {
 function siNo(val: unknown, detalle?: unknown): string {
   if (val === true || val === "si" || val === "Sí") {
     const det = String(detalle ?? "").trim();
-    return det ? "Sí - " + escapeHtml(det) : "Sí";
+    return det ? "Sí - " + escapeHtml(convertirATerceraPersona(det)) : "Sí";
   }
   return "No";
 }
@@ -118,7 +132,7 @@ export async function GET(
       : "No";
 
   const redSocialTexto = d.redSocial
-    ? v(d.redSocialPlataforma, "Instagram") + " - " + v(d.redSocial)
+    ? vRaw(d.redSocialPlataforma, "Instagram") + " - " + escapeHtml(String(d.redSocial).trim())
     : "No utiliza";
 
   const hermanosArray = Array.isArray(d.listaHermanos) ? d.listaHermanos : [];

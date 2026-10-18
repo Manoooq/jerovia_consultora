@@ -120,8 +120,11 @@ function DashboardContent() {
   ): EntrevistaItem[] {
     let deletedLocal: string[] = [];
     try {
+      // Limpiar listas viejas que pudieran haber ocultado expedientes recuperados (ej. Valeria o Ingrid)
+      localStorage.removeItem("jerovia_deleted_tokens_v3");
+      localStorage.removeItem("jerovia_deleted_tokens_v4");
       deletedLocal = JSON.parse(
-        localStorage.getItem("jerovia_deleted_tokens_v3") || "[]"
+        localStorage.getItem("jerovia_deleted_tokens_v5") || "[]"
       );
     } catch {}
     const delSet = new Set(deletedLocal);
@@ -188,7 +191,7 @@ function DashboardContent() {
         return { ...item, datos: lightDatos };
       });
       localStorage.setItem(
-        "jerovia_dashboard_cache_v3",
+        "jerovia_dashboard_cache_v5",
         JSON.stringify(lightArr)
       );
     } catch {}
@@ -211,7 +214,8 @@ function DashboardContent() {
   async function loadInitial() {
     setLoading(true);
     try {
-      const cachedRaw = localStorage.getItem("jerovia_dashboard_cache_v3");
+      localStorage.removeItem("jerovia_dashboard_cache_v3");
+      const cachedRaw = localStorage.getItem("jerovia_dashboard_cache_v5");
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw) as EntrevistaItem[];
         if (Array.isArray(cached) && cached.length > 0) {
@@ -370,12 +374,12 @@ function DashboardContent() {
       }
       try {
         const deletedLocal: string[] = JSON.parse(
-          localStorage.getItem("jerovia_deleted_tokens_v3") || "[]"
+          localStorage.getItem("jerovia_deleted_tokens_v5") || "[]"
         );
         if (!deletedLocal.includes(deleteModal.token)) {
           deletedLocal.push(deleteModal.token);
           localStorage.setItem(
-            "jerovia_deleted_tokens_v3",
+            "jerovia_deleted_tokens_v5",
             JSON.stringify(deletedLocal)
           );
         }
@@ -738,27 +742,27 @@ function DashboardContent() {
                   role="listitem"
                   className="py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 hover:bg-surface1/40 rounded-xl px-2 sm:px-3 transition-colors"
                 >
-                  <div className="flex items-start sm:items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0/50 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                    <div className="h-11 w-11 rounded-xl bg-surface1 border border-overlay0/50 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                       {estadoIcon(e.estado)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="font-bold text-text text-sm truncate">
+                      <div className="flex flex-wrap items-center gap-2.5 mb-1">
+                        <h3 className="font-bold text-text text-base sm:text-lg truncate">
                           {e.candidatoNombre || "Postulante sin nombre"}
                         </h3>
                         {estadoBadge(e.estado)}
                         {e.cedula && (
-                          <span className="text-[11px] font-mono text-subtext0 tabular-nums">
+                          <span className="text-xs sm:text-sm font-mono font-semibold text-subtext1 tabular-nums">
                             CI: {e.cedula}
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-subtext0 tabular-nums">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-subtext0 tabular-nums">
                         <span className="font-semibold text-subtext1">{e.entidadSolicitante}</span>
                         <span>•</span>
                         <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3 w-3 text-gold" aria-hidden="true" />
+                          <MapPin className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
                           {e.ciudad || "Gran Asunción"}
                         </span>
                         <span>•</span>
@@ -766,7 +770,7 @@ function DashboardContent() {
                         {e.evaluadorAsignado && (
                           <>
                             <span>•</span>
-                            <span className="text-gold font-medium">{e.evaluadorAsignado}</span>
+                            <span className="text-gold font-semibold">{e.evaluadorAsignado}</span>
                           </>
                         )}
                         <span>•</span>
@@ -777,20 +781,40 @@ function DashboardContent() {
 
                   {/* Barra de Acciones Táctil */}
                   <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-overlay0/20">
+                    <a
+                      href={`/api/exportar/${encodeURIComponent(e.token)}?formato=pdf&t=${encodeURIComponent(e.actualizadoEn)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-h-[40px] px-3 rounded-xl border border-gold/50 bg-gold/10 hover:bg-gold/20 transition-colors text-text flex items-center gap-1.5 text-xs sm:text-sm font-bold"
+                      title="Abrir Informe en 5 Páginas (PDF)"
+                    >
+                      <FileText className="h-4 w-4 text-gold" />
+                      <span>PDF</span>
+                    </a>
+
+                    <a
+                      href={`/api/exportar/${encodeURIComponent(e.token)}?formato=pptx&t=${encodeURIComponent(e.actualizadoEn)}`}
+                      className="min-h-[40px] px-3 rounded-xl border border-overlay0/70 bg-surface1 hover:border-gold transition-colors text-text flex items-center gap-1.5 text-xs sm:text-sm font-bold"
+                      title="Descargar Informe PowerPoint (.PPTX)"
+                    >
+                      <Download className="h-4 w-4 text-gold" />
+                      <span>PPTX</span>
+                    </a>
+
                     <button
                       type="button"
                       onClick={() => handleCopyLink(e.token)}
-                      className="min-h-[38px] px-2.5 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext1 hover:text-text flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                      className="min-h-[40px] px-3 rounded-xl border border-overlay0/60 bg-surface1 hover:border-gold transition-colors text-subtext1 hover:text-text flex items-center gap-1.5 text-xs sm:text-sm font-medium cursor-pointer"
                       title="Copiar enlace de la entrevista"
                     >
                       {copiadoToken === e.token ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-green" />
+                          <Check className="h-4 w-4 text-green" />
                           <span className="sm:hidden">Copiado</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="h-3.5 w-3.5" />
+                          <Copy className="h-4 w-4" />
                           <span className="sm:hidden">Enlace</span>
                         </>
                       )}

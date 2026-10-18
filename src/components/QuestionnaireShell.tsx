@@ -32,16 +32,16 @@ export function QuestionnaireShell({
       <AntigravityBackground />
 
       <header className="glass-panel sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-3.5 sm:px-6 h-16 flex items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-3">
           <Link href={isEvaluator ? "/dashboard" : "/"} className="flex items-center gap-2 shrink-0">
             <Logo size="sm" />
           </Link>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {isEvaluator && (
               <Link
                 href="/dashboard"
-                className="px-3 py-1.5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-xs font-bold text-text"
+                className="px-4 py-2 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-xs sm:text-sm font-bold text-text"
               >
                 Panel Evaluador
               </Link>
@@ -54,49 +54,49 @@ export function QuestionnaireShell({
       <main
         id="main-content"
         tabIndex={-1}
-        className="relative z-10 w-full max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-7 outline-none space-y-4 flex-1"
+        className="relative z-10 w-full max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 outline-none space-y-5 flex-1"
       >
-        <div className="rounded-2xl bg-gradient-to-r from-[#536c45] via-[#485536] to-[#364228] text-white p-4 sm:p-5 shadow-md border border-[#85987a]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-2xl bg-gradient-to-r from-[#536c45] via-[#485536] to-[#364228] text-white p-5 sm:p-6 shadow-md border border-[#85987a]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#d5ddd1]">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-widest text-[#d5ddd1]">
+              <ShieldCheck className="h-4 w-4" />
               <span>
                 {isEvaluator
                   ? "MODO EVALUADOR (ACCESO COMPLETO + FOTOS Y CIERRE)"
                   : "FORMULARIO SOCIOAMBIENTAL"}
               </span>
             </div>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
+            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white">
               {candidatoNombre
                 ? `Postulante: ${candidatoNombre}`
                 : "Relevamiento de Datos"}
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/25 border border-white/20 font-bold text-[#f4f6f2]">
-              <Building2 className="h-3.5 w-3.5 text-[#b4c6aa]" />
+          <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-black/25 border border-white/20 font-bold text-[#f4f6f2]">
+              <Building2 className="h-4 w-4 text-[#b4c6aa]" />
               <span>{entidadSolicitante}</span>
             </span>
             {evaluadorAsignado && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/20 border border-white/15 font-mono text-[11px] text-[#d5ddd1]">
-                <UserCheck className="h-3.5 w-3.5" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-black/20 border border-white/15 font-mono text-xs sm:text-sm text-[#d5ddd1]">
+                <UserCheck className="h-4 w-4" />
                 <span>{evaluadorAsignado}</span>
               </span>
             )}
           </div>
         </div>
 
-        <div className="recessed-well rounded-3xl p-2 sm:p-4">
-          <SpotlightCard sinkIntensity={2} className="p-4 sm:p-7">
+        <div className="recessed-well rounded-3xl p-2.5 sm:p-5">
+          <SpotlightCard sinkIntensity={2} className="p-5 sm:p-8 lg:p-10">
             {children}
           </SpotlightCard>
         </div>
       </main>
 
       <footer className="relative z-10 border-t border-overlay0/40 bg-mantle/90 backdrop-blur-md py-4 px-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-center gap-2 text-xs font-mono text-subtext1">
-          <Lock className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+        <div className="max-w-5xl mx-auto flex items-center justify-center gap-2 text-xs sm:text-sm font-mono text-subtext1">
+          <Lock className="h-4 w-4 text-gold" aria-hidden="true" />
           <span>Jerovia Consultora · Información Confidencial</span>
         </div>
       </footer>

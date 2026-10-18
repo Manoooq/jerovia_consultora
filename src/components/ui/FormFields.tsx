@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { InputHTMLAttributes, forwardRef, useId } from "react";
 import { AlertCircle } from "lucide-react";
+import { corregirOrtografiaTexto } from "@/lib/textProcessor";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -9,18 +10,30 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, id, ...props }, ref) => {
+  ({ className, label, error, hint, id, onBlur, onChange, ...props }, ref) => {
     const generatedId = useId();
     const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const hintId = `${inputId}-hint`;
+
+    function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+      const type = props.type || "text";
+      if (type === "text" && e.target.value && e.target.value.trim().length > 1) {
+        const fixed = corregirOrtografiaTexto(e.target.value);
+        if (fixed !== e.target.value) {
+          e.target.value = fixed;
+          onChange?.(e as unknown as React.ChangeEvent<HTMLInputElement>);
+        }
+      }
+      onBlur?.(e);
+    }
 
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
           <label
             htmlFor={inputId}
-            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
+            className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
@@ -34,11 +47,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          lang="es"
+          spellCheck={props.type === "email" || props.type === "password" ? false : true}
+          autoCorrect="on"
           aria-required={props.required ? "true" : undefined}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
+          onChange={onChange}
+          onBlur={handleBlur}
           className={cn(
-            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium min-h-[44px]",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-4 py-3 text-base text-text placeholder:text-subtext0/60 font-medium min-h-[48px]",
             "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none",
             "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
@@ -51,14 +69,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p
             id={errorId}
             role="alert"
-            className="text-xs font-semibold text-red flex items-center gap-1.5 mt-0.5"
+            className="text-xs sm:text-sm font-semibold text-red flex items-center gap-1.5 mt-0.5"
           >
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </p>
         )}
         {hint && !error && (
-          <p id={hintId} className="text-xs text-subtext0">
+          <p id={hintId} className="text-xs sm:text-sm text-subtext0">
             {hint}
           </p>
         )}
@@ -85,7 +103,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
+            className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
@@ -103,7 +121,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text font-medium min-h-[44px]",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-4 py-3 text-base text-text font-medium min-h-[48px]",
             "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none cursor-pointer",
             "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
@@ -129,9 +147,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <p
             id={errorId}
             role="alert"
-            className="text-xs font-semibold text-red flex items-center gap-1.5 mt-0.5"
+            className="text-xs sm:text-sm font-semibold text-red flex items-center gap-1.5 mt-0.5"
           >
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </p>
         )}
@@ -149,18 +167,29 @@ interface TextareaProps
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, label, error, hint, id, ...props }, ref) => {
+  ({ className, label, error, hint, id, onBlur, onChange, ...props }, ref) => {
     const generatedId = useId();
     const textareaId = id || generatedId;
     const errorId = `${textareaId}-error`;
     const hintId = `${textareaId}-hint`;
+
+    function handleBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
+      if (e.target.value && e.target.value.trim().length > 1) {
+        const fixed = corregirOrtografiaTexto(e.target.value);
+        if (fixed !== e.target.value) {
+          e.target.value = fixed;
+          onChange?.(e as unknown as React.ChangeEvent<HTMLTextAreaElement>);
+        }
+      }
+      onBlur?.(e);
+    }
 
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
           <label
             htmlFor={textareaId}
-            className="text-[11px] font-mono font-bold uppercase tracking-wider text-subtext1"
+            className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-subtext1"
           >
             {label}
             {props.required && (
@@ -174,12 +203,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={textareaId}
+          lang="es"
+          spellCheck={true}
+          autoCorrect="on"
           aria-required={props.required ? "true" : undefined}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
+          onChange={onChange}
+          onBlur={handleBlur}
           className={cn(
-            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-3.5 py-2.5 text-base sm:text-sm text-text placeholder:text-subtext0/60 font-medium",
-            "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none resize-y min-h-[88px]",
+            "w-full rounded-xl border border-overlay1/80 bg-crust/80 px-4 py-3 text-base text-text placeholder:text-subtext0/60 font-medium",
+            "shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-150 outline-none resize-y min-h-[96px]",
             "hover:border-gold/40 focus-visible:border-gold focus-visible:bg-surface0 focus-visible:shadow-[inset_0_1px_3px_rgba(0,0,0,0.2),0_0_0_3px_rgba(212,175,55,0.15)]",
             error &&
               "border-red focus-visible:border-red focus-visible:ring-red/25",
@@ -191,14 +225,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           <p
             id={errorId}
             role="alert"
-            className="text-xs font-semibold text-red flex items-center gap-1.5 mt-0.5"
+            className="text-xs sm:text-sm font-semibold text-red flex items-center gap-1.5 mt-0.5"
           >
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{error}</span>
           </p>
         )}
         {hint && !error && (
-          <p id={hintId} className="text-xs text-subtext0">
+          <p id={hintId} className="text-xs sm:text-sm text-subtext0">
             {hint}
           </p>
         )}
@@ -222,7 +256,7 @@ export function Toggle({ label, checked, onChange, description }: ToggleProps) {
     <div
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex items-center justify-between gap-4 py-2.5 px-3.5 rounded-xl border transition-all cursor-pointer select-none min-h-[46px]",
+        "flex items-center justify-between gap-4 py-3 px-4 rounded-xl border transition-all cursor-pointer select-none min-h-[50px]",
         checked
           ? "border-gold/50 bg-gold/10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]"
           : "border-overlay0/60 bg-crust/50 hover:border-overlay1"
@@ -232,12 +266,12 @@ export function Toggle({ label, checked, onChange, description }: ToggleProps) {
         <label
           htmlFor={id}
           onClick={(e) => e.stopPropagation()}
-          className="text-xs sm:text-sm font-semibold text-text cursor-pointer"
+          className="text-sm sm:text-base font-semibold text-text cursor-pointer"
         >
           {label}
         </label>
         {description && (
-          <span className="text-[11px] text-subtext1 mt-0.5">{description}</span>
+          <span className="text-xs sm:text-sm text-subtext1 mt-0.5">{description}</span>
         )}
       </div>
 
@@ -278,7 +312,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-overlay0/80 bg-surface0 p-5 sm:p-6 shadow-xs",
+        "rounded-2xl border border-overlay0/80 bg-surface0 p-5 sm:p-7 shadow-xs",
         className
       )}
     >
@@ -303,7 +337,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border",
+        "inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border",
         variants[variant]
       )}
     >

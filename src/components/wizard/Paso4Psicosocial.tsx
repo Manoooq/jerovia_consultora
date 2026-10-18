@@ -11,7 +11,6 @@ import {
   Sparkles,
   ArrowLeft,
   ArrowRight,
-  Loader2,
   Smile,
   TrendingUp,
   Target,
@@ -25,8 +24,6 @@ interface Props {
 }
 
 export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
-  const [loadingField, setLoadingField] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -46,41 +43,6 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
   });
 
   const esPep = watch("familiaresPoliticos");
-
-  async function mejorarCampo(
-    campo: "aspectosPositivos" | "aspectosMejorar" | "visionLargoPlazo"
-  ) {
-    setLoadingField(campo);
-    const actual = (watch(campo) || "").trim();
-    const fallback =
-      campo === "aspectosPositivos"
-        ? "Persona responsable, puntual, honesta y comprometida con el trabajo en equipo"
-        : campo === "aspectosMejorar"
-        ? "Tendencia a la autoexigencia en el cumplimiento de metas"
-        : "Culminar los estudios universitarios, crecer profesionalmente y consolidar patrimonio propio";
-
-    try {
-      const res = await fetch("/api/ai/extraer-campos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          texto: actual || fallback,
-          modo: "mejorar",
-          campo,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.textoMejorado) {
-          setValue(campo, data.textoMejorado, { shouldValidate: true });
-        }
-      }
-    } catch {
-      setValue(campo, actual || fallback, { shouldValidate: true });
-    } finally {
-      setLoadingField(null);
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-5" noValidate>
@@ -128,19 +90,6 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           {...register("aspectosPositivos")}
           error={errors.aspectosPositivos?.message}
         />
-        <button
-          type="button"
-          disabled={loadingField === "aspectosPositivos"}
-          onClick={() => mejorarCampo("aspectosPositivos")}
-          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-        >
-          {loadingField === "aspectosPositivos" ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Sparkles className="h-3 w-3" />
-          )}
-          <span>Mejorar redacción con IA</span>
-        </button>
       </div>
 
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-2">
@@ -155,19 +104,6 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           {...register("aspectosMejorar")}
           error={errors.aspectosMejorar?.message}
         />
-        <button
-          type="button"
-          disabled={loadingField === "aspectosMejorar"}
-          onClick={() => mejorarCampo("aspectosMejorar")}
-          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-        >
-          {loadingField === "aspectosMejorar" ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Sparkles className="h-3 w-3" />
-          )}
-          <span>Mejorar redacción con IA</span>
-        </button>
       </div>
 
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-2">
@@ -182,19 +118,6 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           {...register("visionLargoPlazo")}
           error={errors.visionLargoPlazo?.message}
         />
-        <button
-          type="button"
-          disabled={loadingField === "visionLargoPlazo"}
-          onClick={() => mejorarCampo("visionLargoPlazo")}
-          className="text-[11px] font-bold text-gold hover:underline inline-flex items-center gap-1 cursor-pointer"
-        >
-          {loadingField === "visionLargoPlazo" ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Sparkles className="h-3 w-3" />
-          )}
-          <span>Mejorar redacción con IA</span>
-        </button>
       </div>
 
       {/* Última pregunta del 4to apartado exacta solicitada */}
