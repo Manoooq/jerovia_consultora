@@ -20,6 +20,7 @@ import {
   FileText,
   FileSpreadsheet,
   ArrowLeft,
+  Lock,
 } from "lucide-react";
 
 interface StoredDraft {
@@ -36,31 +37,37 @@ export default function EntrevistaWizardPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
-  const storageKey = `jerovia_draft_v4_${token}`;
+  const storageKey = `jerovia_draft_v5_${token}`;
 
   const [loading, setLoading] = useState(true);
   const [isEvaluator, setIsEvaluator] = useState(false);
   const [prefilledList, setPrefilledList] = useState<string[]>([]);
   const [paso, setPaso] = useState(1);
   const [maxPasoAlcanzado, setMaxPasoAlcanzado] = useState(1);
-  const [entidadSolicitante, setEntidadSolicitante] = useState("Entidad Solicitante");
-  const [candidatoNombre, setCandidatoNombre] = useState<string | undefined>();
-  const [evaluadorAsignado, setEvaluadorAsignado] = useState<string | undefined>(
-    "Lic. Michelle Romero"
+  const [entidadSolicitante, setEntidadSolicitante] = useState(
+    "Banco Continental"
   );
+  const [candidatoNombre, setCandidatoNombre] = useState<string | undefined>();
+  const [evaluadorAsignado, setEvaluadorAsignado] = useState<
+    string | undefined
+  >("Lic. Michelle Romero");
   const [datos, setDatos] = useState<Partial<FormularioCompleto>>({});
   const [completado, setCompletado] = useState(false);
 
   const totalSteps: 8 | 9 = isEvaluator ? 9 : 8;
 
-  // Forzar siempre el inicio desde arriba al cambiar de pestaña
+  // Siempre desplazar al tope al cambiar de pestaña
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
     const resetScroll = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant" as ScrollBehavior,
+      });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
@@ -72,7 +79,6 @@ export default function EntrevistaWizardPage({
       clearTimeout(timerId);
     };
   }, [paso, completado]);
-
 
   const saveLocalDraft = useCallback(
     (
@@ -131,7 +137,9 @@ export default function EntrevistaWizardPage({
       try {
         const [meRes, entRes] = await Promise.all([
           fetch("/api/auth/me").catch(() => null),
-          fetch(`/api/entrevista/${token}`).catch(() => null),
+          fetch(`/api/entrevista/${token}`, { cache: "no-store" }).catch(
+            () => null
+          ),
         ]);
 
         let evalRole = false;
@@ -148,7 +156,7 @@ export default function EntrevistaWizardPage({
           if (!mounted) return;
 
           setEntidadSolicitante(
-            serverRecord.entidadSolicitante || "Entidad Solicitante"
+            serverRecord.entidadSolicitante || "Banco Continental"
           );
           setCandidatoNombre(serverRecord.candidatoNombre);
           setEvaluadorAsignado(
@@ -159,7 +167,8 @@ export default function EntrevistaWizardPage({
             setPrefilledList(serverRecord.camposPrellenados);
           }
 
-          const serverDatos = (serverRecord.datos || {}) as Partial<FormularioCompleto>;
+          const serverDatos = (serverRecord.datos ||
+            {}) as Partial<FormularioCompleto>;
           const localDatos = localDraft?.datos || {};
 
           const mergedDatos: Partial<FormularioCompleto> = {
@@ -171,6 +180,19 @@ export default function EntrevistaWizardPage({
             }
           });
 
+          setDatos(mergedDatos);
+
+          const isAlreadyCompleted =
+            serverRecord.estado === "completado" ||
+            Boolean(localDraft?.completado);
+
+          // REGLA: Si el postulante ya finalizó el formulario y NO es evaluador, bloquear edición inmediatamente
+          if (isAlreadyCompleted && !evalRole && token !== "demo") {
+            setCompletado(true);
+            syncWithServer(mergedDatos, 9, "completado");
+            return;
+          }
+
           const maxAllowed = evalRole ? 9 : 8;
           const bestPaso = Math.min(
             maxAllowed,
@@ -181,7 +203,6 @@ export default function EntrevistaWizardPage({
             Math.max(localDraft?.maxPaso || 1, bestPaso)
           );
 
-          setDatos(mergedDatos);
           setPaso(bestPaso);
           setMaxPasoAlcanzado(bestMaxPaso);
 
@@ -189,18 +210,32 @@ export default function EntrevistaWizardPage({
             localDraft &&
             Object.keys(localDatos).length > Object.keys(serverDatos).length
           ) {
-            syncWithServer(mergedDatos, localDraft.completado ? 9 : bestPaso, localDraft.completado ? "completado" : "en_progreso");
+            syncWithServer(
+              mergedDatos,
+              isAlreadyCompleted ? 9 : bestPaso,
+              isAlreadyCompleted ? "completado" : "en_progreso"
+            );
           }
         } else if (localDraft && mounted) {
           setDatos(localDraft.datos);
-          setPaso(Math.min(evalRole ? 9 : 8, localDraft.paso));
-          setMaxPasoAlcanzado(Math.min(evalRole ? 9 : 8, localDraft.maxPaso));
+          if (localDraft.completado && !evalRole && token !== "demo") {
+            setCompletado(true);
+          } else {
+            setPaso(Math.min(evalRole ? 9 : 8, localDraft.paso));
+            setMaxPasoAlcanzado(
+              Math.min(evalRole ? 9 : 8, localDraft.maxPaso)
+            );
+          }
         }
       } catch {
         if (localDraft && mounted) {
           setDatos(localDraft.datos);
-          setPaso(localDraft.paso);
-          setMaxPasoAlcanzado(localDraft.maxPaso);
+          if (localDraft.completado && token !== "demo") {
+            setCompletado(true);
+          } else {
+            setPaso(localDraft.paso);
+            setMaxPasoAlcanzado(localDraft.maxPaso);
+          }
         }
       } finally {
         if (mounted) setLoading(false);
@@ -221,13 +256,12 @@ export default function EntrevistaWizardPage({
       .trim();
     if (fullNombre) setCandidatoNombre(fullNombre);
 
-    // Si es un postulante (!isEvaluator) y está en el Paso 8, al enviar finaliza el formulario sin ver el Paso 9
+    // Si es un postulante (!isEvaluator) y termina el Paso 8, se marca completado y queda bloqueado para edición
     if (!isEvaluator && paso === 8) {
       setDatos(merged);
       setCompletado(true);
       saveLocalDraft(merged, 9, 9, true);
       syncWithServer(merged, 9, "completado");
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -240,23 +274,29 @@ export default function EntrevistaWizardPage({
 
     saveLocalDraft(merged, nextPaso, nextMax, false);
     syncWithServer(merged, nextPaso, "en_progreso");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleBackStep() {
     const prevPaso = Math.max(1, paso - 1);
     setPaso(prevPaso);
     saveLocalDraft(datos, prevPaso, maxPasoAlcanzado, false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleCompleteEvaluator(step9Data: Partial<FormularioCompleto>) {
+  async function handleAutoSavePartial(partial: Record<string, unknown>) {
+    const merged = { ...datos, ...partial };
+    setDatos(merged);
+    saveLocalDraft(merged, paso, maxPasoAlcanzado, completado);
+    await syncWithServer(merged, paso, completado ? "completado" : "en_progreso");
+  }
+
+  async function handleCompleteEvaluator(
+    step9Data: Partial<FormularioCompleto>
+  ) {
     const merged = { ...datos, ...step9Data };
     setDatos(merged);
     setCompletado(true);
     saveLocalDraft(merged, 9, 9, true);
-    syncWithServer(merged, 9, "completado");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    await syncWithServer(merged, 9, "completado");
   }
 
   if (loading) {
@@ -283,61 +323,68 @@ export default function EntrevistaWizardPage({
         evaluadorAsignado={evaluadorAsignado}
         isEvaluator={isEvaluator}
       >
-        <div className="py-8 text-center space-y-6">
+        <div className="py-10 text-center space-y-6">
           <div className="h-16 w-16 rounded-2xl bg-[#536c45]/15 border border-[#536c45]/40 text-gold flex items-center justify-center mx-auto">
             <CheckCircle2 className="h-9 w-9" />
           </div>
 
           <div className="space-y-2">
             <span className="text-xs font-mono font-bold uppercase tracking-widest text-gold">
-              DATOS ENVIADOS CON ÉXITO
+              FORMULARIO FINALIZADO Y CERRADO
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-text">
               ¡Muchas gracias{candidatoNombre ? `, ${candidatoNombre}` : ""}!
             </h2>
             <p className="text-xs sm:text-sm text-subtext1 max-w-md mx-auto leading-relaxed">
-              Sus datos fueron registrados correctamente en el sistema de Jerovia Consultora.
+              Sus datos ya fueron enviados y registrados de forma definitiva en el sistema de Jerovia Consultora.
             </p>
           </div>
 
-          {/* Los botones de descarga de Informe Confidencial solo son visibles para el Evaluador */}
-          {isEvaluator && (
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <a
-                href={`/api/exportar/${token}?formato=pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[44px] px-5 rounded-xl bg-gold text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
-              >
-                <FileText className="h-4 w-4" />
-                <span>Abrir Informe en 5 Páginas (PDF)</span>
-              </a>
-
-              <a
-                href={`/api/exportar/${token}?formato=pptx`}
-                className="min-h-[44px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs inline-flex items-center gap-2"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-gold" />
-                <span>Descargar PowerPoint (.PPTX)</span>
-              </a>
+          {!isEvaluator && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface1 border border-overlay1 text-xs font-bold text-subtext1">
+              <Lock className="h-3.5 w-3.5 text-gold" />
+              <span>El cuestionario se encuentra cerrado y ya no admite modificaciones.</span>
             </div>
           )}
 
-          <div className="pt-4 border-t border-overlay0 flex items-center justify-center gap-6 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setCompletado(false)}
-              className="text-subtext1 hover:text-gold inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Revisar mis respuestas</span>
-            </button>
-            {isEvaluator && (
-              <Link href="/dashboard" className="text-gold hover:underline">
-                Volver al Panel →
-              </Link>
-            )}
-          </div>
+          {/* Solo el Evaluador puede ver los botones de descarga y volver a editar */}
+          {isEvaluator && (
+            <>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a
+                  href={`/api/exportar/${token}?formato=pdf&t=${Date.now()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-h-[44px] px-5 rounded-xl bg-gold text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Abrir Informe en 5 Páginas (PDF)</span>
+                </a>
+
+                <a
+                  href={`/api/exportar/${token}?formato=pptx&t=${Date.now()}`}
+                  className="min-h-[44px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs inline-flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-gold" />
+                  <span>Descargar PowerPoint (.PPTX)</span>
+                </a>
+              </div>
+
+              <div className="pt-4 border-t border-overlay0 flex items-center justify-center gap-6 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setCompletado(false)}
+                  className="text-subtext1 hover:text-gold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Volver a editar expediente (Modo Evaluador)</span>
+                </button>
+                <Link href="/dashboard" className="text-gold hover:underline">
+                  Ir al Panel General →
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </QuestionnaireShell>
     );
@@ -362,7 +409,6 @@ export default function EntrevistaWizardPage({
             onStepSelect={(targetStep) => {
               setPaso(targetStep);
               saveLocalDraft(datos, targetStep, maxPasoAlcanzado, false);
-              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
 
@@ -423,6 +469,7 @@ export default function EntrevistaWizardPage({
               defaultValues={datos}
               allData={datos as Record<string, unknown>}
               token={token}
+              onAutoSave={handleAutoSavePartial}
               onComplete={handleCompleteEvaluator}
               onBack={handleBackStep}
             />

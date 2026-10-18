@@ -1,39 +1,32 @@
 "use client";
 
-import { useState, useCallback, useId } from "react";
-import {
-  Camera,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  ImagePlus,
-  Trash2,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
+import { Camera, Trash2, Upload, Loader2, CheckCircle2 } from "lucide-react";
 
 interface FotoUploaderProps {
-  tipo: "vivienda" | "factura";
-  onAnalizado: (data: Record<string, unknown>) => void;
-  onFotoGuardada?: (base64: string) => void;
-  initialPreview?: string;
+  fotos: string[];
+  onChange: (fotos: string[]) => void;
+  maxFotos?: number;
 }
 
-function comprimirImagen(file: File, maxDim = 800, quality = 0.72): Promise<string> {
-  return new Promise((resolve) => {
+function compressImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onerror = () => reject(new Error("Error leyendo imagen"));
+    reader.onload = () => {
       const img = new Image();
+      img.onerror = () => reject(new Error("Formato no soportado"));
       img.onload = () => {
+        const MAX_DIM = 760;
         let w = img.width;
         let h = img.height;
-        if (w > maxDim || h > maxDim) {
+        if (w > MAX_DIM || h > MAX_DIM) {
           if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
+            h = Math.round((h * MAX_DIM) / w);
+            w = MAX_DIM;
           } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
+            w = Math.round((w * MAX_DIM) / h);
+            h = MAX_DIM;
           }
         }
         const canvas = document.createElement("canvas");
@@ -41,207 +34,127 @@ function comprimirImagen(file: File, maxDim = 800, quality = 0.72): Promise<stri
         canvas.height = h;
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          resolve(e.target?.result as string);
+          resolve(reader.result as string);
           return;
         }
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+        resolve(canvas.toDataURL("image/jpeg", 0.72));
       };
-      img.onerror = () => resolve(e.target?.result as string);
-      img.src = e.target?.result as string;
+      img.src = reader.result as string;
     };
-    reader.onerror = () => resolve("");
     reader.readAsDataURL(file);
   });
 }
 
 export function FotoUploader({
-  tipo,
-  onAnalizado,
-  onFotoGuardada,
-  initialPreview,
+  fotos = [],
+  onChange,
+  maxFotos = 4,
 }: FotoUploaderProps) {
-  const uid = useId();
-  const cameraInputId = `cam-${tipo}-${uid}`;
-  const galleryInputId = `gal-${tipo}-${uid}`;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [processing, setProcessing] = useState(false);
 
-  const [state, setState] = useState<"idle" | "analyzing" | "done" | "error">(
-    initialPreview ? "done" : "idle"
-  );
-  const [preview, setPreview] = useState<string | null>(initialPreview || null);
-  const [dragging, setDragging] = useState(false);
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-  const processFile = useCallback(
-    async (file: File) => {
-      if (!file.type.startsWith("image/")) return;
+    setProcessing(true);
+    try {
+      const remaining = Math.max(0, maxFotos - fotos.length);
+      const selected = Array.from(fileList).slice(0, remaining);
+      const compressedList: string[] = [];
 
-      const compressedDataUrl = await comprimirImagen(file);
-      if (!compressedDataUrl) return;
-
-      setPreview(compressedDataUrl);
-      const base64 = compressedDataUrl.split(",")[1];
-      onFotoGuardada?.(compressedDataUrl);
-      setState("analyzing");
-
-      try {
-        const res = await fetch("/api/ai/analizar-foto", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagen: base64, tipo }),
-        });
-        if (!res.ok) throw new Error("Error analizando imagen");
-        const data = await res.json();
-        onAnalizado(data);
-        setState("done");
-      } catch {
-        setState("error");
+      for (const file of selected) {
+        const dataUrl = await compressImageFile(file);
+        compressedList.push(dataUrl);
       }
-    },
-    [tipo, onAnalizado, onFotoGuardada]
-  );
 
-  const titulos = {
-    vivienda: "Registro Fotográfico de Fachada e Inmueble",
-    factura: "Comprobante de Suministro (ANDE / ESSAP)",
-  };
-  const hints = {
-    vivienda:
-      "Reconocimiento asistido de mampostería, techo, pisos y estado general",
-    factura:
-      "Detección de NIS, titularidad y estado del suministro eléctrico",
-  };
+      if (compressedList.length > 0) {
+        onChange([...fotos, ...compressedList]);
+      }
+    } catch (err) {
+      console.error("Error procesando foto:", err);
+    } finally {
+      setProcessing(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  function removeFoto(index: number) {
+    const next = fotos.filter((_, i) => i !== index);
+    onChange(next);
+  }
 
   return (
-    <div className="rounded-2xl border border-overlay0/70 bg-surface1/40 p-4 sm:p-5 space-y-3.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs sm:text-sm font-bold text-text">{titulos[tipo]}</p>
-          <p className="text-[11px] text-subtext0">{hints[tipo]}</p>
-        </div>
-        {state === "done" && (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green bg-green/10 border border-green/30 px-2.5 py-1 rounded-md">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Evidencia adjuntada
-          </span>
-        )}
-      </div>
-
-      {/* Inputs ocultos separados: uno para Cámara directa en celular y otro para Galería/PC */}
+    <div className="space-y-3">
       <input
-        id={cameraInputId}
+        ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        multiple={maxFotos > 1}
+        onChange={handleFiles}
         className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) processFile(f);
-        }}
-      />
-      <input
-        id={galleryInputId}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) processFile(f);
-        }}
       />
 
-      {preview ? (
-        <div className="space-y-3">
-          <div className="relative w-full overflow-hidden rounded-xl border border-overlay0/60 bg-crust">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={preview}
-              alt={`Evidencia ${tipo}`}
-              className="w-full max-h-56 object-cover"
-            />
-            {state === "analyzing" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-base/80 backdrop-blur-xs">
-                <div className="flex items-center gap-2.5 rounded-xl bg-surface0 border border-overlay1 px-4 py-2.5 shadow-lg">
-                  <Loader2 className="h-4 w-4 text-gold animate-spin" />
-                  <span className="text-xs font-semibold text-text">
-                    Relevando características constructivas...
-                  </span>
-                </div>
+      {fotos.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {fotos.map((src, idx) => (
+            <div
+              key={idx}
+              className="relative group rounded-xl overflow-hidden border-2 border-[#536c45] bg-surface0 aspect-[4/3] shadow-sm"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={`Fotografía ${idx + 1}`}
+                className="w-full h-full object-cover block"
+              />
+              <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/65 text-white text-[10px] font-mono font-bold flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-[#a3e635]" />
+                <span>Lista #{idx + 1}</span>
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {state === "error" ? (
-              <span className="text-xs text-subtext0 flex items-center gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5 text-yellow" />
-                Foto guardada (complete los materiales manualmente abajo).
-              </span>
-            ) : (
-              <span className="text-xs text-subtext0">
-                Imagen comprimida y vinculada al expediente.
-              </span>
-            )}
-
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setPreview(null);
-                setState("idle");
-                onFotoGuardada?.("");
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5 text-red" />
-              <span>Reemplazar foto</span>
-            </Button>
-          </div>
+              <button
+                type="button"
+                onClick={() => removeFoto(idx)}
+                className="absolute top-1.5 right-1.5 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90"
+                title="Eliminar fotografía"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
-      ) : (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            const f = e.dataTransfer.files[0];
-            if (f) processFile(f);
-          }}
-          className={cn(
-            "rounded-xl border border-dashed p-5 transition-colors flex flex-col items-center justify-center gap-3 text-center",
-            dragging
-              ? "border-gold bg-gold/10"
-              : "border-overlay1/70 bg-surface0/60"
-          )}
+      )}
+
+      {fotos.length < maxFotos && (
+        <button
+          type="button"
+          disabled={processing}
+          onClick={() => inputRef.current?.click()}
+          className="w-full min-h-[84px] rounded-2xl border-2 border-dashed border-[#85987a] hover:border-[#536c45] bg-surface0/70 hover:bg-[#536c45]/10 px-4 py-4 flex flex-col items-center justify-center gap-1.5 text-xs font-bold text-text cursor-pointer transition-all"
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full max-w-sm">
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              onClick={() => document.getElementById(cameraInputId)?.click()}
-              className="w-full sm:flex-1"
-            >
-              <Camera className="h-4 w-4" />
-              <span>Tomar Foto</span>
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              onClick={() => document.getElementById(galleryInputId)?.click()}
-              className="w-full sm:flex-1"
-            >
-              <ImagePlus className="h-4 w-4 text-gold" />
-              <span>Subir de Galería</span>
-            </Button>
-          </div>
-          <p className="text-[11px] text-subtext0">
-            Compatible con cámara móvil en terreno o arrastrando archivos en PC
-          </p>
-        </div>
+          {processing ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin text-gold" />
+              <span>Optimizando y guardando fotografía...</span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-gold">
+                <Camera className="h-5 w-5" />
+                <Upload className="h-4 w-4" />
+              </div>
+              <span>
+                Seleccionar o Tomar Fotografía ({fotos.length}/{maxFotos})
+              </span>
+              <span className="text-[11px] font-normal text-subtext1">
+                Se inserta automáticamente en el informe PDF y PowerPoint (.PPTX)
+              </span>
+            </>
+          )}
+        </button>
       )}
     </div>
   );

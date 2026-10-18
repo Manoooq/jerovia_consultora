@@ -18,41 +18,72 @@ export interface EntrevistaRecord {
   pasoActual: number;
   datos: Partial<FormularioCompleto>;
   camposPrellenados?: string[];
+  shardUrl?: string;
   alertas: string[];
   creadoEn: string;
   actualizadoEn: string;
 }
 
-const REPO_DATA_DIR = path.join(process.cwd(), "data");
-const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data");
-const CLOUD_URL =
+interface CloudIndexPayload {
+  version: number;
+  shards: Record<string, string>;
+  deletedTokens: string[];
+  summaries: Record<string, EntrevistaRecord>;
+  updatedAt: number;
+}
+
+const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data_v2");
+const TMP_FILE = path.join(TMP_DATA_DIR, "entrevistas.json");
+const TMP_DELETED_FILE = path.join(TMP_DATA_DIR, "deleted.json");
+
+const INDEX_CLOUD_URL =
   process.env.JEROVIA_CLOUD_STORE_URL ||
   (cloudConfig as { jsonBlobUrl?: string }).jsonBlobUrl ||
   "";
 
-function getReadableFile(): string | null {
-  const tmpFile = path.join(TMP_DATA_DIR, "entrevistas.json");
-  const repoFile = path.join(REPO_DATA_DIR, "entrevistas.json");
-  if (fs.existsSync(tmpFile)) return tmpFile;
-  if (fs.existsSync(repoFile)) return repoFile;
-  return null;
-}
-
 const store = new Map<string, EntrevistaRecord>();
+const deletedSet = new Set<string>();
+const shardUrls = new Map<string, string>();
 
-function countFilledFields(datos?: Partial<FormularioCompleto>): number {
-  if (!datos) return 0;
-  return Object.entries(datos).filter(([, val]) => {
-    if (val === undefined || val === null || val === "" || val === false) return false;
-    if (Array.isArray(val)) return val.length > 0;
-    return true;
-  }).length;
+function loadLocalTmp() {
+  try {
+    if (fs.existsSync(TMP_DELETED_FILE)) {
+      const delArr: string[] = JSON.parse(
+        fs.readFileSync(TMP_DELETED_FILE, "utf-8")
+      );
+      delArr.forEach((t) => deletedSet.add(t));
+    }
+    if (fs.existsSync(TMP_FILE)) {
+      const list: EntrevistaRecord[] = JSON.parse(
+        fs.readFileSync(TMP_FILE, "utf-8")
+      );
+      list.forEach((r) => {
+        if (r && r.token && !deletedSet.has(r.token)) {
+          store.set(r.token, r);
+          if (r.shardUrl) shardUrls.set(r.token, r.shardUrl);
+        }
+      });
+    }
+  } catch {}
 }
 
-/**
- * Fusiona dos versiones del mismo expediente conservando siempre el que tenga
- * más avance, más respuestas cargadas y estado más avanzado.
- */
+function saveLocalTmp() {
+  try {
+    fs.mkdirSync(TMP_DATA_DIR, { recursive: true });
+    const records = Array.from(store.values()).filter(
+      (r) => r.token !== "demo" && !deletedSet.has(r.token)
+    );
+    fs.writeFileSync(TMP_FILE, JSON.stringify(records, null, 2), "utf-8");
+    fs.writeFileSync(
+      TMP_DELETED_FILE,
+      JSON.stringify(Array.from(deletedSet), null, 2),
+      "utf-8"
+    );
+  } catch {}
+}
+
+loadLocalTmp();
+
 function mergeRecords(
   existing: EntrevistaRecord,
   incoming: EntrevistaRecord
@@ -62,7 +93,6 @@ function mergeRecords(
     ...incoming.datos,
   };
 
-  // No permitir que un campo vacío sobrescriba un dato ya rellenado por el postulante
   for (const [k, val] of Object.entries(existing.datos || {})) {
     const incVal = (incoming.datos as Record<string, unknown> | undefined)?.[k];
     const isIncEmpty =
@@ -70,7 +100,13 @@ function mergeRecords(
       incVal === null ||
       incVal === "" ||
       (Array.isArray(incVal) && incVal.length === 0);
-    if (isIncEmpty && val !== undefined && val !== null && val !== "") {
+    const isExistingFilled =
+      val !== undefined &&
+      val !== null &&
+      val !== "" &&
+      (!Array.isArray(val) || val.length > 0);
+
+    if (isIncEmpty && isExistingFilled) {
       (mergedDatos as Record<string, unknown>)[k] = val;
     }
   }
@@ -83,8 +119,8 @@ function mergeRecords(
 
   const bestPaso = Math.max(existing.pasoActual || 1, incoming.pasoActual || 1);
   const latestTime =
-    new Date(incoming.actualizadoEn).getTime() >=
-    new Date(existing.actualizadoEn).getTime()
+    new Date(incoming.actualizadoEn || 0).getTime() >=
+    new Date(existing.actualizadoEn || 0).getTime()
       ? incoming.actualizadoEn
       : existing.actualizadoEn;
 
@@ -96,129 +132,223 @@ function mergeRecords(
     telefono:
       incoming.telefono || existing.telefono || (mergedDatos.telefono as string),
     ciudad: incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
+    shardUrl: incoming.shardUrl || existing.shardUrl,
     estado: bestEstado,
     pasoActual: bestPaso,
     datos: mergedDatos,
-    camposPrellenados:
-      incoming.camposPrellenados?.length
-        ? incoming.camposPrellenados
-        : existing.camposPrellenados,
+    camposPrellenados: incoming.camposPrellenados?.length
+      ? incoming.camposPrellenados
+      : existing.camposPrellenados,
     actualizadoEn: latestTime,
   };
 }
 
-export async function syncStoreFromCloud(): Promise<void> {
-  if (!CLOUD_URL) return;
+async function saveRecordShardToCloud(
+  record: EntrevistaRecord
+): Promise<string | undefined> {
+  let shardUrl = record.shardUrl || shardUrls.get(record.token);
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(CLOUD_URL, {
+    if (shardUrl) {
+      const res = await fetch(shardUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(record),
+      });
+      if (res.ok) return shardUrl;
+    }
+
+    const createRes = await fetch("https://jsonblob.com/api/jsonBlob", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(record),
+    });
+    const loc =
+      createRes.headers.get("location") ||
+      createRes.headers.get("Location") ||
+      "";
+    if (loc) {
+      shardUrl = loc.startsWith("http")
+        ? loc.replace("http://", "https://")
+        : `https://jsonblob.com${loc}`;
+      shardUrls.set(record.token, shardUrl);
+      record.shardUrl = shardUrl;
+      return shardUrl;
+    }
+  } catch {}
+  return shardUrl;
+}
+
+function toLightSummary(record: EntrevistaRecord): EntrevistaRecord {
+  const lightDatos: Record<string, unknown> = { ...record.datos };
+  delete lightDatos.fotoCandidato;
+  delete lightDatos.fotosVivienda;
+  delete lightDatos.firmaEvaluador;
+  return {
+    ...record,
+    datos: lightDatos as Partial<FormularioCompleto>,
+  };
+}
+
+export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
+  if (!INDEX_CLOUD_URL) return;
+  try {
+    const res = await fetch(INDEX_CLOUD_URL, {
       method: "GET",
       headers: {
         Accept: "application/json",
         "Cache-Control": "no-cache, no-store",
       },
       cache: "no-store",
-      signal: controller.signal,
     });
-    clearTimeout(timer);
 
-    if (res.ok) {
-      const data = await res.json();
-      const cloudRecords: EntrevistaRecord[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.records)
-        ? data.records
-        : [];
+    if (!res.ok) return;
+    const indexData = (await res.json()) as Partial<CloudIndexPayload>;
 
-      for (const cr of cloudRecords) {
-        if (!cr || !cr.token) continue;
-        const local = store.get(cr.token);
-        if (!local) {
-          store.set(cr.token, cr);
-        } else {
-          store.set(cr.token, mergeRecords(local, cr));
+    if (Array.isArray(indexData.deletedTokens)) {
+      for (const delTok of indexData.deletedTokens) {
+        deletedSet.add(delTok);
+        store.delete(delTok);
+        shardUrls.delete(delTok);
+      }
+    }
+
+    if (indexData.shards && typeof indexData.shards === "object") {
+      for (const [tok, url] of Object.entries(indexData.shards)) {
+        if (!deletedSet.has(tok) && url) {
+          shardUrls.set(tok, url);
         }
       }
-      persistLocalDisk();
     }
+
+    if (indexData.summaries && typeof indexData.summaries === "object") {
+      for (const [tok, sumRecord] of Object.entries(indexData.summaries)) {
+        if (deletedSet.has(tok) || !sumRecord) continue;
+        const loc = store.get(tok);
+        if (!loc) {
+          store.set(tok, sumRecord);
+        } else {
+          store.set(tok, mergeRecords(loc, sumRecord));
+        }
+      }
+    }
+
+    if (targetToken && !deletedSet.has(targetToken)) {
+      const sUrl =
+        shardUrls.get(targetToken) || store.get(targetToken)?.shardUrl;
+      if (sUrl) {
+        const shardRes = await fetch(sUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Cache-Control": "no-cache, no-store",
+          },
+          cache: "no-store",
+        }).catch(() => null);
+        if (shardRes && shardRes.ok) {
+          const fullRecord = (await shardRes.json()) as EntrevistaRecord;
+          if (fullRecord && fullRecord.token) {
+            const existing = store.get(targetToken);
+            store.set(
+              targetToken,
+              existing ? mergeRecords(existing, fullRecord) : fullRecord
+            );
+          }
+        }
+      }
+    }
+
+    saveLocalTmp();
   } catch {}
 }
 
-export async function syncStoreToCloud(): Promise<void> {
-  persistLocalDisk();
-  if (!CLOUD_URL) return;
+export async function syncStoreToCloud(changedToken?: string): Promise<void> {
+  saveLocalTmp();
+  if (!INDEX_CLOUD_URL) return;
+
   try {
-    // Primero traer cualquier cambio de otros dispositivos para no pisarlo
-    const controllerGet = new AbortController();
-    const timerGet = setTimeout(() => controllerGet.abort(), 2500);
-    const getRes = await fetch(CLOUD_URL, {
+    if (changedToken && !deletedSet.has(changedToken)) {
+      const rec = store.get(changedToken);
+      if (rec && rec.token !== "demo") {
+        await saveRecordShardToCloud(rec);
+      }
+    }
+
+    const getRes = await fetch(INDEX_CLOUD_URL, {
       method: "GET",
       headers: {
         Accept: "application/json",
         "Cache-Control": "no-cache, no-store",
       },
       cache: "no-store",
-      signal: controllerGet.signal,
     }).catch(() => null);
-    clearTimeout(timerGet);
 
     if (getRes && getRes.ok) {
-      const remoteData = await getRes.json().catch(() => null);
-      const remoteList: EntrevistaRecord[] = Array.isArray(remoteData?.records)
-        ? remoteData.records
-        : [];
-      for (const rr of remoteList) {
-        if (!rr || !rr.token) continue;
-        const loc = store.get(rr.token);
-        if (!loc) {
-          store.set(rr.token, rr);
-        } else {
-          store.set(rr.token, mergeRecords(loc, rr));
+      const remoteIndex = (await getRes
+        .json()
+        .catch(() => null)) as Partial<CloudIndexPayload> | null;
+      if (remoteIndex) {
+        if (Array.isArray(remoteIndex.deletedTokens)) {
+          for (const dt of remoteIndex.deletedTokens) {
+            deletedSet.add(dt);
+            store.delete(dt);
+            shardUrls.delete(dt);
+          }
+        }
+        if (remoteIndex.shards) {
+          for (const [t, u] of Object.entries(remoteIndex.shards)) {
+            if (!deletedSet.has(t) && u && !shardUrls.has(t)) {
+              shardUrls.set(t, u);
+            }
+          }
+        }
+        if (remoteIndex.summaries) {
+          for (const [t, sr] of Object.entries(remoteIndex.summaries)) {
+            if (deletedSet.has(t) || !sr) continue;
+            const localRec = store.get(t);
+            if (!localRec) {
+              store.set(t, sr);
+            } else {
+              store.set(t, mergeRecords(localRec, sr));
+            }
+          }
         }
       }
     }
 
-    const allRecords = Array.from(store.values()).filter(
-      (r) => r.token !== "demo"
-    );
+    const summariesObj: Record<string, EntrevistaRecord> = {};
+    const shardsObj: Record<string, string> = {};
 
-    const controllerPut = new AbortController();
-    const timerPut = setTimeout(() => controllerPut.abort(), 3500);
-    await fetch(CLOUD_URL, {
+    for (const [tok, rec] of store.entries()) {
+      if (tok === "demo" || deletedSet.has(tok)) continue;
+      summariesObj[tok] = toLightSummary(rec);
+      const sUrl = rec.shardUrl || shardUrls.get(tok);
+      if (sUrl) shardsObj[tok] = sUrl;
+    }
+
+    const payload: CloudIndexPayload = {
+      version: 2,
+      shards: shardsObj,
+      deletedTokens: Array.from(deletedSet),
+      summaries: summariesObj,
+      updatedAt: Date.now(),
+    };
+
+    await fetch(INDEX_CLOUD_URL, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        records: allRecords,
-        updatedAt: Date.now(),
-      }),
-      signal: controllerPut.signal,
+      body: JSON.stringify(payload),
     });
-    clearTimeout(timerPut);
-  } catch {}
-}
 
-function persistLocalDisk() {
-  const records = Array.from(store.values());
-  const payload = JSON.stringify(records, null, 2);
-  try {
-    fs.mkdirSync(TMP_DATA_DIR, { recursive: true });
-    fs.writeFileSync(
-      path.join(TMP_DATA_DIR, "entrevistas.json"),
-      payload,
-      "utf-8"
-    );
-  } catch {}
-  try {
-    fs.mkdirSync(REPO_DATA_DIR, { recursive: true });
-    fs.writeFileSync(
-      path.join(REPO_DATA_DIR, "entrevistas.json"),
-      payload,
-      "utf-8"
-    );
+    saveLocalTmp();
   } catch {}
 }
 
@@ -259,7 +389,7 @@ function decodeSmartToken(token: string): {
     const b64 = parts.slice(1, -1).join("_");
     const parsed = JSON.parse(Buffer.from(b64, "base64url").toString("utf-8"));
     return {
-      entidadSolicitante: parsed.e || "Entidad Solicitante",
+      entidadSolicitante: parsed.e || "Banco Continental",
       candidatoNombre: parsed.n || undefined,
       cedula: parsed.c || undefined,
       telefono: parsed.t || undefined,
@@ -273,31 +403,15 @@ function decodeSmartToken(token: string): {
   }
 }
 
-function initStore() {
-  try {
-    const file = getReadableFile();
-    if (file) {
-      const content = fs.readFileSync(file, "utf-8");
-      if (content.trim()) {
-        const records: EntrevistaRecord[] = JSON.parse(content);
-        records.forEach((r) => store.set(r.token, r));
-      }
-    }
-  } catch {}
-}
-
-initStore();
-
 export function crearEntrevista(
   entidadSolicitante: string,
   token: string,
   evaluadorAsignado = "Lic. Michelle Romero",
   creadoPor = "admin"
 ): EntrevistaRecord {
+  deletedSet.delete(token);
   const existing = store.get(token);
-  if (existing && countFilledFields(existing.datos) > 0) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const record: EntrevistaRecord = {
     id: `ent_${crypto.randomUUID().slice(0, 8)}`,
@@ -314,12 +428,12 @@ export function crearEntrevista(
     actualizadoEn: new Date().toISOString(),
   };
   store.set(token, record);
-  persistLocalDisk();
+  saveLocalTmp();
   return record;
 }
 
 export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
-  if (store.size === 0) initStore();
+  if (deletedSet.has(token)) return undefined;
 
   let record = store.get(token);
 
@@ -368,7 +482,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
       actualizadoEn: new Date().toISOString(),
     };
     store.set(token, record);
-    persistLocalDisk();
+    saveLocalTmp();
   }
 
   return record;
@@ -378,6 +492,7 @@ export function actualizarEntrevista(
   token: string,
   patch: Partial<EntrevistaRecord>
 ): EntrevistaRecord | null {
+  deletedSet.delete(token);
   let record = store.get(token);
   if (!record) {
     record = obtenerEntrevista(token);
@@ -391,12 +506,17 @@ export function actualizarEntrevista(
 
   for (const [k, val] of Object.entries(record.datos || {})) {
     const nextVal = (patch.datos as Record<string, unknown> | undefined)?.[k];
-    if (
-      (nextVal === undefined || nextVal === null || nextVal === "") &&
+    const isNextEmpty =
+      nextVal === undefined ||
+      nextVal === null ||
+      nextVal === "" ||
+      (Array.isArray(nextVal) && nextVal.length === 0);
+    const isOldFilled =
       val !== undefined &&
       val !== null &&
-      val !== ""
-    ) {
+      val !== "" &&
+      (!Array.isArray(val) || val.length > 0);
+    if (isNextEmpty && isOldFilled) {
       (mergedDatos as Record<string, unknown>)[k] = val;
     }
   }
@@ -418,22 +538,21 @@ export function actualizarEntrevista(
   };
 
   store.set(token, updated);
-  persistLocalDisk();
+  saveLocalTmp();
   return updated;
 }
 
 export function eliminarEntrevista(token: string): boolean {
-  const exists = store.has(token);
-  if (!exists) return false;
+  deletedSet.add(token);
+  shardUrls.delete(token);
   store.delete(token);
-  persistLocalDisk();
+  saveLocalTmp();
   return true;
 }
 
 export function listarEntrevistas(): EntrevistaRecord[] {
-  if (store.size === 0) initStore();
   return Array.from(store.values())
-    .filter((r) => r.token !== "demo")
+    .filter((r) => r.token !== "demo" && !deletedSet.has(r.token))
     .sort(
       (a, b) =>
         new Date(b.actualizadoEn).getTime() -

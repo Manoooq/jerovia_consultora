@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     camposPrellenados,
   });
 
-  await syncStoreToCloud();
+  await syncStoreToCloud(token);
 
   registrarEventoAuditoria({
     userId: session.userId,

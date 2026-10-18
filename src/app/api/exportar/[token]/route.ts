@@ -27,12 +27,7 @@ function v(val: unknown, fallback = "No especificado"): string {
 
 function isSafeImageSrc(src: unknown): boolean {
   if (typeof src !== "string") return false;
-  return (
-    src.startsWith("data:image/jpeg;base64,") ||
-    src.startsWith("data:image/png;base64,") ||
-    src.startsWith("data:image/webp;base64,") ||
-    src.startsWith("https://")
-  );
+  return src.startsWith("data:image/") || src.startsWith("https://");
 }
 
 function siNo(val: unknown, detalle?: unknown): string {
@@ -54,7 +49,7 @@ export async function GET(
   const url = new URL(req.url);
   const formato = url.searchParams.get("formato") ?? "pptx";
 
-  await syncStoreFromCloud();
+  await syncStoreFromCloud(token);
   const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
     return NextResponse.json(

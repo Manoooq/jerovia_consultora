@@ -16,7 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  await syncStoreFromCloud();
+  await syncStoreFromCloud(token);
 
   const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
@@ -40,7 +40,7 @@ export async function PATCH(
   >(req, 10_000_000);
   if (errorResponse) return errorResponse;
 
-  await syncStoreFromCloud();
+  await syncStoreFromCloud(token);
 
   const actual = obtenerEntrevista(token);
   if (!actual) {
@@ -100,7 +100,7 @@ export async function PATCH(
     alertas,
   });
 
-  await syncStoreToCloud();
+  await syncStoreToCloud(token);
 
   return NextResponse.json(updated);
 }
@@ -115,10 +115,10 @@ export async function DELETE(
   }
 
   const { token } = await params;
-  await syncStoreFromCloud();
+  await syncStoreFromCloud(token);
   const ok = eliminarEntrevista(token);
   if (ok) {
-    await syncStoreToCloud();
+    await syncStoreToCloud(token);
     registrarEventoAuditoria({
       userId: session.userId,
       userName: session.name,
