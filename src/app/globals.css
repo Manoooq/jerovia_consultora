@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* MODO CLARO — Superficies Limpias + Acentos Verde Oliva de Alto Contraste */
+  /* MODO CLARO — Superficies Neutras Limpias + Acentos en Verde Oliva (#536c45 / #85987a) */
   --bg-base: #f4f6f3;
   --bg-mantle: #ffffff;
   --bg-crust: #e8ece6;
@@ -11,113 +11,116 @@
   --bg-surface1: #f6f8f5;
   --bg-surface2: #e3e8e0;
 
-  --border-overlay0: rgba(26, 34, 22, 0.14);
-  --border-overlay1: rgba(26, 34, 22, 0.24);
-  --border-overlay2: rgba(26, 34, 22, 0.38);
+  --border-overlay0: rgba(26, 34, 22, 0.11);
+  --border-overlay1: rgba(26, 34, 22, 0.20);
+  --border-overlay2: rgba(26, 34, 22, 0.32);
 
   --text-main: #141a12;
-  --text-subtext1: #242e21;      /* Máxima legibilidad contrast ratio > 12:1 */
-  --text-subtext0: #414d3d;      /* Legibilidad contrast ratio > 7.2:1 */
-  --text-placeholder: #5c6a58;
+  --text-subtext1: #2c3629;
+  --text-subtext0: #52604e;
+  --text-placeholder: #72806e;
 
-  /* Paleta Verde Oliva Oficial con Alto Contraste en Modo Claro */
-  --brand-gold: #3c5030;
-  --brand-gold-light: #536c45;
-  --brand-gold-dark: #27371f;
-  --brand-gold-btn: #3c5030;
-  --brand-gold-btn-hover: #2d3e24;
+  /* Paleta Verde Oliva Oficial */
+  --brand-gold: #536c45;
+  --brand-gold-light: #85987a;
+  --brand-gold-dark: #485536;
+  --brand-gold-btn: #536c45;
+  --brand-gold-btn-hover: #485536;
   --brand-gold-btn-text: #ffffff;
 
-  --sem-green: #1b6330;          /* Verde nítido legible */
-  --sem-blue: #1c5277;           /* Azul corporativo legible */
-  --sem-sky: #1b6c8a;
-  --sem-yellow: #92400e;         /* Ámbar/Dorado WCAG AAA (7.2:1 en blanco) */
-  --sem-red: #b91c1c;            /* Rojo de alta visibilidad */
+  --sem-green: #536c45;
+  --sem-blue: #536c45;
+  --sem-sky: #85987a;
+  --sem-yellow: #9a8b68;
+  --sem-red: #b91c1c;
   --sem-pink: #9d174d;
 
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(60, 80, 48, 0.18);
-  --glass-shadow: 0 4px 24px rgba(20, 26, 18, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(83, 108, 69, 0.16);
+  --glass-shadow: 0 4px 24px rgba(20, 26, 18, 0.05);
 
   --well-bg: #e8ede6;
   --well-shadow: inset 0 2px 5px rgba(20, 26, 18, 0.06), 0 1px 0 rgba(255, 255, 255, 0.95);
-  --well-border: rgba(26, 34, 22, 0.15);
+  --well-border: rgba(26, 34, 22, 0.12);
 
+  /* En Modo Claro: El cuadro permanece 100% Blanco Puro (#ffffff) al pasar el mouse */
   --card-bg: #ffffff;
   --card-hover-bg: #ffffff;
   --card-active-bg: #ffffff;
-  --card-border: rgba(26, 34, 22, 0.15);
-  --card-hover-border: rgba(60, 80, 48, 0.75);
-  --card-shadow: 0 6px 20px -6px rgba(20, 26, 18, 0.08), 0 2px 5px rgba(20, 26, 18, 0.04);
-  --card-sink-shadow: 0 10px 26px -6px rgba(60, 80, 48, 0.16), inset 0 0 0 1.5px rgba(60, 80, 48, 0.65);
+  --card-border: rgba(26, 34, 22, 0.12);
+  --card-hover-border: rgba(83, 108, 69, 0.65);
+  --card-shadow: 0 6px 20px -6px rgba(20, 26, 18, 0.07), 0 2px 5px rgba(20, 26, 18, 0.03);
+  --card-sink-shadow: 0 10px 26px -6px rgba(83, 108, 69, 0.14), inset 0 0 0 1.5px rgba(83, 108, 69, 0.55);
 
   --input-bg: #ffffff;
   --input-focus-bg: #ffffff;
-  --input-border: rgba(26, 34, 22, 0.28);
-  --input-shadow: inset 0 1px 2px rgba(20, 26, 18, 0.05);
+  --input-border: rgba(26, 34, 22, 0.22);
+  --input-shadow: inset 0 1px 2px rgba(20, 26, 18, 0.04);
 
-  --spotlight-surface: rgba(60, 80, 48, 0.025);
-  --spotlight-sub: rgba(60, 80, 48, 0.0);
-  --spotlight-border: rgba(60, 80, 48, 0.85);
+  /* Reflejo neutro casi imperceptible para no teñir la tarjeta blanca */
+  --spotlight-surface: rgba(83, 108, 69, 0.025);
+  --spotlight-sub: rgba(83, 108, 69, 0.0);
+  --spotlight-border: rgba(83, 108, 69, 0.85);
 }
 
 .dark, html.dark {
-  /* MODO OSCURO — Carbón Arquitectónico Neutro + Acentos Salvia Luminosos */
-  --bg-base: #0c0e0c;
+  /* MODO OSCURO — Carbón Arquitectónico Neutro + Bordes Verde Oliva Salvia (#85987a) */
+  --bg-base: #0d0f0d;
   --bg-mantle: #121512;
-  --bg-crust: #080a08;
-  --bg-surface0: #151815;
-  --bg-surface1: #1c211c;
-  --bg-surface2: #242a24;
+  --bg-crust: #090b09;
+  --bg-surface0: #161a16;
+  --bg-surface1: #1d221d;
+  --bg-surface2: #262d26;
 
-  --border-overlay0: rgba(255, 255, 255, 0.12);
-  --border-overlay1: rgba(255, 255, 255, 0.22);
-  --border-overlay2: rgba(255, 255, 255, 0.36);
+  --border-overlay0: rgba(255, 255, 255, 0.10);
+  --border-overlay1: rgba(255, 255, 255, 0.18);
+  --border-overlay2: rgba(255, 255, 255, 0.30);
 
-  --text-main: #f8faf7;
-  --text-subtext1: #dbe0d8;      /* Blanco perla nítido */
-  --text-subtext0: #a7b3a4;      /* Salvia claro contrastado */
-  --text-placeholder: #7c8879;
+  --text-main: #f6f7f5;
+  --text-subtext1: #d8ddd6;
+  --text-subtext0: #9ca699;
+  --text-placeholder: #6e786b;
 
-  /* Paleta Verde Salvia Luminoso en Modo Oscuro (contraste > 8.5:1 sobre negro) */
-  --brand-gold: #a3c293;
-  --brand-gold-light: #bfd8b2;
-  --brand-gold-dark: #7b9e6f;
-  --brand-gold-btn: #425736;
-  --brand-gold-btn-hover: #536c45;
+  --brand-gold: #85987a;
+  --brand-gold-light: #a3b598;
+  --brand-gold-dark: #536c45;
+  --brand-gold-btn: #536c45;
+  --brand-gold-btn-hover: #637f53;
   --brand-gold-btn-text: #ffffff;
 
-  --sem-green: #34d399;          /* Verde esmeralda luminoso en dark mode */
-  --sem-blue: #38bdf8;           /* Celeste luminoso */
-  --sem-sky: #7dd3fc;
-  --sem-yellow: #fbbf24;         /* Ámbar brillante de alta visibilidad en dark mode */
-  --sem-red: #f87171;            /* Rojo pastel brillante en dark mode */
-  --sem-pink: #f472b6;
+  --sem-green: #85987a;
+  --sem-blue: #85987a;
+  --sem-sky: #a3b598;
+  --sem-yellow: #b8a886;
+  --sem-red: #e06c6c;
+  --sem-pink: #d67ba8;
 
-  --glass-bg: rgba(18, 21, 18, 0.92);
-  --glass-border: rgba(163, 194, 147, 0.22);
+  --glass-bg: rgba(18, 21, 18, 0.90);
+  --glass-border: rgba(133, 152, 122, 0.20);
   --glass-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
 
   --well-bg: #0a0c0a;
-  --well-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.05);
-  --well-border: rgba(255, 255, 255, 0.12);
+  --well-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.04);
+  --well-border: rgba(255, 255, 255, 0.09);
 
-  --card-bg: #151815;
-  --card-hover-bg: #181d18;
-  --card-active-bg: #1c231c;
-  --card-border: rgba(255, 255, 255, 0.13);
-  --card-hover-border: rgba(163, 194, 147, 0.75);
-  --card-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  --card-sink-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.65), inset 0 0 0 1.5px rgba(163, 194, 147, 0.65);
+  /* En Modo Oscuro: El cuadro mantiene su fondo carbón neutro (#161a16) sin volverse verde al pasar el mouse */
+  --card-bg: #161a16;
+  --card-hover-bg: #191e19;
+  --card-active-bg: #1d241c;
+  --card-border: rgba(255, 255, 255, 0.11);
+  --card-hover-border: rgba(133, 152, 122, 0.70);
+  --card-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  --card-sink-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.65), inset 0 0 0 1.5px rgba(133, 152, 122, 0.60);
 
   --input-bg: #0f120f;
   --input-focus-bg: #141814;
-  --input-border: rgba(255, 255, 255, 0.24);
+  --input-border: rgba(255, 255, 255, 0.20);
   --input-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 
-  --spotlight-surface: rgba(255, 255, 255, 0.035);
+  /* Luz especular blanca ultra sutil (3%) sin mancha verde */
+  --spotlight-surface: rgba(255, 255, 255, 0.03);
   --spotlight-sub: rgba(255, 255, 255, 0.0);
-  --spotlight-border: rgba(163, 194, 147, 0.90);
+  --spotlight-border: rgba(163, 181, 152, 0.90);
 }
 
 @theme {
@@ -182,23 +185,6 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Opciones de select nativo con contraste explícito e inmunes a OS */
-select option {
-  background-color: #ffffff;
-  color: #141a12;
-}
-
-html.dark select option,
-.dark select option {
-  background-color: #151815 !important;
-  color: #f8faf7 !important;
-}
-
-html:not(.dark) select option {
-  background-color: #ffffff !important;
-  color: #141a12 !important;
-}
-
 .bg-gold {
   background-color: var(--brand-gold-btn) !important;
   color: #ffffff !important;
@@ -242,7 +228,7 @@ html:not(.dark) select option {
 .tactile-card-selected {
   background-color: var(--card-active-bg) !important;
   border-color: var(--brand-gold) !important;
-  box-shadow: 0 8px 24px -6px rgba(60, 80, 48, 0.22), inset 0 0 0 2px var(--brand-gold) !important;
+  box-shadow: 0 8px 24px -6px rgba(83, 108, 69, 0.22), inset 0 0 0 2px var(--brand-gold) !important;
 }
 
 .tactile-input {
@@ -264,7 +250,7 @@ html:not(.dark) select option {
 .tactile-input:focus-visible {
   background-color: var(--input-focus-bg);
   border-color: var(--brand-gold);
-  box-shadow: 0 0 0 3px rgba(163, 194, 147, 0.25);
+  box-shadow: 0 0 0 3px rgba(133, 152, 122, 0.25);
 }
 
 :focus-visible {

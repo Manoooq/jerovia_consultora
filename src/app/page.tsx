@@ -58,7 +58,7 @@ export default function LandingPage() {
               <p className="text-lg sm:text-2xl font-black text-gold font-mono tabular-nums">
                 {m.value}
               </p>
-              <p className="text-xs sm:text-sm font-bold text-text mt-1">
+              <p className="text-xs font-bold text-subtext1 mt-1">
                 {m.label}
               </p>
             </SpotlightCard>

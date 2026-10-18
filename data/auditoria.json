@@ -1,5 +1,15 @@
 [
   {
+    "id": "aud_891da11c",
+    "timestamp": "2026-10-18T21:57:51.719Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
     "id": "aud_170f413f",
     "timestamp": "2026-10-18T21:47:50.357Z",
     "userId": "usr_admin_01",
