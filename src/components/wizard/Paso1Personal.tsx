@@ -179,6 +179,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               label="Fecha de Nacimiento"
               type="date"
               {...register("fechaNacimiento")}
+              error={errors.fechaNacimiento?.message}
             />
           )}
           {!shouldHideField("telefono") && (
@@ -309,6 +310,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               })`}
               placeholder="Indique tipo (auto/moto), marca, modelo y año"
               {...register("tipoMovilidad")}
+              error={errors.tipoMovilidad?.message}
             />
             <div className="flex flex-col justify-end">
               <Toggle
@@ -337,6 +339,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               label="¿Con qué medio irá generalmente a la sucursal asignada?"
               placeholder="Ómnibus, vehículo propio, vehículo familiar..."
               {...register("medioTransporteSucursal")}
+              error={errors.medioTransporteSucursal?.message}
             />
           </div>
           <div className="space-y-1">
@@ -347,6 +350,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               label="¿Cuánto tiempo le toma ir de su casa a la sucursal asignada?"
               placeholder="Indique tiempo en minutos u horas"
               {...register("tiempoViajeSucursal")}
+              error={errors.tiempoViajeSucursal?.message}
             />
           </div>
         </div>
@@ -383,6 +387,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               label="¿En qué zona tiene los tatuajes?"
               placeholder="Indique la zona tatuada"
               {...register("zonaTatuada")}
+              error={errors.zonaTatuada?.message}
             />
           </div>
         )}

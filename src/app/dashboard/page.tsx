@@ -133,6 +133,18 @@ function DashboardContent() {
 
   useEffect(() => {
     loadInitial();
+    const refreshLive = async () => {
+      if (document.hidden) return;
+      try {
+        const res = await fetch("/api/entrevista", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setEntrevistas(data);
+        }
+      } catch {}
+    };
+    const intervalId = setInterval(refreshLive, 4000);
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {

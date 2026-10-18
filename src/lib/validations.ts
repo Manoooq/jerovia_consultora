@@ -13,6 +13,12 @@ const safeStr = (defaultVal = "") =>
     z.string().default(defaultVal)
   );
 
+const reqStr = (msg: string, minLen = 2) =>
+  z.preprocess(
+    (val) => (val === null || val === undefined ? "" : String(val)),
+    z.string().trim().min(minLen, msg)
+  );
+
 export const hermanoItemSchema = z.object({
   nombre: safeStr(""),
   edad: safeStr(""),
@@ -31,41 +37,68 @@ export const prestamoItemSchema = z.object({
   cuota: safeStr(""),
 });
 
-export const paso1Schema = z.object({
-  nombre: z.string().trim().min(2, "Ingrese nombres"),
-  apellido: z.string().trim().min(2, "Ingrese apellidos"),
-  fotoCandidato: safeStr(""),
-  fechaNacimiento: safeStr(""),
-  cedula: z.string().trim().min(3, "Ingrese número de cédula"),
-  estadoCivil: safeStr("soltero"),
-  telefono: z.string().trim().min(5, "Ingrese número de teléfono"),
-  email: safeStr(""),
-  hijos: z.boolean().optional().default(false),
-  cantidadHijos: safeNum(0),
-  edadesHijos: safeStr(""),
-  licenciaConducir: z.boolean().optional().default(false),
-  tenenciaMovilidad: safeStr("no"), // "no" | "propia" | "familiar"
-  movilidadPropia: z.boolean().optional().default(false),
-  tipoMovilidad: safeStr(""),
-  medioTransporteSucursal: safeStr(""),
-  tiempoViajeSucursal: safeStr(""),
-  tieneTatuajes: safeStr("no"),
-  tatuajesVisibles: safeStr("no_visibles"),
-  zonaTatuada: safeStr(""),
-  redSocialPlataforma: safeStr("Instagram"),
-  redSocial: safeStr(""),
-  vinculosFamiliares: z.boolean().optional().default(false),
-  vinculosFamiliaresDetalle: safeStr(""),
-});
+export const paso1Schema = z
+  .object({
+    nombre: reqStr("Ingrese sus nombres", 2),
+    apellido: reqStr("Ingrese sus apellidos", 2),
+    fotoCandidato: safeStr(""),
+    fechaNacimiento: reqStr("Seleccione su fecha de nacimiento", 4),
+    cedula: reqStr("Ingrese su número de cédula", 4),
+    estadoCivil: reqStr("Seleccione su estado civil", 2),
+    telefono: reqStr("Ingrese su número de teléfono", 6),
+    email: safeStr(""),
+    hijos: z.boolean().optional().default(false),
+    cantidadHijos: safeNum(0),
+    edadesHijos: safeStr(""),
+    licenciaConducir: z.boolean().optional().default(false),
+    tenenciaMovilidad: safeStr("no"),
+    movilidadPropia: z.boolean().optional().default(false),
+    tipoMovilidad: safeStr(""),
+    medioTransporteSucursal: reqStr(
+      "Indique con qué medio irá a la sucursal asignada",
+      2
+    ),
+    tiempoViajeSucursal: reqStr(
+      "Indique cuánto tiempo le toma llegar a la sucursal",
+      2
+    ),
+    tieneTatuajes: safeStr("no"),
+    tatuajesVisibles: safeStr("no_visibles"),
+    zonaTatuada: safeStr(""),
+    redSocialPlataforma: safeStr("Instagram"),
+    redSocial: safeStr(""),
+    vinculosFamiliares: z.boolean().optional().default(false),
+    vinculosFamiliaresDetalle: safeStr(""),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      (data.tenenciaMovilidad === "propia" ||
+        data.tenenciaMovilidad === "familiar") &&
+      !data.tipoMovilidad.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tipoMovilidad"],
+        message: "Indique las características del vehículo (marca, modelo, tipo)",
+      });
+    }
+    if (data.tieneTatuajes !== "no" && !data.zonaTatuada.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["zonaTatuada"],
+        message: "Indique en qué zona tiene los tatuajes",
+      });
+    }
+  });
 
 export const paso2Schema = z.object({
-  profesion: safeStr("Estudiante"), // "Estudiante" | "Aspirante a estudiar" | "Profesional / Graduado"
-  carrera: safeStr(""),
-  cursoActual: safeStr(""),
+  profesion: reqStr("Seleccione su situación académica", 2),
+  carrera: reqStr("Indique su carrera o nivel de estudios", 2),
+  cursoActual: reqStr("Indique el año o curso actual", 1),
   aniosEstudio: safeNum(0),
-  universidad: safeStr(""),
+  universidad: reqStr("Indique la institución o universidad", 2),
   estadoEstudios: safeStr("en_curso"),
-  idiomasTexto: safeStr(""),
+  idiomasTexto: reqStr("Seleccione o escriba al menos un idioma que maneja", 2),
   idiomas: z
     .array(
       z.object({
@@ -78,114 +111,195 @@ export const paso2Schema = z.object({
   cursos: safeStr(""),
 });
 
-export const paso3Schema = z.object({
-  situacionActual: safeStr("empleado"), // "empleado" | "desempleado" | "pasantia" | "primera_experiencia"
-  empresaAnterior: safeStr(""),
-  motivoSalida: safeStr(""),
-  cargoAnterior: safeStr(""),
-  antiguedad: safeStr(""),
-  antiguedadAnterior: safeStr(""),
-  salarioBruto: safeStr(""),
-  salarioNeto: safeStr(""),
-  salarioAnterior: safeNum(0),
-  aportesDescuentos: safeStr(""),
-  cargoPostula: safeStr(""),
-  disponibilidad: safeStr("inmediata"),
-  pretensionSalarial: safeStr(""),
-  motivoEleccionEntidad: safeStr(""),
-  objetivosProfesionales: safeStr(""),
-  ambienteLaboralIdeal: safeStr(""),
-  familiarEnEntidad: z.boolean().optional().default(false),
-  familiarEnEntidadDetalle: safeStr(""),
-});
+export const paso3Schema = z
+  .object({
+    situacionActual: reqStr("Seleccione su condición ocupacional", 2),
+    empresaAnterior: safeStr(""),
+    motivoSalida: safeStr(""),
+    cargoAnterior: safeStr(""),
+    antiguedad: safeStr(""),
+    antiguedadAnterior: safeStr(""),
+    salarioBruto: safeStr(""),
+    salarioNeto: safeStr(""),
+    salarioAnterior: safeNum(0),
+    aportesDescuentos: safeStr(""),
+    cargoPostula: reqStr("Indique el cargo al que postula", 2),
+    disponibilidad: safeStr("inmediata"),
+    pretensionSalarial: reqStr("Indique su pretensión salarial", 2),
+    motivoEleccionEntidad: reqStr(
+      "Indique por qué eligió este Banco para trabajar",
+      3
+    ),
+    objetivosProfesionales: reqStr(
+      "Indique sus objetivos profesionales si se incorpora",
+      3
+    ),
+    ambienteLaboralIdeal: reqStr(
+      "Describa cómo sería su ambiente laboral ideal",
+      3
+    ),
+    familiarEnEntidad: z.boolean().optional().default(false),
+    familiarEnEntidadDetalle: safeStr(""),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.situacionActual === "empleado" ||
+      data.situacionActual === "desempleado" ||
+      data.situacionActual === "pasantia"
+    ) {
+      if (!data.empresaAnterior.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["empresaAnterior"],
+          message: "Complete el nombre de la empresa o lugar de trabajo",
+        });
+      }
+      if (!data.cargoAnterior.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cargoAnterior"],
+          message: "Complete el cargo o tareas desempeñadas",
+        });
+      }
+    }
+  });
 
 export const paso4Schema = z.object({
-  aspectosPositivos: safeStr(""),
-  aspectosMejorar: safeStr(""),
-  visionLargoPlazo: safeStr(""),
+  aspectosPositivos: reqStr("Describa sus aspectos positivos como persona", 3),
+  aspectosMejorar: reqStr("Indique una actitud o aspecto a mejorar", 3),
+  visionLargoPlazo: reqStr(
+    "Indique los logros personales que espera cumplir",
+    3
+  ),
   expectativasEntidad: safeStr(""),
   familiaresPoliticos: z.boolean().optional().default(false),
   familiaresPoliticosDetalle: safeStr(""),
 });
 
-export const paso5Schema = z.object({
-  relacionPadres: safeStr("casados"),
-  estructuraFamiliar: safeStr(""),
-  nombreMadre: safeStr(""),
-  edadMadre: safeNum(0),
-  ocupacionMadre: safeStr(""),
-  empresaMadre: safeStr(""),
-  salarioMadre: safeStr(""),
-  ciudadMadre: safeStr(""),
-  telefonoMadre: safeStr(""),
-  nombrePadre: safeStr(""),
-  edadPadre: safeNum(0),
-  ocupacionPadre: safeStr(""),
-  empresaPadre: safeStr(""),
-  salarioPadre: safeStr(""),
-  ciudadPadre: safeStr(""),
-  telefonoPadre: safeStr(""),
-  parejaPadreMadreViveCasa: z.boolean().optional().default(false),
-  nombrePareja: safeStr(""),
-  edadPareja: safeNum(0),
-  ocupacionPareja: safeStr(""),
-  empresaPareja: safeStr(""),
-  salarioPareja: safeStr(""),
-  ciudadPareja: safeStr(""),
-  telefonoPareja: safeStr(""),
-  tieneHermanos: z.boolean().optional().default(false),
-  cantidadHermanos: safeNum(0),
-  listaHermanos: z.array(hermanoItemSchema).optional().default([]),
-  familiaresProductosEntidad: z.boolean().optional().default(false),
-  familiarConProductosDetalle: safeStr(""),
-});
+export const paso5Schema = z
+  .object({
+    relacionPadres: reqStr("Seleccione la relación de sus padres", 2),
+    estructuraFamiliar: safeStr(""),
+    nombreMadre: reqStr("Ingrese el nombre y apellido de su madre", 2),
+    edadMadre: safeNum(0),
+    ocupacionMadre: reqStr("Indique la ocupación de su madre", 2),
+    empresaMadre: safeStr(""),
+    salarioMadre: safeStr(""),
+    ciudadMadre: safeStr(""),
+    telefonoMadre: safeStr(""),
+    nombrePadre: reqStr("Ingrese el nombre y apellido de su padre", 2),
+    edadPadre: safeNum(0),
+    ocupacionPadre: reqStr("Indique la ocupación de su padre", 2),
+    empresaPadre: safeStr(""),
+    salarioPadre: safeStr(""),
+    ciudadPadre: safeStr(""),
+    telefonoPadre: safeStr(""),
+    parejaPadreMadreViveCasa: z.boolean().optional().default(false),
+    nombrePareja: safeStr(""),
+    edadPareja: safeNum(0),
+    ocupacionPareja: safeStr(""),
+    empresaPareja: safeStr(""),
+    salarioPareja: safeStr(""),
+    ciudadPareja: safeStr(""),
+    telefonoPareja: safeStr(""),
+    tieneHermanos: z.boolean().optional().default(false),
+    cantidadHermanos: safeNum(0),
+    listaHermanos: z.array(hermanoItemSchema).optional().default([]),
+    familiaresProductosEntidad: z.boolean().optional().default(false),
+    familiarConProductosDetalle: safeStr(""),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.familiaresProductosEntidad &&
+      !data.familiarConProductosDetalle.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["familiarConProductosDetalle"],
+        message: "Indique qué familiar posee productos y de qué tipo",
+      });
+    }
+  });
 
-export const paso6Schema = z.object({
-  enfermedadBase: z.boolean().optional().default(false),
-  enfermedadBaseDetalle: safeStr(""),
-  consumeMedicamentos: z.boolean().optional().default(false),
-  consumeMedicamentosDetalle: safeStr(""),
-  tieneFobias: z.boolean().optional().default(false),
-  tieneFobiasDetalle: safeStr(""),
-  seguroMedico: safeStr("ninguno"),
-  seguroMedicoDetalle: safeStr(""),
-  consumoAlcohol: safeStr("no"),
-  consumoTabaco: z.boolean().optional().default(false),
-  familiaresEnfermedad: z.boolean().optional().default(false),
-  familiaresEnfermedadDetalle: safeStr(""),
-  condicionDiferenteVivienda: safeStr("Ninguno"),
-  tratamientos: z.boolean().optional().default(false),
-  tratamientosDetalle: safeStr(""),
-});
+export const paso6Schema = z
+  .object({
+    enfermedadBase: z.boolean().optional().default(false),
+    enfermedadBaseDetalle: safeStr(""),
+    consumeMedicamentos: z.boolean().optional().default(false),
+    consumeMedicamentosDetalle: safeStr(""),
+    tieneFobias: z.boolean().optional().default(false),
+    tieneFobiasDetalle: safeStr(""),
+    seguroMedico: reqStr("Seleccione si posee seguro médico", 2),
+    seguroMedicoDetalle: safeStr(""),
+    consumoAlcohol: reqStr("Seleccione una opción", 2),
+    consumoTabaco: z.boolean().optional().default(false),
+    familiaresEnfermedad: z.boolean().optional().default(false),
+    familiaresEnfermedadDetalle: safeStr(""),
+    condicionDiferenteVivienda: safeStr("Ninguno"),
+    tratamientos: z.boolean().optional().default(false),
+    tratamientosDetalle: safeStr(""),
+  })
+  .superRefine((data, ctx) => {
+    if (data.enfermedadBase && !data.enfermedadBaseDetalle.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["enfermedadBaseDetalle"],
+        message: "Especifique el problema de salud o alergia",
+      });
+    }
+    if (
+      (data.seguroMedico === "privado" || data.seguroMedico === "ambos") &&
+      !data.seguroMedicoDetalle.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["seguroMedicoDetalle"],
+        message: "Escriba cuál seguro médico privado posee",
+      });
+    }
+  });
 
-export const paso7Schema = z.object({
-  productosEntidad: z.boolean().optional().default(false),
-  tiposProductosEntidad: safeStr(""),
-  ingresosCubrenDeudas: z.boolean().optional().default(true),
-  tieneDependientesEconomicos: z.boolean().optional().default(false),
-  dependientesEconomicosDetalle: safeStr(""),
-  ingresosFamiliares: safeStr(""),
-  otrosIngresos: safeStr(""),
-  egresosMensuales: safeStr(""),
-  cantidadEgresos: safeNum(0),
-  listaEgresos: z.array(egresoItemSchema).optional().default([]),
-  prestamos: z.boolean().optional().default(false),
-  cantidadPrestamos: safeNum(0),
-  listaPrestamos: z.array(prestamoItemSchema).optional().default([]),
-  prestamosDetalle: safeStr(""),
-});
+export const paso7Schema = z
+  .object({
+    productosEntidad: z.boolean().optional().default(false),
+    tiposProductosEntidad: safeStr(""),
+    ingresosCubrenDeudas: z.boolean().optional().default(true),
+    tieneDependientesEconomicos: z.boolean().optional().default(false),
+    dependientesEconomicosDetalle: safeStr(""),
+    ingresosFamiliares: safeStr(""),
+    otrosIngresos: safeStr(""),
+    egresosMensuales: safeStr(""),
+    cantidadEgresos: safeNum(0),
+    listaEgresos: z.array(egresoItemSchema).optional().default([]),
+    prestamos: z.boolean().optional().default(false),
+    cantidadPrestamos: safeNum(0),
+    listaPrestamos: z.array(prestamoItemSchema).optional().default([]),
+    prestamosDetalle: safeStr(""),
+  })
+  .superRefine((data, ctx) => {
+    if (data.productosEntidad && !data.tiposProductosEntidad.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tiposProductosEntidad"],
+        message: "Indique qué tipo de producto posee en el Banco Continental",
+      });
+    }
+  });
 
 export const paso8Schema = z.object({
-  ciudad: safeStr(""),
-  barrio: safeStr(""),
-  direccion: safeStr(""),
+  ciudad: reqStr("Ingrese su ciudad", 2),
+  barrio: reqStr("Ingrese su barrio", 2),
+  direccion: reqStr("Ingrese su dirección", 3),
   coordenadas: safeStr(""),
   plusCode: safeStr(""),
-  tipoCamino: safeStr("asfalto"),
-  tenenciaVivienda: safeStr("propia"),
+  tipoCamino: reqStr("Seleccione el tipo de trayecto", 2),
+  tenenciaVivienda: reqStr("Seleccione la propiedad de la vivienda", 2),
   costoAlquiler: safeNum(0),
   cantidadPersonas: safeNum(1),
-  quienesVivenCasa: safeStr(""),
+  quienesVivenCasa: reqStr(
+    "Indique quiénes viven en la casa junto a usted",
+    2
+  ),
   habitaciones: safeNum(1),
   salaCantidad: safeNum(1),
   banos: safeNum(1),
@@ -194,11 +308,11 @@ export const paso8Schema = z.object({
   sala: z.boolean().optional().default(true),
   plantas: safeNum(1),
   paredes: safeStr("ladrillo"),
-  paredesDetalle: safeStr(""),
+  paredesDetalle: reqStr("Indique el material de las paredes", 2),
   techo: safeStr("tejas"),
-  techoDetalle: safeStr(""),
+  techoDetalle: reqStr("Indique el material del techo", 2),
   pisos: safeStr("ceramica"),
-  pisosDetalle: safeStr(""),
+  pisosDetalle: reqStr("Indique el material del piso", 2),
   fotosVivienda: z.array(z.string()).optional().default([]),
 });
 
@@ -207,25 +321,25 @@ export const paso9Schema = z.object({
   quienesPresentes: safeStr("Ninguno"),
   vocabularioEntrevistado: safeStr("Respetuoso y acorde a la situación"),
   zonaFacilAcceso: z.boolean().optional().default(true),
-  observacionesEntrevista: safeStr(""),
+  observacionesEntrevista: reqStr("Redacte las observaciones de la visita", 3),
   diccion: safeStr("fluida"),
   estadoVivienda: safeStr("bueno"),
   otrasObservaciones: safeStr("Ninguna"),
   entrevistadorNombre: safeStr(""),
-  fechaVisita: safeStr(new Date().toISOString().slice(0, 10)),
+  fechaVisita: reqStr("Fecha de visita requerida", 4),
   horaVisita: safeStr(""),
-  consultorNombre: safeStr("Lic. Michelle Romero"),
+  consultorNombre: reqStr("Nombre del licenciado/a firmante requerido", 2),
   firmaEvaluador: safeStr(""),
 });
 
 export const formularioCompletoSchema = z.object({
-  ...paso1Schema.shape,
+  ...paso1Schema.innerType().shape,
   ...paso2Schema.shape,
-  ...paso3Schema.shape,
+  ...paso3Schema.innerType().shape,
   ...paso4Schema.shape,
-  ...paso5Schema.shape,
-  ...paso6Schema.shape,
-  ...paso7Schema.shape,
+  ...paso5Schema.innerType().shape,
+  ...paso6Schema.innerType().shape,
+  ...paso7Schema.innerType().shape,
   ...paso8Schema.shape,
   ...paso9Schema.shape,
 });

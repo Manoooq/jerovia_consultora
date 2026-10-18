@@ -32,6 +32,7 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso4Data>({
     resolver: zodResolver(paso4Schema),
     defaultValues: {
@@ -125,6 +126,7 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           rows={2}
           placeholder="Describa sus principales cualidades"
           {...register("aspectosPositivos")}
+          error={errors.aspectosPositivos?.message}
         />
         <button
           type="button"
@@ -151,6 +153,7 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           rows={2}
           placeholder="Indique un aspecto o actitud que considere que puede mejorar"
           {...register("aspectosMejorar")}
+          error={errors.aspectosMejorar?.message}
         />
         <button
           type="button"
@@ -177,6 +180,7 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
           rows={2}
           placeholder="Indique sus metas y proyectos personales"
           {...register("visionLargoPlazo")}
+          error={errors.visionLargoPlazo?.message}
         />
         <button
           type="button"

@@ -58,6 +58,7 @@ export function Paso2Academico({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso2Data>({
     resolver: zodResolver(paso2Schema),
     defaultValues: {
@@ -202,6 +203,7 @@ export function Paso2Academico({ defaultValues, onNext, onBack }: Props) {
               }
               placeholder="Indique la carrera o bachillerato"
               {...register("carrera")}
+              error={errors.carrera?.message}
             />
           )}
           {!shouldHideField("cursoActual") && (
@@ -213,6 +215,7 @@ export function Paso2Academico({ defaultValues, onNext, onBack }: Props) {
               }
               placeholder="Ej: Ingreso / 1er año / 2do año"
               {...register("cursoActual")}
+              error={errors.cursoActual?.message}
             />
           )}
           {!shouldHideField("universidad") && (
@@ -220,6 +223,7 @@ export function Paso2Academico({ defaultValues, onNext, onBack }: Props) {
               label="Institución / Universidad"
               placeholder="Indique nombre de la institución"
               {...register("universidad")}
+              error={errors.universidad?.message}
             />
           )}
         </div>
@@ -309,6 +313,7 @@ export function Paso2Academico({ defaultValues, onNext, onBack }: Props) {
             label="Idiomas que manejas"
             placeholder="Lista de idiomas que maneja"
             {...register("idiomasTexto")}
+            error={errors.idiomasTexto?.message}
           />
         </div>
       )}

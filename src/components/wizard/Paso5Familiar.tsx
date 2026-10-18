@@ -30,6 +30,7 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso5Data>({
     resolver: zodResolver(paso5Schema),
     defaultValues: {
@@ -139,9 +140,9 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           <span>DATOS DE LA MADRE</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input label="Nombre y apellido de la madre" placeholder="Ingrese nombre y apellido" {...register("nombreMadre")} />
+          <Input label="Nombre y apellido de la madre" placeholder="Ingrese nombre y apellido" {...register("nombreMadre")} error={errors.nombreMadre?.message} />
           <Input label="Edad en años" type="number" {...register("edadMadre")} />
-          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionMadre")} />
+          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionMadre")} error={errors.ocupacionMadre?.message} />
           <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaMadre")} />
           <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioMadre")} />
           <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadMadre")} />
@@ -156,9 +157,9 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           <span>DATOS DEL PADRE</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input label="Nombre y apellido del padre" placeholder="Ingrese nombre y apellido" {...register("nombrePadre")} />
+          <Input label="Nombre y apellido del padre" placeholder="Ingrese nombre y apellido" {...register("nombrePadre")} error={errors.nombrePadre?.message} />
           <Input label="Edad en años" type="number" {...register("edadPadre")} />
-          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPadre")} />
+          <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPadre")} error={errors.ocupacionPadre?.message} />
           <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaPadre")} />
           <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPadre")} />
           <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPadre")} />
@@ -305,6 +306,7 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
             label="Familiar con producto/s y tipo de producto"
             placeholder="Indique parentesco y tipo de producto (ej: Tarjeta de débito, cuenta...)"
             {...register("familiarConProductosDetalle")}
+            error={errors.familiarConProductosDetalle?.message}
           />
         )}
       </div>

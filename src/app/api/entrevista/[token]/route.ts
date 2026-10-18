@@ -3,6 +3,8 @@ import {
   obtenerEntrevista,
   actualizarEntrevista,
   eliminarEntrevista,
+  syncStoreFromCloud,
+  syncStoreToCloud,
 } from "@/lib/store";
 import { detectarInconsistencias } from "@/lib/gemini";
 import { getSession } from "@/lib/auth";
@@ -14,8 +16,9 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const entrevista = obtenerEntrevista(token);
+  await syncStoreFromCloud();
 
+  const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
     return NextResponse.json(
       { error: "Expediente no encontrado." },
@@ -32,13 +35,14 @@ export async function PATCH(
 ) {
   const { token } = await params;
 
-  // Límite amplio de 10 MB para soportar fotografías desde iPhone y Android sin rechazos
   const { data: body, errorResponse } = await parseSafeJson<
     Record<string, unknown>
   >(req, 10_000_000);
   if (errorResponse) return errorResponse;
 
-  let actual = obtenerEntrevista(token);
+  await syncStoreFromCloud();
+
+  const actual = obtenerEntrevista(token);
   if (!actual) {
     return NextResponse.json(
       { error: "No se pudo inicializar el expediente." },
@@ -51,7 +55,7 @@ export async function PATCH(
       ? (body.datos as Record<string, unknown>)
       : {};
 
-  const mergedDatos = {
+  const mergedDatos: Record<string, unknown> = {
     ...actual.datos,
     ...incomingDatos,
   };
@@ -62,6 +66,12 @@ export async function PATCH(
     .trim();
 
   const alertas = detectarInconsistencias(mergedDatos);
+
+  const requestedPaso =
+    typeof body?.pasoActual === "number" ? body.pasoActual : actual.pasoActual;
+  const requestedEstado =
+    (body?.estado as "pendiente" | "en_progreso" | "completado") ||
+    actual.estado;
 
   const updated = actualizarEntrevista(token, {
     candidatoNombre:
@@ -84,16 +94,13 @@ export async function PATCH(
       (body?.entidadSolicitante as string) || actual.entidadSolicitante,
     evaluadorAsignado:
       (body?.evaluadorAsignado as string) || actual.evaluadorAsignado,
-    pasoActual:
-      typeof body?.pasoActual === "number"
-        ? body.pasoActual
-        : actual.pasoActual,
-    estado:
-      (body?.estado as "pendiente" | "en_progreso" | "completado") ||
-      actual.estado,
+    pasoActual: requestedPaso,
+    estado: requestedEstado,
     datos: mergedDatos,
     alertas,
   });
+
+  await syncStoreToCloud();
 
   return NextResponse.json(updated);
 }
@@ -108,9 +115,10 @@ export async function DELETE(
   }
 
   const { token } = await params;
+  await syncStoreFromCloud();
   const ok = eliminarEntrevista(token);
-
   if (ok) {
+    await syncStoreToCloud();
     registrarEventoAuditoria({
       userId: session.userId,
       userName: session.name,

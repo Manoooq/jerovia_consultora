@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenerEntrevista } from "@/lib/store";
+import { obtenerEntrevista, syncStoreFromCloud } from "@/lib/store";
 import { generarPptxInforme } from "@/lib/exportPptx";
 import { getSession } from "@/lib/auth";
 import { registrarEventoAuditoria } from "@/lib/audit";
@@ -54,6 +54,7 @@ export async function GET(
   const url = new URL(req.url);
   const formato = url.searchParams.get("formato") ?? "pptx";
 
+  await syncStoreFromCloud();
   const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
     return NextResponse.json(
@@ -465,7 +466,7 @@ export async function GET(
         <div class="section-header">Datos de la Salud</div>
         <div class="section-body two-col">
           <div class="qa-list">
-            <div class="qa-item"><div class="qa-label">Alguna condición especial (Discapacidad, impedimentos físicos)</div><div class="qa-val">${siNo(d.enfermedadBase, d.enfermedadBaseDetalle)}</div></div>
+            <div class="qa-item"><div class="qa-label">¿Cuentas con algún problema de salud o alergia?</div><div class="qa-val">${siNo(d.enfermedadBase, d.enfermedadBaseDetalle)}</div></div>
             <div class="qa-item"><div class="qa-label">Consume medicamento cognitivo, tranquilizante u hormonal</div><div class="qa-val">${siNo(d.consumeMedicamentos, d.consumeMedicamentosDetalle)}</div></div>
             <div class="qa-item"><div class="qa-label">Tiene fobias, pánicos, claustrofobias, etc.</div><div class="qa-val">${siNo(d.tieneFobias, d.tieneFobiasDetalle)}</div></div>
             <div class="qa-item"><div class="qa-label">Posee seguro médico</div><div class="qa-val">${v(d.seguroMedico ? d.seguroMedico.toUpperCase() : "Ninguno")} ${d.seguroMedicoDetalle ? "— " + v(d.seguroMedicoDetalle) : ""}</div></div>
@@ -566,7 +567,7 @@ export async function GET(
         <div class="section-header">Datos Económicos de la Persona</div>
         <div class="section-body qa-list">
           <div class="two-col">
-            <div class="qa-item"><div class="qa-label">Posee algún producto de ${entidadTexto}</div><div class="qa-val">${siNo(d.productosEntidad, d.tiposProductosEntidad)}</div></div>
+            <div class="qa-item"><div class="qa-label">¿Tienes algún producto del Banco Continental?</div><div class="qa-val">${siNo(d.productosEntidad, d.tiposProductosEntidad)}</div></div>
             <div class="qa-item"><div class="qa-label">¿Sus ingresos cubren todas sus deudas o gastos?</div><div class="qa-val">${siNo(d.ingresosCubrenDeudas)} · Dependientes económicos: ${siNo(d.tieneDependientesEconomicos)}</div></div>
           </div>
           <div class="qa-item">

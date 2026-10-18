@@ -162,6 +162,7 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         label="¿Quién vive en la casa junto a la persona entrevistada?"
         placeholder="Indique quiénes habitan en la vivienda"
         {...register("quienesVivenCasa")}
+        error={errors.quienesVivenCasa?.message}
       />
 
       {/* Dependencias con íconos visuales para cada ambiente */}
@@ -215,16 +216,19 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
             label="Material de las paredes"
             placeholder="Indique material de paredes"
             {...register("paredesDetalle")}
+            error={errors.paredesDetalle?.message}
           />
           <Input
             label="Material del techo"
             placeholder="Indique material del techo"
             {...register("techoDetalle")}
+            error={errors.techoDetalle?.message}
           />
           <Input
             label="Material del piso"
             placeholder="Indique material del piso"
             {...register("pisosDetalle")}
+            error={errors.pisosDetalle?.message}
           />
         </div>
       </div>

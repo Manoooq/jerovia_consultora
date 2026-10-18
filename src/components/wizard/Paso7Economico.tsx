@@ -20,6 +20,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso7Data>({
     resolver: zodResolver(paso7Schema),
     defaultValues: {
@@ -84,7 +85,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
 
       <div className="space-y-3">
         <Toggle
-          label="¿La persona entrevistada posee algún producto de la entidad solicitante?"
+          label="¿Tienes algún producto del Banco Continental?"
           checked={Boolean(poseeProductos)}
           onChange={(val) => setValue("productosEntidad", val)}
         />
@@ -93,6 +94,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
             label="Tipo/s de producto/s"
             placeholder="Indique tarjeta de débito, crédito, cuenta, etc."
             {...register("tiposProductosEntidad")}
+            error={errors.tiposProductosEntidad?.message}
           />
         )}
 

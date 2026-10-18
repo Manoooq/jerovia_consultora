@@ -189,7 +189,7 @@ export default function EntrevistaWizardPage({
             localDraft &&
             Object.keys(localDatos).length > Object.keys(serverDatos).length
           ) {
-            syncWithServer(mergedDatos, bestPaso, "en_progreso");
+            syncWithServer(mergedDatos, localDraft.completado ? 9 : bestPaso, localDraft.completado ? "completado" : "en_progreso");
           }
         } else if (localDraft && mounted) {
           setDatos(localDraft.datos);
@@ -225,8 +225,8 @@ export default function EntrevistaWizardPage({
     if (!isEvaluator && paso === 8) {
       setDatos(merged);
       setCompletado(true);
-      saveLocalDraft(merged, 8, 8, true);
-      syncWithServer(merged, 8, "en_progreso");
+      saveLocalDraft(merged, 9, 9, true);
+      syncWithServer(merged, 9, "completado");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }

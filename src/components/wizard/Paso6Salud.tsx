@@ -20,6 +20,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso6Data>({
     resolver: zodResolver(paso6Schema),
     defaultValues: {
@@ -80,15 +81,16 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
 
       <div className="space-y-3">
         <Toggle
-          label="¿Alguna condición especial de la persona entrevistada (Discapacidad, impedimentos físicos o dificultades)?"
+          label="¿Cuentas con algún problema de salud o alergia?"
           checked={Boolean(condEspecial)}
           onChange={(val) => setValue("enfermedadBase", val)}
         />
         {condEspecial && (
           <Input
-            label="Especifique la condición especial o impedimento"
+            label="Especifique el problema de salud o alergia"
             placeholder="Detalle la condición"
             {...register("enfermedadBaseDetalle")}
+            error={errors.enfermedadBaseDetalle?.message}
           />
         )}
 
@@ -149,6 +151,7 @@ export function Paso6Salud({ defaultValues, onNext, onBack }: Props) {
             label="¿Cuál seguro médico privado posee?"
             placeholder="Escriba el nombre de su seguro médico privado"
             {...register("seguroMedicoDetalle")}
+            error={errors.seguroMedicoDetalle?.message}
           />
         )}
       </div>

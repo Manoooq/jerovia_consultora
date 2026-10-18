@@ -62,6 +62,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
     handleSubmit,
     watch,
     setValue,
+    formState: { errors },
   } = useForm<Paso3Data>({
     resolver: zodResolver(paso3Schema),
     defaultValues: {
@@ -218,6 +219,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
                 label="¿Dónde estás trabajando actualmente?"
                 placeholder="Nombre de la empresa o institución"
                 {...register("empresaAnterior")}
+                error={errors.empresaAnterior?.message}
               />
             )}
             {!shouldHideField("cargoAnterior") && (
@@ -225,6 +227,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
                 label="Cargo que ocupas actualmente"
                 placeholder="Indique su puesto o función"
                 {...register("cargoAnterior")}
+                error={errors.cargoAnterior?.message}
               />
             )}
           </div>
@@ -275,11 +278,13 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
               label="Último lugar de empleo"
               placeholder="Nombre de la última empresa donde trabajó"
               {...register("empresaAnterior")}
+                error={errors.empresaAnterior?.message}
             />
             <Input
               label="Último cargo ocupado"
               placeholder="Puesto o función desempeñada"
               {...register("cargoAnterior")}
+                error={errors.cargoAnterior?.message}
             />
           </div>
 
@@ -314,11 +319,13 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
               label="Empresa o institución de la pasantía"
               placeholder="Dónde realizó la pasantía"
               {...register("empresaAnterior")}
+                error={errors.empresaAnterior?.message}
             />
             <Input
               label="Área o tareas realizadas"
               placeholder="Funciones desempeñadas"
               {...register("cargoAnterior")}
+                error={errors.cargoAnterior?.message}
             />
             <Input
               label="Duración de la pasantía"
@@ -358,6 +365,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             label="Cargo al que postula"
             placeholder="Indique el puesto al que postula"
             {...register("cargoPostula")}
+            error={errors.cargoPostula?.message}
           />
         )}
         {!shouldHideField("pretensionSalarial") && (
@@ -365,6 +373,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             label="Pretensión salarial o monto acordado con RRHH"
             placeholder="Ingrese monto en Gs."
             {...register("pretensionSalarial")}
+            error={errors.pretensionSalarial?.message}
           />
         )}
       </div>
@@ -375,6 +384,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             label="¿Por qué eligió este Banco para trabajar?"
             placeholder="Escriba su motivación"
             {...register("motivoEleccionEntidad")}
+            error={errors.motivoEleccionEntidad?.message}
           />
           <button
             type="button"
@@ -396,6 +406,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             label="Objetivos profesionales si se incorpora"
             placeholder="Indique sus metas laborales"
             {...register("objetivosProfesionales")}
+            error={errors.objetivosProfesionales?.message}
           />
           <button
             type="button"
@@ -417,6 +428,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             label="¿Cómo sería su ambiente laboral ideal?"
             placeholder="Describa su entorno ideal"
             {...register("ambienteLaboralIdeal")}
+            error={errors.ambienteLaboralIdeal?.message}
           />
           <button
             type="button"

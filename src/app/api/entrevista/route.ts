@@ -6,6 +6,8 @@ import {
   listarEntrevistas,
   listarEntrevistasPorEvaluador,
   encodeSmartToken,
+  syncStoreFromCloud,
+  syncStoreToCloud,
 } from "@/lib/store";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { enforceRateLimit, getClientIp, parseSafeJson } from "@/lib/apiSecurity";
@@ -16,6 +18,8 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
+
+  await syncStoreFromCloud();
 
   if (session.role === "admin") {
     return NextResponse.json(listarEntrevistas());
@@ -34,6 +38,8 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     );
   }
+
+  await syncStoreFromCloud();
 
   const { data: body, errorResponse } = await parseSafeJson<{
     entidadSolicitante?: string;
@@ -74,9 +80,11 @@ export async function POST(req: NextRequest) {
   if (telefono) datosIniciales.telefono = telefono;
   if (ciudad) datosIniciales.ciudad = ciudad;
 
-  // Registrar exactamente qué campos fueron pre-llenados por el evaluador para no mostrárselos al postulante
   const camposPrellenados = Object.entries(datosIniciales)
-    .filter(([, val]) => val !== undefined && val !== null && String(val).trim() !== "")
+    .filter(
+      ([, val]) =>
+        val !== undefined && val !== null && String(val).trim() !== ""
+    )
     .map(([key]) => key);
 
   datosIniciales.entrevistadorNombre = evaluador;
@@ -105,12 +113,14 @@ export async function POST(req: NextRequest) {
     camposPrellenados,
   });
 
+  await syncStoreToCloud();
+
   registrarEventoAuditoria({
     userId: session.userId,
     userName: session.name,
     userRole: session.role,
     action: "CREATE_VISITA",
-    detail: `Habilitación de expediente para ${candidato} (${entidad}) con ${camposPrellenados.length} campos pre-llenados.`,
+    detail: `Habilitación de expediente para ${candidato} (${entidad}).`,
     ip: getClientIp(req),
   });
 

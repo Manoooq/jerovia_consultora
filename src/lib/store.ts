@@ -2,6 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { FormularioCompleto } from "./validations";
+import cloudConfig from "./cloudConfig.json";
 
 export interface EntrevistaRecord {
   id: string;
@@ -24,6 +25,10 @@ export interface EntrevistaRecord {
 
 const REPO_DATA_DIR = path.join(process.cwd(), "data");
 const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data");
+const CLOUD_URL =
+  process.env.JEROVIA_CLOUD_STORE_URL ||
+  (cloudConfig as { jsonBlobUrl?: string }).jsonBlobUrl ||
+  "";
 
 function getReadableFile(): string | null {
   const tmpFile = path.join(TMP_DATA_DIR, "entrevistas.json");
@@ -34,7 +39,188 @@ function getReadableFile(): string | null {
 }
 
 const store = new Map<string, EntrevistaRecord>();
-let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function countFilledFields(datos?: Partial<FormularioCompleto>): number {
+  if (!datos) return 0;
+  return Object.entries(datos).filter(([, val]) => {
+    if (val === undefined || val === null || val === "" || val === false) return false;
+    if (Array.isArray(val)) return val.length > 0;
+    return true;
+  }).length;
+}
+
+/**
+ * Fusiona dos versiones del mismo expediente conservando siempre el que tenga
+ * más avance, más respuestas cargadas y estado más avanzado.
+ */
+function mergeRecords(
+  existing: EntrevistaRecord,
+  incoming: EntrevistaRecord
+): EntrevistaRecord {
+  const mergedDatos: Partial<FormularioCompleto> = {
+    ...existing.datos,
+    ...incoming.datos,
+  };
+
+  // No permitir que un campo vacío sobrescriba un dato ya rellenado por el postulante
+  for (const [k, val] of Object.entries(existing.datos || {})) {
+    const incVal = (incoming.datos as Record<string, unknown> | undefined)?.[k];
+    const isIncEmpty =
+      incVal === undefined ||
+      incVal === null ||
+      incVal === "" ||
+      (Array.isArray(incVal) && incVal.length === 0);
+    if (isIncEmpty && val !== undefined && val !== null && val !== "") {
+      (mergedDatos as Record<string, unknown>)[k] = val;
+    }
+  }
+
+  const estadoRank = { pendiente: 0, en_progreso: 1, completado: 2 };
+  const bestEstado =
+    estadoRank[incoming.estado] >= estadoRank[existing.estado]
+      ? incoming.estado
+      : existing.estado;
+
+  const bestPaso = Math.max(existing.pasoActual || 1, incoming.pasoActual || 1);
+  const latestTime =
+    new Date(incoming.actualizadoEn).getTime() >=
+    new Date(existing.actualizadoEn).getTime()
+      ? incoming.actualizadoEn
+      : existing.actualizadoEn;
+
+  return {
+    ...existing,
+    ...incoming,
+    candidatoNombre: incoming.candidatoNombre || existing.candidatoNombre,
+    cedula: incoming.cedula || existing.cedula || (mergedDatos.cedula as string),
+    telefono:
+      incoming.telefono || existing.telefono || (mergedDatos.telefono as string),
+    ciudad: incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
+    estado: bestEstado,
+    pasoActual: bestPaso,
+    datos: mergedDatos,
+    camposPrellenados:
+      incoming.camposPrellenados?.length
+        ? incoming.camposPrellenados
+        : existing.camposPrellenados,
+    actualizadoEn: latestTime,
+  };
+}
+
+export async function syncStoreFromCloud(): Promise<void> {
+  if (!CLOUD_URL) return;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(CLOUD_URL, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache, no-store",
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const data = await res.json();
+      const cloudRecords: EntrevistaRecord[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.records)
+        ? data.records
+        : [];
+
+      for (const cr of cloudRecords) {
+        if (!cr || !cr.token) continue;
+        const local = store.get(cr.token);
+        if (!local) {
+          store.set(cr.token, cr);
+        } else {
+          store.set(cr.token, mergeRecords(local, cr));
+        }
+      }
+      persistLocalDisk();
+    }
+  } catch {}
+}
+
+export async function syncStoreToCloud(): Promise<void> {
+  persistLocalDisk();
+  if (!CLOUD_URL) return;
+  try {
+    // Primero traer cualquier cambio de otros dispositivos para no pisarlo
+    const controllerGet = new AbortController();
+    const timerGet = setTimeout(() => controllerGet.abort(), 2500);
+    const getRes = await fetch(CLOUD_URL, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache, no-store",
+      },
+      cache: "no-store",
+      signal: controllerGet.signal,
+    }).catch(() => null);
+    clearTimeout(timerGet);
+
+    if (getRes && getRes.ok) {
+      const remoteData = await getRes.json().catch(() => null);
+      const remoteList: EntrevistaRecord[] = Array.isArray(remoteData?.records)
+        ? remoteData.records
+        : [];
+      for (const rr of remoteList) {
+        if (!rr || !rr.token) continue;
+        const loc = store.get(rr.token);
+        if (!loc) {
+          store.set(rr.token, rr);
+        } else {
+          store.set(rr.token, mergeRecords(loc, rr));
+        }
+      }
+    }
+
+    const allRecords = Array.from(store.values()).filter(
+      (r) => r.token !== "demo"
+    );
+
+    const controllerPut = new AbortController();
+    const timerPut = setTimeout(() => controllerPut.abort(), 3500);
+    await fetch(CLOUD_URL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        records: allRecords,
+        updatedAt: Date.now(),
+      }),
+      signal: controllerPut.signal,
+    });
+    clearTimeout(timerPut);
+  } catch {}
+}
+
+function persistLocalDisk() {
+  const records = Array.from(store.values());
+  const payload = JSON.stringify(records, null, 2);
+  try {
+    fs.mkdirSync(TMP_DATA_DIR, { recursive: true });
+    fs.writeFileSync(
+      path.join(TMP_DATA_DIR, "entrevistas.json"),
+      payload,
+      "utf-8"
+    );
+  } catch {}
+  try {
+    fs.mkdirSync(REPO_DATA_DIR, { recursive: true });
+    fs.writeFileSync(
+      path.join(REPO_DATA_DIR, "entrevistas.json"),
+      payload,
+      "utf-8"
+    );
+  } catch {}
+}
 
 export function encodeSmartToken(meta: {
   e: string;
@@ -94,37 +280,10 @@ function initStore() {
       const content = fs.readFileSync(file, "utf-8");
       if (content.trim()) {
         const records: EntrevistaRecord[] = JSON.parse(content);
-        store.clear();
         records.forEach((r) => store.set(r.token, r));
       }
     }
-  } catch (err) {
-    console.warn("[initStore warn]:", err);
-  }
-}
-
-function persistStore() {
-  if (persistTimer) clearTimeout(persistTimer);
-  persistTimer = setTimeout(async () => {
-    const records = Array.from(store.values());
-    const payload = JSON.stringify(records, null, 2);
-    try {
-      await fs.promises.mkdir(TMP_DATA_DIR, { recursive: true });
-      await fs.promises.writeFile(
-        path.join(TMP_DATA_DIR, "entrevistas.json"),
-        payload,
-        "utf-8"
-      );
-    } catch {}
-    try {
-      await fs.promises.mkdir(REPO_DATA_DIR, { recursive: true });
-      await fs.promises.writeFile(
-        path.join(REPO_DATA_DIR, "entrevistas.json"),
-        payload,
-        "utf-8"
-      );
-    } catch {}
-  }, 40);
+  } catch {}
 }
 
 initStore();
@@ -135,6 +294,11 @@ export function crearEntrevista(
   evaluadorAsignado = "Lic. Michelle Romero",
   creadoPor = "admin"
 ): EntrevistaRecord {
+  const existing = store.get(token);
+  if (existing && countFilledFields(existing.datos) > 0) {
+    return existing;
+  }
+
   const record: EntrevistaRecord = {
     id: `ent_${crypto.randomUUID().slice(0, 8)}`,
     token,
@@ -150,7 +314,7 @@ export function crearEntrevista(
     actualizadoEn: new Date().toISOString(),
   };
   store.set(token, record);
-  persistStore();
+  persistLocalDisk();
   return record;
 }
 
@@ -163,7 +327,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
     record = {
       id: "ent_demo",
       token: "demo",
-      entidadSolicitante: "Entidad Financiera",
+      entidadSolicitante: "Banco Continental",
       evaluadorAsignado: "Lic. Michelle Romero",
       creadoPor: "admin",
       estado: "en_progreso",
@@ -186,7 +350,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
     record = {
       id: `ent_${token.slice(-8)}`,
       token,
-      entidadSolicitante: decoded?.entidadSolicitante || "Entidad Solicitante",
+      entidadSolicitante: decoded?.entidadSolicitante || "Banco Continental",
       candidatoNombre: decoded?.candidatoNombre,
       cedula: decoded?.cedula,
       telefono: decoded?.telefono,
@@ -204,7 +368,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
       actualizadoEn: new Date().toISOString(),
     };
     store.set(token, record);
-    persistStore();
+    persistLocalDisk();
   }
 
   return record;
@@ -220,21 +384,41 @@ export function actualizarEntrevista(
   }
   if (!record) return null;
 
+  const mergedDatos: Partial<FormularioCompleto> = {
+    ...record.datos,
+    ...(patch.datos || {}),
+  };
+
+  for (const [k, val] of Object.entries(record.datos || {})) {
+    const nextVal = (patch.datos as Record<string, unknown> | undefined)?.[k];
+    if (
+      (nextVal === undefined || nextVal === null || nextVal === "") &&
+      val !== undefined &&
+      val !== null &&
+      val !== ""
+    ) {
+      (mergedDatos as Record<string, unknown>)[k] = val;
+    }
+  }
+
   const updated: EntrevistaRecord = {
     ...record,
     ...patch,
-    datos: {
-      ...record.datos,
-      ...(patch.datos || {}),
-    },
+    datos: mergedDatos,
+    pasoActual: Math.max(record.pasoActual || 1, patch.pasoActual || 1),
+    estado:
+      record.estado === "completado"
+        ? "completado"
+        : patch.estado || record.estado,
     camposPrellenados:
       patch.camposPrellenados !== undefined
         ? patch.camposPrellenados
         : record.camposPrellenados,
     actualizadoEn: new Date().toISOString(),
   };
+
   store.set(token, updated);
-  persistStore();
+  persistLocalDisk();
   return updated;
 }
 
@@ -242,7 +426,7 @@ export function eliminarEntrevista(token: string): boolean {
   const exists = store.has(token);
   if (!exists) return false;
   store.delete(token);
-  persistStore();
+  persistLocalDisk();
   return true;
 }
 
