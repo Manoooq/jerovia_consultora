@@ -21,6 +21,102 @@ function isValidDataUrl(src: unknown): src is string {
   return typeof src === "string" && src.startsWith("data:image/");
 }
 
+/**
+ * Extrae las dimensiones reales (ancho x alto en píxeles) de un dataURL JPEG o PNG
+ * para insertar la imagen en PowerPoint manteniendo su proporción exacta sin recortes.
+ */
+function getImageDimensions(
+  dataUrl: string
+): { width: number; height: number } | null {
+  try {
+    const commaIdx = dataUrl.indexOf(",");
+    if (commaIdx === -1) return null;
+    const b64 = dataUrl.slice(commaIdx + 1);
+    const buf = Buffer.from(b64, "base64");
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A + IHDR chunk at offset 16..24
+    if (
+      buf.length >= 24 &&
+      buf[0] === 0x89 &&
+      buf[1] === 0x50 &&
+      buf[2] === 0x4e &&
+      buf[3] === 0x47
+    ) {
+      const width = buf.readUInt32BE(16);
+      const height = buf.readUInt32BE(20);
+      if (width > 0 && height > 0) return { width, height };
+    }
+
+    // JPEG: FF D8 ... buscar marcador SOF0/SOF1/SOF2 (FF C0 .. FF C3)
+    if (buf.length > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+      let offset = 2;
+      while (offset + 9 < buf.length) {
+        if (buf[offset] !== 0xff) {
+          offset++;
+          continue;
+        }
+        const marker = buf[offset + 1];
+        if (marker === 0xff) {
+          offset++;
+          continue;
+        }
+        if (
+          marker === 0xc0 ||
+          marker === 0xc1 ||
+          marker === 0xc2 ||
+          marker === 0xc3
+        ) {
+          const height = buf.readUInt16BE(offset + 5);
+          const width = buf.readUInt16BE(offset + 7);
+          if (width > 0 && height > 0) return { width, height };
+          break;
+        }
+        const segLen = buf.readUInt16BE(offset + 2);
+        if (segLen < 2) break;
+        offset += 2 + segLen;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+/**
+ * Calcula la caja contenedora centrada (object-fit: contain) manteniendo el aspect ratio original.
+ */
+function fitImageInBox(
+  dataUrl: string,
+  boxX: number,
+  boxY: number,
+  boxW: number,
+  boxH: number
+): { x: number; y: number; w: number; h: number } {
+  const dims = getImageDimensions(dataUrl);
+  if (!dims || dims.width <= 0 || dims.height <= 0) {
+    return { x: boxX, y: boxY, w: boxW, h: boxH };
+  }
+  const imgRatio = dims.width / dims.height;
+  const boxRatio = boxW / boxH;
+
+  let w = boxW;
+  let h = boxH;
+  if (imgRatio > boxRatio) {
+    w = boxW;
+    h = boxW / imgRatio;
+  } else {
+    h = boxH;
+    w = boxH * imgRatio;
+  }
+
+  const x = boxX + (boxW - w) / 2;
+  const y = boxY + (boxH - h) / 2;
+  return {
+    x: Number(x.toFixed(3)),
+    y: Number(y.toFixed(3)),
+    w: Number(w.toFixed(3)),
+    h: Number(h.toFixed(3)),
+  };
+}
+
 export async function generarPptxInforme(
   entrevista: EntrevistaRecord
 ): Promise<Buffer> {
@@ -184,12 +280,16 @@ export async function generarPptxInforme(
 
   if (hasCandidatePhoto) {
     try {
+      const fitted = fitImageInBox(
+        d.fotoCandidato as string,
+        11.15,
+        1.16,
+        1.5,
+        1.52
+      );
       s1.addImage({
         data: d.fotoCandidato as string,
-        x: 11.2,
-        y: 1.18,
-        w: 1.45,
-        h: 1.48,
+        ...fitted,
       });
     } catch {}
   }
@@ -469,7 +569,7 @@ export async function generarPptxInforme(
   });
 
   const fotosViv = Array.isArray(d.fotosVivienda)
-    ? d.fotosVivienda.filter(isValidDataUrl)
+    ? d.fotosVivienda.filter(isValidDataUrl).slice(0, 4)
     : [];
 
   s3.addText(
@@ -498,22 +598,67 @@ export async function generarPptxInforme(
       x: 0.75,
       y: 1.62,
       w: 5.7,
-      h: fotosViv.length > 0 ? 2.6 : 4.9,
-      fontSize: 9.2,
+      h: fotosViv.length > 0 ? 2.35 : 4.9,
+      fontSize: 9.0,
       color: COLOR_TEXT,
       fontFace: "Arial",
     }
   );
 
-  if (fotosViv.length > 0) {
-    fotosViv.slice(0, 2).forEach((imgData, idx) => {
+  if (fotosViv.length === 1) {
+    try {
+      s3.addShape(pres.ShapeType.roundRect, {
+        x: 0.75,
+        y: 4.05,
+        w: 5.7,
+        h: 2.72,
+        fill: { color: "EEF3EB" },
+        line: { color: COLOR_SAGE, width: 1 },
+      });
+      const fitted = fitImageInBox(fotosViv[0], 0.82, 4.1, 5.56, 2.62);
+      s3.addImage({
+        data: fotosViv[0],
+        ...fitted,
+      });
+    } catch {}
+  } else if (fotosViv.length === 2) {
+    fotosViv.forEach((imgData, idx) => {
       try {
+        const bx = 0.75 + idx * 2.9;
+        s3.addShape(pres.ShapeType.roundRect, {
+          x: bx,
+          y: 4.05,
+          w: 2.8,
+          h: 2.72,
+          fill: { color: "EEF3EB" },
+          line: { color: COLOR_SAGE, width: 1 },
+        });
+        const fitted = fitImageInBox(imgData, bx + 0.05, 4.1, 2.7, 2.62);
         s3.addImage({
           data: imgData,
-          x: 0.75 + idx * 2.88,
-          y: 4.35,
-          w: 2.75,
-          h: 2.35,
+          ...fitted,
+        });
+      } catch {}
+    });
+  } else if (fotosViv.length >= 3) {
+    fotosViv.slice(0, 4).forEach((imgData, idx) => {
+      try {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const bx = 0.75 + col * 2.9;
+        const by = 4.02 + row * 1.38;
+        s3.addShape(pres.ShapeType.roundRect, {
+          x: bx,
+          y: by,
+          w: 2.8,
+          h: 1.32,
+          fill: { color: "EEF3EB" },
+          line: { color: COLOR_SAGE, width: 0.8 },
+        });
+        const fitted = fitImageInBox(imgData, bx + 0.04, by + 0.04, 2.72, 1.24);
+        s3.addImage({
+          data: imgData,
+          ...fitted,
         });
       } catch {}
     });
@@ -735,12 +880,10 @@ export async function generarPptxInforme(
 
   if (isValidDataUrl(d.firmaEvaluador)) {
     try {
+      const fittedSig = fitImageInBox(d.firmaEvaluador, 5.1, 5.06, 3.1, 0.98);
       s5.addImage({
         data: d.firmaEvaluador,
-        x: 5.2,
-        y: 5.08,
-        w: 2.9,
-        h: 0.95,
+        ...fittedSig,
       });
     } catch {}
   }

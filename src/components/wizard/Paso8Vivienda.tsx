@@ -24,11 +24,12 @@ import {
 
 interface Props {
   defaultValues: Partial<Paso8Data>;
+  onAutoSave?: (partial: Record<string, unknown>) => Promise<void>;
   onNext: (data: Paso8Data) => void;
   onBack: () => void;
 }
 
-export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
+export function Paso8Vivienda({ defaultValues, onAutoSave, onNext, onBack }: Props) {
   const { isEvaluator, shouldHideField } = useInterviewMode();
 
   const {
@@ -100,6 +101,15 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
           setValue("plusCode", data.plusCode);
           if (data.ciudad && !watch("ciudad")) setValue("ciudad", data.ciudad);
           if (data.barrio && !watch("barrio")) setValue("barrio", data.barrio);
+          if (onAutoSave) {
+            void onAutoSave({
+              ...watch(),
+              coordenadas: data.coordenadas,
+              plusCode: data.plusCode,
+              ...(data.ciudad && !watch("ciudad") ? { ciudad: data.ciudad } : {}),
+              ...(data.barrio && !watch("barrio") ? { barrio: data.barrio } : {}),
+            });
+          }
         }}
       />
 
@@ -233,18 +243,21 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {isEvaluator && (
-        <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
-          <span className="text-xs font-mono font-bold uppercase text-gold block">
-            FOTOGRAFÍAS DE LA VIVIENDA Y UBICACIÓN (EXCLUSIVO EVALUADOR)
-          </span>
-          <FotoUploader
-            fotos={fotos}
-            onChange={(nuevas) => setValue("fotosVivienda", nuevas)}
-            maxFotos={4}
-          />
-        </div>
-      )}
+      <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
+        <span className="text-xs font-mono font-bold uppercase text-gold block">
+          FOTOGRAFÍAS DE LA FACHADA / VIVIENDA (SE INSERTAN COMPLETAS EN EL INFORME)
+        </span>
+        <FotoUploader
+          fotos={fotos}
+          onChange={(nuevas) => {
+            setValue("fotosVivienda", nuevas, { shouldDirty: true, shouldValidate: true });
+            if (onAutoSave) {
+              void onAutoSave({ ...watch(), fotosVivienda: nuevas });
+            }
+          }}
+          maxFotos={4}
+        />
+      </div>
 
       <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-overlay0">
         <Button type="button" variant="secondary" onClick={onBack} className="w-full sm:w-auto">

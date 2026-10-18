@@ -5,10 +5,19 @@ import { MapPin, CheckCircle2, AlertCircle, Navigation, ExternalLink } from "luc
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormFields";
 
+interface GeoCapturePayload {
+  coordenadas: string;
+  plusCode: string;
+  ciudad?: string;
+  barrio?: string;
+}
+
 interface GeoCaptureProps {
-  onCapturado: (data: { coordenadas: string; plusCode: string; ciudad?: string }) => void;
+  onCapturado?: (data: GeoCapturePayload) => void;
+  onCaptured?: (data: GeoCapturePayload) => void;
   ciudad?: string;
   coordenadas?: string;
+  plusCode?: string;
 }
 
 function latLngToPlusCode(lat: number, lng: number): string {
@@ -17,7 +26,11 @@ function latLngToPlusCode(lat: number, lng: number): string {
   return `${latCode}+${lngCode} PY`;
 }
 
-export function GeoCapture({ onCapturado, ciudad = "", coordenadas = "" }: GeoCaptureProps) {
+export function GeoCapture({ onCapturado, onCaptured, ciudad = "", coordenadas = "" }: GeoCaptureProps) {
+  const emitCapture = (payload: GeoCapturePayload) => {
+    onCapturado?.(payload);
+    onCaptured?.(payload);
+  };
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">(
     coordenadas ? "done" : "idle"
   );
@@ -43,6 +56,7 @@ export function GeoCapture({ onCapturado, ciudad = "", coordenadas = "" }: GeoCa
         setPrecision(Math.round(accuracy));
 
         let city = ciudad;
+        let suburb = "";
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
@@ -56,12 +70,17 @@ export function GeoCapture({ onCapturado, ciudad = "", coordenadas = "" }: GeoCa
               geo.address?.municipality ||
               geo.address?.village ||
               ciudad;
+            suburb =
+              geo.address?.suburb ||
+              geo.address?.neighbourhood ||
+              geo.address?.quarter ||
+              "";
           }
         } catch {
           // Conserva ciudad manual si no hay respuesta de red
         }
 
-        onCapturado({ coordenadas: coordStr, plusCode, ciudad: city });
+        emitCapture({ coordenadas: coordStr, plusCode, ciudad: city, barrio: suburb || undefined });
         setState("done");
       },
       (err) => {
@@ -154,7 +173,7 @@ export function GeoCapture({ onCapturado, ciudad = "", coordenadas = "" }: GeoCa
             onChange={(e) => {
               setCoords(e.target.value);
               if (e.target.value.trim()) {
-                onCapturado({
+                emitCapture({
                   coordenadas: e.target.value.trim(),
                   plusCode: "",
                   ciudad,

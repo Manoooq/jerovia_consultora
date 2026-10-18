@@ -48,7 +48,7 @@ export function BentoFeatures() {
             <SpotlightCard sinkIntensity={4.5} className="p-6 sm:p-7 flex flex-col justify-between min-h-[180px]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-gold">
-                  {item.code} // {item.metric}
+                  {`${item.code} // ${item.metric}`}
                 </span>
                 <div className="h-10 w-10 rounded-xl bg-surface1 border border-overlay0 flex items-center justify-center text-gold">
                   <Icon className="h-5 w-5" />

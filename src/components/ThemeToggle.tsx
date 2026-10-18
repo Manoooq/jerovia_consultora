@@ -6,6 +6,27 @@ import { cn } from "@/lib/utils";
 
 type ThemeMode = "light" | "dark" | "system";
 
+function applyTheme(mode: ThemeMode) {
+  const root = document.documentElement;
+  const body = document.body;
+  let isDark = false;
+  if (mode === "dark") {
+    isDark = true;
+  } else if (mode === "light") {
+    isDark = false;
+  } else {
+    isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  if (isDark) {
+    root.classList.add("dark");
+    if (body) body.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+    if (body) body.classList.remove("dark");
+  }
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<ThemeMode>("system");
   const [mounted, setMounted] = useState(false);
@@ -31,27 +52,6 @@ export function ThemeToggle({ className }: { className?: string }) {
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
-
-  function applyTheme(mode: ThemeMode) {
-    const root = document.documentElement;
-    const body = document.body;
-    let isDark = false;
-    if (mode === "dark") {
-      isDark = true;
-    } else if (mode === "light") {
-      isDark = false;
-    } else {
-      isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-
-    if (isDark) {
-      root.classList.add("dark");
-      if (body) body.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-      if (body) body.classList.remove("dark");
-    }
-  }
 
   function handleSelect(mode: ThemeMode) {
     setTheme(mode);

@@ -3,6 +3,7 @@ import {
   obtenerEntrevista,
   actualizarEntrevista,
   eliminarEntrevista,
+  countFilledFields,
   syncStoreFromCloud,
   syncStoreToCloud,
 } from "@/lib/store";
@@ -57,6 +58,18 @@ export async function PATCH(
     );
   }
 
+  // Si es una petición de recuperación de caché (onlyIfMissing) y el servidor ya tiene datos reales, no sobrescribir
+  if (body?.onlyIfMissing && countFilledFields(actual.datos) > 5) {
+    return NextResponse.json(actual, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      },
+    });
+  }
+
+  const session = await getSession();
+  const isAuthenticatedStaff = Boolean(session);
+
   const incomingDatos =
     body?.datos && typeof body.datos === "object"
       ? (body.datos as Record<string, unknown>)
@@ -79,6 +92,8 @@ export async function PATCH(
   const requestedEstado =
     (body?.estado as "pendiente" | "en_progreso" | "completado") ||
     actual.estado;
+
+  const forceEstado = Boolean(isAuthenticatedStaff && body?._forceEstado);
 
   const updated = actualizarEntrevista(token, {
     candidatoNombre:
@@ -105,6 +120,7 @@ export async function PATCH(
     estado: requestedEstado,
     datos: mergedDatos,
     alertas,
+    _forceEstado: forceEstado,
   });
 
   await syncStoreToCloud(token);

@@ -1,23 +1,35 @@
 import { z } from "zod";
 
-const safeNum = (defaultVal = 0) =>
+const safeNum = (defaultVal = 0): z.ZodType<number, number> =>
   z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return defaultVal;
     const n = Number(val);
     return Number.isNaN(n) ? defaultVal : n;
-  }, z.number().min(0).default(defaultVal));
+  }, z.number().min(0).default(defaultVal)) as unknown as z.ZodType<number, number>;
 
-const safeStr = (defaultVal = "") =>
+const safeStr = (defaultVal = ""): z.ZodType<string, string> =>
   z.preprocess(
     (val) => (val === null || val === undefined ? defaultVal : String(val)),
     z.string().default(defaultVal)
-  );
+  ) as unknown as z.ZodType<string, string>;
 
-const reqStr = (msg: string, minLen = 2) =>
+const reqStr = (msg: string, minLen = 2): z.ZodType<string, string> =>
   z.preprocess(
     (val) => (val === null || val === undefined ? "" : String(val)),
     z.string().trim().min(minLen, msg)
-  );
+  ) as unknown as z.ZodType<string, string>;
+
+const safeBool = (defaultVal = false): z.ZodType<boolean, boolean> =>
+  z.preprocess(
+    (val) => (val === null || val === undefined ? defaultVal : Boolean(val)),
+    z.boolean().default(defaultVal)
+  ) as unknown as z.ZodType<boolean, boolean>;
+
+const safeArr = <T>(itemSchema: z.ZodType<T, T>): z.ZodType<T[], T[]> =>
+  z.preprocess(
+    (val) => (Array.isArray(val) ? val : []),
+    z.array(itemSchema).default([])
+  ) as unknown as z.ZodType<T[], T[]>;
 
 export const hermanoItemSchema = z.object({
   nombre: safeStr(""),
@@ -37,6 +49,11 @@ export const prestamoItemSchema = z.object({
   cuota: safeStr(""),
 });
 
+export const idiomaItemSchema = z.object({
+  idioma: safeStr(""),
+  nivel: safeStr("intermedio"),
+});
+
 export const paso1Schema = z.object({
   nombre: reqStr("Ingrese sus nombres", 2),
   apellido: reqStr("Ingrese sus apellidos", 2),
@@ -46,12 +63,12 @@ export const paso1Schema = z.object({
   estadoCivil: reqStr("Seleccione su estado civil", 2),
   telefono: reqStr("Ingrese su número de teléfono", 6),
   email: safeStr(""),
-  hijos: z.boolean().optional().default(false),
+  hijos: safeBool(false),
   cantidadHijos: safeNum(0),
   edadesHijos: safeStr(""),
-  licenciaConducir: z.boolean().optional().default(false),
+  licenciaConducir: safeBool(false),
   tenenciaMovilidad: safeStr("no"),
-  movilidadPropia: z.boolean().optional().default(false),
+  movilidadPropia: safeBool(false),
   tipoMovilidad: safeStr(""),
   medioTransporteSucursal: reqStr(
     "Indique con qué medio irá a la sucursal asignada",
@@ -66,7 +83,7 @@ export const paso1Schema = z.object({
   zonaTatuada: safeStr(""),
   redSocialPlataforma: safeStr("Instagram"),
   redSocial: safeStr(""),
-  vinculosFamiliares: z.boolean().optional().default(false),
+  vinculosFamiliares: safeBool(false),
   vinculosFamiliaresDetalle: safeStr(""),
 });
 
@@ -78,15 +95,7 @@ export const paso2Schema = z.object({
   universidad: reqStr("Indique la institución o universidad", 2),
   estadoEstudios: safeStr("en_curso"),
   idiomasTexto: reqStr("Seleccione o escriba al menos un idioma que maneja", 2),
-  idiomas: z
-    .array(
-      z.object({
-        idioma: safeStr(""),
-        nivel: safeStr("intermedio"),
-      })
-    )
-    .optional()
-    .default([]),
+  idiomas: safeArr(idiomaItemSchema),
   cursos: safeStr(""),
 });
 
@@ -116,7 +125,7 @@ export const paso3Schema = z.object({
     "Describa cómo sería su ambiente laboral ideal",
     3
   ),
-  familiarEnEntidad: z.boolean().optional().default(false),
+  familiarEnEntidad: safeBool(false),
   familiarEnEntidadDetalle: safeStr(""),
 });
 
@@ -128,7 +137,7 @@ export const paso4Schema = z.object({
     3
   ),
   expectativasEntidad: safeStr(""),
-  familiaresPoliticos: z.boolean().optional().default(false),
+  familiaresPoliticos: safeBool(false),
   familiaresPoliticosDetalle: safeStr(""),
 });
 
@@ -149,7 +158,7 @@ export const paso5Schema = z.object({
   salarioPadre: safeStr(""),
   ciudadPadre: safeStr(""),
   telefonoPadre: safeStr(""),
-  parejaPadreMadreViveCasa: z.boolean().optional().default(false),
+  parejaPadreMadreViveCasa: safeBool(false),
   nombrePareja: safeStr(""),
   edadPareja: safeNum(0),
   ocupacionPareja: safeStr(""),
@@ -157,45 +166,45 @@ export const paso5Schema = z.object({
   salarioPareja: safeStr(""),
   ciudadPareja: safeStr(""),
   telefonoPareja: safeStr(""),
-  tieneHermanos: z.boolean().optional().default(false),
+  tieneHermanos: safeBool(false),
   cantidadHermanos: safeNum(0),
-  listaHermanos: z.array(hermanoItemSchema).optional().default([]),
-  familiaresProductosEntidad: z.boolean().optional().default(false),
+  listaHermanos: safeArr(hermanoItemSchema),
+  familiaresProductosEntidad: safeBool(false),
   familiarConProductosDetalle: safeStr(""),
 });
 
 export const paso6Schema = z.object({
-  enfermedadBase: z.boolean().optional().default(false),
+  enfermedadBase: safeBool(false),
   enfermedadBaseDetalle: safeStr(""),
-  consumeMedicamentos: z.boolean().optional().default(false),
+  consumeMedicamentos: safeBool(false),
   consumeMedicamentosDetalle: safeStr(""),
-  tieneFobias: z.boolean().optional().default(false),
+  tieneFobias: safeBool(false),
   tieneFobiasDetalle: safeStr(""),
   seguroMedico: reqStr("Seleccione si posee seguro médico", 2),
   seguroMedicoDetalle: safeStr(""),
   consumoAlcohol: reqStr("Seleccione una opción", 2),
-  consumoTabaco: z.boolean().optional().default(false),
-  familiaresEnfermedad: z.boolean().optional().default(false),
+  consumoTabaco: safeBool(false),
+  familiaresEnfermedad: safeBool(false),
   familiaresEnfermedadDetalle: safeStr(""),
   condicionDiferenteVivienda: safeStr("Ninguno"),
-  tratamientos: z.boolean().optional().default(false),
+  tratamientos: safeBool(false),
   tratamientosDetalle: safeStr(""),
 });
 
 export const paso7Schema = z.object({
-  productosEntidad: z.boolean().optional().default(false),
+  productosEntidad: safeBool(false),
   tiposProductosEntidad: safeStr(""),
-  ingresosCubrenDeudas: z.boolean().optional().default(true),
-  tieneDependientesEconomicos: z.boolean().optional().default(false),
+  ingresosCubrenDeudas: safeBool(true),
+  tieneDependientesEconomicos: safeBool(false),
   dependientesEconomicosDetalle: safeStr(""),
   ingresosFamiliares: safeStr(""),
   otrosIngresos: safeStr(""),
   egresosMensuales: safeStr(""),
   cantidadEgresos: safeNum(0),
-  listaEgresos: z.array(egresoItemSchema).optional().default([]),
-  prestamos: z.boolean().optional().default(false),
+  listaEgresos: safeArr(egresoItemSchema),
+  prestamos: safeBool(false),
   cantidadPrestamos: safeNum(0),
-  listaPrestamos: z.array(prestamoItemSchema).optional().default([]),
+  listaPrestamos: safeArr(prestamoItemSchema),
   prestamosDetalle: safeStr(""),
 });
 
@@ -217,8 +226,8 @@ export const paso8Schema = z.object({
   salaCantidad: safeNum(1),
   banos: safeNum(1),
   cocinaCantidad: safeNum(1),
-  cocina: z.boolean().optional().default(true),
-  sala: z.boolean().optional().default(true),
+  cocina: safeBool(true),
+  sala: safeBool(true),
   plantas: safeNum(1),
   paredes: safeStr("ladrillo"),
   paredesDetalle: reqStr("Indique el material de las paredes", 2),
@@ -226,14 +235,14 @@ export const paso8Schema = z.object({
   techoDetalle: reqStr("Indique el material del techo", 2),
   pisos: safeStr("ceramica"),
   pisosDetalle: reqStr("Indique el material del piso", 2),
-  fotosVivienda: z.array(z.string()).optional().default([]),
+  fotosVivienda: safeArr(safeStr("")),
 });
 
 export const paso9Schema = z.object({
   limpiezaOrdenVivienda: safeStr("Ordenada y limpia"),
   quienesPresentes: safeStr("Ninguno"),
   vocabularioEntrevistado: safeStr("Respetuoso y acorde a la situación"),
-  zonaFacilAcceso: z.boolean().optional().default(true),
+  zonaFacilAcceso: safeBool(true),
   observacionesEntrevista: reqStr("Redacte las observaciones de la visita", 3),
   diccion: safeStr("fluida"),
   estadoVivienda: safeStr("bueno"),

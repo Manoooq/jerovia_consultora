@@ -172,22 +172,29 @@ export async function GET(
       : `<div class="qa-val">${siNo(d.prestamos, d.prestamosDetalle)}</div>`;
 
   const fotoCandidatoHtml = isSafeImageSrc(d.fotoCandidato)
-    ? `<img src="${d.fotoCandidato}" alt="${nombreMostrar}" style="width: 92px; height: 112px; object-fit: cover; border-radius: 10px; border: 2px solid #f4f6f2;" />`
+    ? `<div style="width: 104px; height: 124px; border-radius: 10px; border: 2px solid #f4f6f2; background: rgba(255,255,255,0.14); padding: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><img src="${d.fotoCandidato}" alt="${nombreMostrar}" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 7px; display: block;" /></div>`
     : "";
 
   const fotosViviendaSeguras = Array.isArray(d.fotosVivienda)
     ? d.fotosVivienda.filter(isSafeImageSrc)
     : [];
 
+  const gridClass =
+    fotosViviendaSeguras.length === 1
+      ? "photo-grid photo-grid-1"
+      : fotosViviendaSeguras.length === 2
+      ? "photo-grid photo-grid-2"
+      : "photo-grid photo-grid-multi";
+
   const galeriaViviendaHtml =
     fotosViviendaSeguras.length > 0
-      ? `<div class="photo-grid">${fotosViviendaSeguras
+      ? `<div class="${gridClass}">${fotosViviendaSeguras
           .slice(0, 4)
           .map(
             (src, i) =>
-              `<div class="photo-frame"><img src="${src}" alt="Vivienda ${
+              `<div class="photo-frame"><div class="photo-img-wrap"><img src="${src}" alt="Vivienda ${
                 i + 1
-              }" /><span>Evidencia Vivienda #${i + 1}</span></div>`
+              }" /></div><span>Evidencia Fotográfica del Hogar #${i + 1}</span></div>`
           )
           .join("")}</div>`
       : "";
@@ -371,9 +378,16 @@ export async function GET(
     .qa-val { font-size: 9.5pt; font-weight: 600; color: #1a2216; }
     .sub-card { background: #f4f7f2; border: 1px solid #cbd5c5; border-radius: 6px; padding: 5px 8px; font-size: 8.8pt; margin-bottom: 4px; }
     .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 6px; }
-    .photo-frame { border: 1px solid #85987a; border-radius: 8px; overflow: hidden; text-align: center; background: #f8faf7; }
-    .photo-frame img { width: 100%; height: 105px; object-fit: cover; display: block; }
-    .photo-frame span { display: block; font-size: 7pt; font-weight: 700; color: #485536; padding: 2px; }
+    .photo-grid-1 { grid-template-columns: 1fr; }
+    .photo-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .photo-grid-multi { grid-template-columns: repeat(2, 1fr); }
+    .photo-frame { border: 1.5px solid #85987a; border-radius: 8px; overflow: hidden; text-align: center; background: #f4f7f2; display: flex; flex-direction: column; }
+    .photo-img-wrap { width: 100%; display: flex; align-items: center; justify-content: center; background: #eef3eb; padding: 4px; }
+    .photo-grid-1 .photo-img-wrap { height: 215px; }
+    .photo-grid-2 .photo-img-wrap { height: 185px; }
+    .photo-grid-multi .photo-img-wrap { height: 120px; }
+    .photo-frame img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px; }
+    .photo-frame span { display: block; font-size: 7pt; font-weight: 700; color: #485536; padding: 3px 4px; border-top: 1px solid #d5ddd1; background: #f8faf7; }
     .signature-area { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; }
     .signature-box { background: #f8faf7; border: 1.5px solid #85987a; border-radius: 12px; padding: 14px 36px; min-width: 300px; }
     .signature-line { border-top: 1.5px solid #485536; padding-top: 6px; margin-top: 4px; font-size: 10.5pt; font-weight: 800; color: #1a2216; }

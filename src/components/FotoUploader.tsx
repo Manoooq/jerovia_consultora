@@ -17,7 +17,7 @@ function compressImageFile(file: File): Promise<string> {
       const img = new Image();
       img.onerror = () => reject(new Error("Formato no soportado"));
       img.onload = () => {
-        const MAX_DIM = 760;
+        const MAX_DIM = 1100;
         let w = img.width;
         let h = img.height;
         if (w > MAX_DIM || h > MAX_DIM) {
@@ -40,7 +40,7 @@ function compressImageFile(file: File): Promise<string> {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.72));
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
       };
       img.src = reader.result as string;
     };
@@ -99,26 +99,32 @@ export function FotoUploader({
       />
 
       {fotos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div
+          className={
+            fotos.length === 1
+              ? "grid grid-cols-1 gap-3"
+              : "grid grid-cols-1 sm:grid-cols-2 gap-3"
+          }
+        >
           {fotos.map((src, idx) => (
             <div
               key={idx}
-              className="relative group rounded-xl overflow-hidden border-2 border-[#536c45] bg-surface0 aspect-[4/3] shadow-sm"
+              className="relative group rounded-xl overflow-hidden border-2 border-[#536c45] bg-surface1 min-h-[180px] max-h-[260px] flex items-center justify-center p-1.5 shadow-sm"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
                 alt={`Fotografía ${idx + 1}`}
-                className="w-full h-full object-cover block"
+                className="max-w-full max-h-[240px] w-auto h-auto object-contain rounded-lg block mx-auto"
               />
-              <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/65 text-white text-[10px] font-mono font-bold flex items-center gap-1">
+              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-mono font-bold flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3 text-[#a3e635]" />
-                <span>Lista #{idx + 1}</span>
+                <span>Foto completa #{idx + 1}</span>
               </div>
               <button
                 type="button"
                 onClick={() => removeFoto(idx)}
-                className="absolute top-1.5 right-1.5 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90"
+                className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90"
                 title="Eliminar fotografía"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -138,7 +144,7 @@ export function FotoUploader({
           {processing ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin text-gold" />
-              <span>Optimizando y guardando fotografía...</span>
+              <span>Optimizando y guardando fotografía completa...</span>
             </>
           ) : (
             <>
@@ -150,7 +156,7 @@ export function FotoUploader({
                 Seleccionar o Tomar Fotografía ({fotos.length}/{maxFotos})
               </span>
               <span className="text-[11px] font-normal text-subtext1">
-                Se inserta automáticamente en el informe PDF y PowerPoint (.PPTX)
+                Se ajusta automáticamente a proporción completa en el informe PDF y PowerPoint (.PPTX)
               </span>
             </>
           )}

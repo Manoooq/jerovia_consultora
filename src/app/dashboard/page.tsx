@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { MetricCardSkeleton, InterviewRowSkeleton } from "@/components/ui/Skeleton";
 import { MetricsCharts } from "@/components/ui/MetricsCharts";
 import { formatDate } from "@/lib/utils";
+import type { EntrevistaRecord } from "@/lib/store";
 import {
   Plus,
   Search,
@@ -48,6 +49,9 @@ interface EntrevistaItem {
   estado: "pendiente" | "en_progreso" | "completado";
   pasoActual: number;
   actualizadoEn: string;
+  creadoEn?: string;
+  datos?: Record<string, unknown>;
+  alertas?: string[];
 }
 
 interface CurrentUser {
@@ -111,9 +115,9 @@ function DashboardContent() {
   const [passConfirm, setPassConfirm] = useState("");
 
   function mergeDashboardLists(
-    currentList: EntrevistaRecord[],
-    serverList: EntrevistaRecord[]
-  ): EntrevistaRecord[] {
+    currentList: EntrevistaItem[],
+    serverList: EntrevistaItem[]
+  ): EntrevistaItem[] {
     let deletedLocal: string[] = [];
     try {
       deletedLocal = JSON.parse(
@@ -122,7 +126,7 @@ function DashboardContent() {
     } catch {}
     const delSet = new Set(deletedLocal);
 
-    const map = new Map<string, EntrevistaRecord>();
+    const map = new Map<string, EntrevistaItem>();
     for (const item of currentList) {
       if (item && item.token && !delSet.has(item.token)) {
         map.set(item.token, item);
@@ -175,20 +179,28 @@ function DashboardContent() {
     );
 
     try {
+      // Guardar versión liviana en localStorage sin cadenas Base64 pesadas para evitar QuotaExceededError
+      const lightArr = mergedArr.map((item) => {
+        const lightDatos: Record<string, unknown> = { ...(item.datos || {}) };
+        delete lightDatos.fotosVivienda;
+        delete lightDatos.fotoCandidato;
+        delete lightDatos.firmaEvaluador;
+        return { ...item, datos: lightDatos };
+      });
       localStorage.setItem(
         "jerovia_dashboard_cache_v3",
-        JSON.stringify(mergedArr)
+        JSON.stringify(lightArr)
       );
     } catch {}
 
-    // Si algún registro de nuestra caché no estaba en el servidor temporal, curar al servidor en segundo plano
+    // Si algún registro de nuestra caché no estaba en absoluto en el servidor, restaurarlo solo si falta (onlyIfMissing)
     const srvTokens = new Set(serverList.map((s) => s.token));
     for (const item of mergedArr) {
-      if (!srvTokens.has(item.token)) {
+      if (!srvTokens.has(item.token) && !delSet.has(item.token)) {
         fetch(`/api/entrevista/${encodeURIComponent(item.token)}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item),
+          body: JSON.stringify({ ...item, onlyIfMissing: true }),
         }).catch(() => {});
       }
     }
@@ -201,7 +213,7 @@ function DashboardContent() {
     try {
       const cachedRaw = localStorage.getItem("jerovia_dashboard_cache_v3");
       if (cachedRaw) {
-        const cached = JSON.parse(cachedRaw) as EntrevistaRecord[];
+        const cached = JSON.parse(cachedRaw) as EntrevistaItem[];
         if (Array.isArray(cached) && cached.length > 0) {
           setEntrevistas(cached);
         }
@@ -322,6 +334,7 @@ function DashboardContent() {
           evaluadorAsignado: editEvaluador.trim(),
           estado: editEstado,
           pasoActual: nuevoPaso,
+          _forceEstado: true,
         }),
       });
 
@@ -355,6 +368,21 @@ function DashboardContent() {
         const err = await res.json();
         throw new Error(err.error || "No se pudo eliminar el registro.");
       }
+      try {
+        const deletedLocal: string[] = JSON.parse(
+          localStorage.getItem("jerovia_deleted_tokens_v3") || "[]"
+        );
+        if (!deletedLocal.includes(deleteModal.token)) {
+          deletedLocal.push(deleteModal.token);
+          localStorage.setItem(
+            "jerovia_deleted_tokens_v3",
+            JSON.stringify(deletedLocal)
+          );
+        }
+      } catch {}
+      setEntrevistas((prev) =>
+        prev.filter((item) => item.token !== deleteModal.token)
+      );
       setFeedbackMsg({ tipo: "success", text: "Expediente eliminado con éxito." });
       setDeleteModal(null);
       await loadInitial();

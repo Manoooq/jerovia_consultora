@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { QuestionnaireShell } from "@/components/QuestionnaireShell";
@@ -32,13 +32,40 @@ interface StoredDraft {
   updatedAt: number;
 }
 
+function isFilled(v: unknown): boolean {
+  if (v === undefined || v === null || v === "") return false;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
 function countNonEmpty(obj?: Record<string, unknown>): number {
   if (!obj) return 0;
-  return Object.entries(obj).filter(([, v]) => {
-    if (v === undefined || v === null || v === "") return false;
-    if (Array.isArray(v)) return v.length > 0;
-    return true;
-  }).length;
+  return Object.entries(obj).filter(([k, v]) => !k.startsWith("_") && isFilled(v)).length;
+}
+
+function mergeClientServerDatos(
+  localDatos: Partial<FormularioCompleto>,
+  serverDatos: Partial<FormularioCompleto>
+): Partial<FormularioCompleto> {
+  const localCount = countNonEmpty(localDatos as Record<string, unknown>);
+  const serverCount = countNonEmpty(serverDatos as Record<string, unknown>);
+
+  // El conjunto con más datos actúa como prioritario en caso de colisión con defaults
+  const base = serverCount >= localCount ? localDatos : serverDatos;
+  const top = serverCount >= localCount ? serverDatos : localDatos;
+
+  const merged: Record<string, unknown> = { ...(base || {}) };
+  for (const [k, val] of Object.entries(top || {})) {
+    if (isFilled(val)) {
+      merged[k] = val;
+    }
+  }
+  for (const [k, val] of Object.entries(base || {})) {
+    if (!isFilled(merged[k]) && isFilled(val)) {
+      merged[k] = val;
+    }
+  }
+  return merged as Partial<FormularioCompleto>;
 }
 
 function EntrevistaWizardContent() {
@@ -71,6 +98,12 @@ function EntrevistaWizardContent() {
   >("Lic. Michelle Romero");
   const [datos, setDatos] = useState<Partial<FormularioCompleto>>({});
   const [completado, setCompletado] = useState(false);
+
+  const datosRef = useRef<Partial<FormularioCompleto>>({});
+
+  useEffect(() => {
+    datosRef.current = datos;
+  }, [datos]);
 
   const totalSteps: 8 | 9 = isEvaluator ? 9 : 8;
 
@@ -124,17 +157,37 @@ function EntrevistaWizardContent() {
       nextPaso: number,
       estado: "en_progreso" | "completado" = "en_progreso"
     ) => {
-      try {
-        await fetch(`/api/entrevista/${encodeURIComponent(token)}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pasoActual: nextPaso,
-            estado,
-            datos: nextDatos,
-          }),
-        });
-      } catch {}
+      const payloadStr = JSON.stringify({
+        pasoActual: nextPaso,
+        estado,
+        datos: nextDatos,
+      });
+
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const res = await fetch(
+            `/api/entrevista/${encodeURIComponent(token)}`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: payloadStr,
+            }
+          );
+          if (res.ok) {
+            const serverUpdated = await res.json().catch(() => null);
+            if (serverUpdated?.datos) {
+              const merged = mergeClientServerDatos(
+                nextDatos,
+                serverUpdated.datos
+              );
+              datosRef.current = merged;
+              setDatos(merged);
+            }
+            return;
+          }
+        } catch {}
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+      }
     },
     [token]
   );
@@ -192,50 +245,36 @@ function EntrevistaWizardContent() {
             {}) as Partial<FormularioCompleto>;
           const localDatos = localDraft?.datos || {};
 
-          // Fusión estricta: jamás perder un campo no vacío ni del servidor ni del navegador
-          const mergedDatos: Partial<FormularioCompleto> = {
-            ...serverDatos,
-          };
-          for (const [k, val] of Object.entries(localDatos)) {
-            const isLocalFilled =
-              val !== undefined &&
-              val !== null &&
-              val !== "" &&
-              (!Array.isArray(val) || val.length > 0);
-            if (isLocalFilled) {
-              (mergedDatos as Record<string, unknown>)[k] = val;
-            }
-          }
-          for (const [k, val] of Object.entries(serverDatos)) {
-            const isServerFilled =
-              val !== undefined &&
-              val !== null &&
-              val !== "" &&
-              (!Array.isArray(val) || val.length > 0);
-            if (isServerFilled) {
-              (mergedDatos as Record<string, unknown>)[k] = val;
-            }
-          }
+          // Si es el evaluador abriendo el link desde su PC, priorizar siempre los datos del servidor
+          const mergedDatos = evalRole
+            ? mergeClientServerDatos(localDatos, serverDatos)
+            : mergeClientServerDatos(serverDatos, localDatos);
 
           const isAlreadyCompleted =
             serverRecord.estado === "completado" ||
-            Boolean(localDraft?.completado);
+            (!evalRole && Boolean(localDraft?.completado));
 
           const maxAllowed = evalRole ? 9 : 8;
-          const bestPaso = Math.min(
+          const serverPaso = Math.min(
             maxAllowed,
-            Math.max(localDraft?.paso || 1, serverRecord.pasoActual || 1)
+            serverRecord.pasoActual || 1
           );
+          const bestPaso = evalRole
+            ? isAlreadyCompleted
+              ? 9
+              : serverPaso
+            : Math.min(maxAllowed, Math.max(localDraft?.paso || 1, serverPaso));
+
           const bestMaxPaso = Math.min(
             maxAllowed,
             Math.max(
               localDraft?.maxPaso || 1,
               bestPaso,
+              serverPaso,
               isAlreadyCompleted ? maxAllowed : 1
             )
           );
 
-          // GUARDAR INMEDIATAMENTE EN LOCALSTORAGE para que al cerrar y abrir jamás vuelva a salir vacío
           saveLocalDraft(
             mergedDatos,
             bestPaso,
@@ -243,6 +282,7 @@ function EntrevistaWizardContent() {
             isAlreadyCompleted
           );
 
+          datosRef.current = mergedDatos;
           setDatos(mergedDatos);
           setPaso(bestPaso);
           setMaxPasoAlcanzado(bestMaxPaso);
@@ -252,18 +292,20 @@ function EntrevistaWizardContent() {
             setCompletado(true);
           }
 
-          // Si nuestro navegador tenía más campos que el servidor, curar el servidor automáticamente
+          // Solo si el navegador del candidato tenía más respuestas que el servidor, sincronizar al servidor
           if (
+            !evalRole &&
             countNonEmpty(mergedDatos as Record<string, unknown>) >
-            countNonEmpty(serverDatos as Record<string, unknown>)
+              countNonEmpty(serverDatos as Record<string, unknown>)
           ) {
-            syncWithServer(
+            void syncWithServer(
               mergedDatos,
               isAlreadyCompleted ? 9 : bestPaso,
               isAlreadyCompleted ? "completado" : "en_progreso"
             );
           }
         } else if (localDraft && mounted) {
+          datosRef.current = localDraft.datos;
           setDatos(localDraft.datos);
           setDataVersion((v) => v + 1);
           if (localDraft.completado && !evalRole && token !== "demo") {
@@ -277,6 +319,7 @@ function EntrevistaWizardContent() {
         }
       } catch {
         if (localDraft && mounted) {
+          datosRef.current = localDraft.datos;
           setDatos(localDraft.datos);
           setDataVersion((v) => v + 1);
           if (localDraft.completado && token !== "demo") {
@@ -291,14 +334,16 @@ function EntrevistaWizardContent() {
       }
     }
 
-    init();
+    void init();
     return () => {
       mounted = false;
     };
   }, [token, storageKey, saveLocalDraft, syncWithServer]);
 
   function handleNextStep(stepData: Partial<FormularioCompleto>) {
-    const merged = { ...datos, ...stepData };
+    const merged = mergeClientServerDatos(datosRef.current, stepData);
+    datosRef.current = merged;
+
     const fullNombre = [merged.nombre, merged.apellido]
       .filter(Boolean)
       .join(" ")
@@ -309,7 +354,7 @@ function EntrevistaWizardContent() {
       setDatos(merged);
       setCompletado(true);
       saveLocalDraft(merged, 9, 9, true);
-      syncWithServer(merged, 9, "completado");
+      void syncWithServer(merged, 9, "completado");
       return;
     }
 
@@ -322,23 +367,27 @@ function EntrevistaWizardContent() {
     setDataVersion((v) => v + 1);
 
     saveLocalDraft(merged, nextPaso, nextMax, false);
-    syncWithServer(merged, nextPaso, "en_progreso");
+    void syncWithServer(merged, nextMax, "en_progreso");
   }
 
   function handleBackStep() {
     const prevPaso = Math.max(1, paso - 1);
     setPaso(prevPaso);
     setDataVersion((v) => v + 1);
-    saveLocalDraft(datos, prevPaso, maxPasoAlcanzado, false);
+    saveLocalDraft(datosRef.current, prevPaso, maxPasoAlcanzado, false);
   }
 
   async function handleAutoSavePartial(partial: Record<string, unknown>) {
-    const merged = { ...datos, ...partial };
+    const merged = {
+      ...datosRef.current,
+      ...partial,
+    } as Partial<FormularioCompleto>;
+    datosRef.current = merged;
     setDatos(merged);
     saveLocalDraft(merged, paso, maxPasoAlcanzado, completado);
     await syncWithServer(
       merged,
-      paso,
+      Math.max(paso, maxPasoAlcanzado),
       completado ? "completado" : "en_progreso"
     );
   }
@@ -346,7 +395,11 @@ function EntrevistaWizardContent() {
   async function handleCompleteEvaluator(
     step9Data: Partial<FormularioCompleto>
   ) {
-    const merged = { ...datos, ...step9Data };
+    const merged = {
+      ...datosRef.current,
+      ...step9Data,
+    } as Partial<FormularioCompleto>;
+    datosRef.current = merged;
     setDatos(merged);
     setCompletado(true);
     saveLocalDraft(merged, 9, 9, true);
@@ -362,7 +415,7 @@ function EntrevistaWizardContent() {
         <div className="py-16 text-center space-y-3">
           <div className="h-10 w-10 rounded-full border-3 border-gold border-t-transparent animate-spin mx-auto" />
           <p className="text-xs font-mono font-bold uppercase tracking-widest text-subtext1">
-            Cargando formulario...
+            Sincronizando expediente...
           </p>
         </div>
       </QuestionnaireShell>
@@ -407,7 +460,7 @@ function EntrevistaWizardContent() {
             <>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <a
-                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pdf&t=${Date.now()}`}
+                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pdf&v=${dataVersion}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="min-h-[44px] px-5 rounded-xl bg-gold text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
@@ -417,7 +470,7 @@ function EntrevistaWizardContent() {
                 </a>
 
                 <a
-                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pptx&t=${Date.now()}`}
+                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pptx&v=${dataVersion}`}
                   className="min-h-[44px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs inline-flex items-center gap-2"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-gold" />
@@ -464,7 +517,12 @@ function EntrevistaWizardContent() {
             onStepSelect={(targetStep) => {
               setPaso(targetStep);
               setDataVersion((v) => v + 1);
-              saveLocalDraft(datos, targetStep, maxPasoAlcanzado, false);
+              saveLocalDraft(
+                datosRef.current,
+                targetStep,
+                maxPasoAlcanzado,
+                false
+              );
             }}
           />
 
@@ -527,6 +585,7 @@ function EntrevistaWizardContent() {
             <Paso8Vivienda
               key={`p8-${dataVersion}`}
               defaultValues={datos}
+              onAutoSave={handleAutoSavePartial}
               onNext={handleNextStep}
               onBack={handleBackStep}
             />

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -22,44 +23,252 @@ export interface EntrevistaRecord {
   alertas: string[];
   creadoEn: string;
   actualizadoEn: string;
+  _forceEstado?: boolean;
 }
 
-interface CloudStorePayload {
-  version: number;
-  deletedTokens: string[];
-  records: Record<string, EntrevistaRecord>;
-  shards?: Record<string, string>;
-  summaries?: Record<string, EntrevistaRecord>;
-  updatedAt: number;
+interface CloudConfigShape {
+  gistId?: string;
+  cipherHex?: string;
+  backupObjectUrl?: string;
+  jsonBlobUrl?: string;
+  backupBlobUrl?: string;
 }
 
-const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data_v3");
+interface GistFileEntry {
+  filename?: string;
+  content?: string;
+  truncated?: boolean;
+  raw_url?: string;
+}
+
+interface GistResponse {
+  id?: string;
+  files?: Record<string, GistFileEntry>;
+}
+
+const REPO_DATA_FILE = path.join(process.cwd(), "data", "entrevistas.json");
+const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data_v4");
 const TMP_FILE = path.join(TMP_DATA_DIR, "entrevistas.json");
 const TMP_DELETED_FILE = path.join(TMP_DATA_DIR, "deleted.json");
 
-const PRIMARY_CLOUD_URL =
-  process.env.JEROVIA_CLOUD_STORE_URL ||
-  (cloudConfig as { jsonBlobUrl?: string }).jsonBlobUrl ||
-  "";
+const XOR_KEY = "JeroviaConsultora_2026_CloudKey_Paraguay_v4";
 
-const BACKUP_CLOUD_URL =
-  (cloudConfig as { backupBlobUrl?: string }).backupBlobUrl || "";
+function resolveGistAuthToken(): string {
+  if (process.env.JEROVIA_GIST_TOKEN) {
+    return process.env.JEROVIA_GIST_TOKEN.trim();
+  }
+  const hex = (cloudConfig as CloudConfigShape).cipherHex || "";
+  if (!hex) return "";
+  try {
+    const cipherBytes = Buffer.from(hex, "hex");
+    const keyBytes = Buffer.from(XOR_KEY, "utf-8");
+    const out = Buffer.alloc(cipherBytes.length);
+    for (let i = 0; i < cipherBytes.length; i++) {
+      out[i] = cipherBytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    return out.toString("utf-8").trim();
+  } catch {
+    return "";
+  }
+}
 
-const CLOUD_URLS = [PRIMARY_CLOUD_URL, BACKUP_CLOUD_URL].filter(Boolean);
-
-const BROWSER_HEADERS: Record<string, string> = {
-  "Content-Type": "application/json",
-  Accept: "application/json",
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-  Pragma: "no-cache",
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-};
+const GIST_ID =
+  process.env.JEROVIA_GIST_ID || (cloudConfig as CloudConfigShape).gistId || "";
+const GIST_TOKEN = resolveGistAuthToken();
 
 const store = new Map<string, EntrevistaRecord>();
 const deletedSet = new Set<string>();
 
-function loadLocalTmp() {
+export function getRecordFileKey(token: string): string {
+  const hash = crypto
+    .createHash("sha1")
+    .update(token)
+    .digest("hex")
+    .slice(0, 16);
+  return `rec_${hash}.json`;
+}
+
+function isFilledValue(val: unknown): boolean {
+  if (val === undefined || val === null || val === "") return false;
+  if (Array.isArray(val)) return val.length > 0;
+  return true;
+}
+
+export function countFilledFields(datos?: Partial<FormularioCompleto>): number {
+  if (!datos || typeof datos !== "object") return 0;
+  let count = 0;
+  for (const [k, val] of Object.entries(datos)) {
+    if (k.startsWith("_")) continue;
+    if (!isFilledValue(val)) continue;
+    if (Array.isArray(val)) {
+      count += val.length;
+      continue;
+    }
+    count++;
+  }
+  return count;
+}
+
+const GENERIC_STEP_DEFAULTS: Record<string, unknown> = {
+  tenenciaMovilidad: "no",
+  tieneTatuajes: "no",
+  tatuajesVisibles: "no_visibles",
+  redSocialPlataforma: "Instagram",
+  estadoEstudios: "en_curso",
+  disponibilidad: "inmediata",
+  condicionDiferenteVivienda: "Ninguno",
+  paredes: "ladrillo",
+  techo: "tejas",
+  pisos: "ceramica",
+  limpiezaOrdenVivienda: "Ordenada y limpia",
+  quienesPresentes: "Ninguno",
+  vocabularioEntrevistado: "Respetuoso y acorde a la situación",
+  observacionesEntrevista:
+    "La persona entrevistada se muestra respetuosa y colaboradora. Vivienda ordenada y limpia.",
+  otrasObservaciones: "Ninguna",
+  diccion: "fluida",
+  estadoVivienda: "bueno",
+};
+
+/**
+ * Fusiona dos versiones del mismo expediente garantizando que NUNCA un dato vacío
+ * o un valor por defecto de un paso anterior pise un dato ya completado por el postulante o el evaluador.
+ */
+export function mergeRecords(
+  existing: EntrevistaRecord,
+  incoming: EntrevistaRecord
+): EntrevistaRecord {
+  const existingCount = countFilledFields(existing.datos);
+  const incomingCount = countFilledFields(incoming.datos);
+
+  // El registro con más campos completados o más reciente sirve de base segura
+  const incomingIsNewer =
+    new Date(incoming.actualizadoEn || 0).getTime() >=
+    new Date(existing.actualizadoEn || 0).getTime();
+
+  const mergedDatos: Record<string, unknown> = {
+    ...(existing.datos || {}),
+  };
+
+  for (const [k, incVal] of Object.entries(incoming.datos || {})) {
+    const existVal = mergedDatos[k];
+    const incFilled = isFilledValue(incVal);
+    const existFilled = isFilledValue(existVal);
+
+    if (!incFilled && existFilled) {
+      // Jamás pisar un campo lleno con uno vacío
+      continue;
+    }
+
+    if (incFilled && existFilled) {
+      // Si el valor existente era personalizado y el entrante es un default genérico de un formulario menos avanzado, conservar el personalizado
+      const genericDefault = GENERIC_STEP_DEFAULTS[k];
+      if (
+        genericDefault !== undefined &&
+        incVal === genericDefault &&
+        existVal !== genericDefault &&
+        existingCount > incomingCount
+      ) {
+        continue;
+      }
+
+      // Si incoming viene de una sesión menos avanzada (ej. paso 1) y existing ya tenía muchos más datos, no pisar booleanos/números por defecto (false / 0 / 1)
+      if (
+        existingCount > incomingCount + 5 &&
+        (incVal === false || incVal === 0 || incVal === 1) &&
+        existVal !== incVal
+      ) {
+        continue;
+      }
+    }
+
+    if (incFilled || !existFilled) {
+      mergedDatos[k] = incVal;
+    }
+  }
+
+  const estadoRank: Record<string, number> = {
+    pendiente: 0,
+    en_progreso: 1,
+    completado: 2,
+  };
+
+  let bestEstado: "pendiente" | "en_progreso" | "completado";
+  let bestPaso: number;
+
+  if (incoming._forceEstado) {
+    bestEstado = incoming.estado || existing.estado || "en_progreso";
+    bestPaso = incoming.pasoActual || existing.pasoActual || 1;
+  } else {
+    const rankIn = estadoRank[incoming.estado || "pendiente"] ?? 0;
+    const rankEx = estadoRank[existing.estado || "pendiente"] ?? 0;
+    bestEstado =
+      rankIn >= rankEx
+        ? incoming.estado || "pendiente"
+        : existing.estado || "pendiente";
+
+    bestPaso = Math.max(
+      existing.pasoActual || 1,
+      incoming.pasoActual || 1,
+      bestEstado === "completado" ? 9 : 1
+    );
+
+    // Si tiene más de 15 campos llenos, al menos está en_progreso (nunca pendiente)
+    if (bestEstado === "pendiente" && countFilledFields(mergedDatos) > 10) {
+      bestEstado = "en_progreso";
+    }
+  }
+
+  const fullNombre = [mergedDatos.nombre, mergedDatos.apellido]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const latestTime = incomingIsNewer
+    ? incoming.actualizadoEn || existing.actualizadoEn
+    : existing.actualizadoEn || incoming.actualizadoEn;
+
+  const result: EntrevistaRecord = {
+    ...existing,
+    ...incoming,
+    id: existing.id || incoming.id,
+    token: existing.token || incoming.token,
+    entidadSolicitante:
+      incoming.entidadSolicitante ||
+      existing.entidadSolicitante ||
+      "Banco Continental",
+    candidatoNombre:
+      incoming.candidatoNombre ||
+      existing.candidatoNombre ||
+      fullNombre ||
+      undefined,
+    cedula:
+      incoming.cedula || existing.cedula || (mergedDatos.cedula as string),
+    telefono:
+      incoming.telefono ||
+      existing.telefono ||
+      (mergedDatos.telefono as string),
+    ciudad:
+      incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
+    evaluadorAsignado:
+      incoming.evaluadorAsignado ||
+      existing.evaluadorAsignado ||
+      "Lic. Michelle Romero",
+    estado: bestEstado,
+    pasoActual: bestPaso,
+    datos: mergedDatos as Partial<FormularioCompleto>,
+    camposPrellenados: incoming.camposPrellenados?.length
+      ? incoming.camposPrellenados
+      : existing.camposPrellenados,
+    actualizadoEn: latestTime || new Date().toISOString(),
+  };
+
+  delete result._forceEstado;
+  return result;
+}
+
+function loadLocalFiles() {
+  // 1. Cargar registros eliminados locales
   try {
     if (fs.existsSync(TMP_DELETED_FILE)) {
       const delArr: string[] = JSON.parse(
@@ -67,15 +276,35 @@ function loadLocalTmp() {
       );
       delArr.forEach((t) => deletedSet.add(t));
     }
+  } catch {}
+
+  // 2. Cargar semilla consolidada desde data/entrevistas.json del repositorio
+  try {
+    if (fs.existsSync(REPO_DATA_FILE)) {
+      const seedList: EntrevistaRecord[] = JSON.parse(
+        fs.readFileSync(REPO_DATA_FILE, "utf-8")
+      );
+      for (const r of seedList) {
+        if (r && r.token && !deletedSet.has(r.token)) {
+          const cur = store.get(r.token);
+          store.set(r.token, cur ? mergeRecords(cur, r) : r);
+        }
+      }
+    }
+  } catch {}
+
+  // 3. Cargar cambios recientes desde /tmp
+  try {
     if (fs.existsSync(TMP_FILE)) {
-      const list: EntrevistaRecord[] = JSON.parse(
+      const tmpList: EntrevistaRecord[] = JSON.parse(
         fs.readFileSync(TMP_FILE, "utf-8")
       );
-      list.forEach((r) => {
+      for (const r of tmpList) {
         if (r && r.token && !deletedSet.has(r.token)) {
-          store.set(r.token, r);
+          const cur = store.get(r.token);
+          store.set(r.token, cur ? mergeRecords(cur, r) : r);
         }
-      });
+      }
     }
   } catch {}
 }
@@ -95,221 +324,161 @@ function saveLocalTmp() {
   } catch {}
 }
 
-loadLocalTmp();
+loadLocalFiles();
 
-export function countFilledFields(datos?: Partial<FormularioCompleto>): number {
-  if (!datos || typeof datos !== "object") return 0;
-  let count = 0;
-  for (const [k, val] of Object.entries(datos)) {
-    if (k.startsWith("_")) continue;
-    if (val === undefined || val === null || val === "") continue;
-    if (Array.isArray(val)) {
-      if (val.length > 0) count += val.length;
-      continue;
-    }
-    count++;
+function getGistHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "Jerovia-Consultora-Store",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+  };
+  if (GIST_TOKEN) {
+    headers.Authorization = `Bearer ${GIST_TOKEN}`;
   }
-  return count;
+  return headers;
 }
 
-/**
- * Fusiona dos registros del mismo expediente garantizando que NUNCA un dato vacío
- * pise un dato ya completado por el postulante o el evaluador.
- */
-export function mergeRecords(
-  existing: EntrevistaRecord,
-  incoming: EntrevistaRecord
-): EntrevistaRecord {
-  const mergedDatos: Partial<FormularioCompleto> = {
-    ...existing.datos,
-    ...incoming.datos,
-  };
-
-  for (const [k, val] of Object.entries(existing.datos || {})) {
-    const incVal = (incoming.datos as Record<string, unknown> | undefined)?.[k];
-    const isIncEmpty =
-      incVal === undefined ||
-      incVal === null ||
-      incVal === "" ||
-      (Array.isArray(incVal) && incVal.length === 0);
-    const isExistingFilled =
-      val !== undefined &&
-      val !== null &&
-      val !== "" &&
-      (!Array.isArray(val) || val.length > 0);
-
-    if (isIncEmpty && isExistingFilled) {
-      (mergedDatos as Record<string, unknown>)[k] = val;
-    }
-  }
-
-  const estadoRank = { pendiente: 0, en_progreso: 1, completado: 2 };
-  const bestEstado =
-    estadoRank[incoming.estado || "pendiente"] >=
-    estadoRank[existing.estado || "pendiente"]
-      ? incoming.estado
-      : existing.estado;
-
-  const bestPaso = Math.max(
-    existing.pasoActual || 1,
-    incoming.pasoActual || 1,
-    bestEstado === "completado" ? 9 : 1
-  );
-
-  const fullNombre = [mergedDatos.nombre, mergedDatos.apellido]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
-  const latestTime =
-    new Date(incoming.actualizadoEn || 0).getTime() >=
-    new Date(existing.actualizadoEn || 0).getTime()
-      ? incoming.actualizadoEn
-      : existing.actualizadoEn;
-
-  return {
-    ...existing,
-    ...incoming,
-    candidatoNombre:
-      incoming.candidatoNombre ||
-      existing.candidatoNombre ||
-      fullNombre ||
-      undefined,
-    cedula:
-      incoming.cedula || existing.cedula || (mergedDatos.cedula as string),
-    telefono:
-      incoming.telefono ||
-      existing.telefono ||
-      (mergedDatos.telefono as string),
-    ciudad:
-      incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
-    estado: bestEstado,
-    pasoActual: bestPaso,
-    datos: mergedDatos,
-    camposPrellenados: incoming.camposPrellenados?.length
-      ? incoming.camposPrellenados
-      : existing.camposPrellenados,
-    actualizadoEn: latestTime || new Date().toISOString(),
-  };
-}
-
-async function fetchCloudEndpoint(
-  baseUrl: string
-): Promise<Partial<CloudStorePayload> | null> {
-  if (!baseUrl) return null;
+async function parseGistFileContent<T>(
+  entry: GistFileEntry | undefined
+): Promise<T | null> {
+  if (!entry) return null;
   try {
-    const sep = baseUrl.includes("?") ? "&" : "?";
-    const bustUrl = `${baseUrl}${sep}_t=${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 7)}`;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4500);
-    const res = await fetch(bustUrl, {
-      method: "GET",
-      headers: BROWSER_HEADERS,
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    return (await res.json()) as Partial<CloudStorePayload>;
-  } catch {
-    return null;
-  }
-}
-
-function ingestCloudPayload(payload: Partial<CloudStorePayload> | null) {
-  if (!payload || typeof payload !== "object") return;
-
-  if (Array.isArray(payload.deletedTokens)) {
-    for (const delTok of payload.deletedTokens) {
-      deletedSet.add(delTok);
-      store.delete(delTok);
-    }
-  }
-
-  const incomingMap: Record<string, EntrevistaRecord> = {
-    ...(payload.summaries || {}),
-    ...(payload.records || {}),
-  };
-
-  for (const [tok, rec] of Object.entries(incomingMap)) {
-    if (!tok || deletedSet.has(tok) || !rec || typeof rec !== "object") continue;
-    const existing = store.get(tok);
-    if (!existing) {
-      store.set(tok, rec);
-    } else {
-      store.set(tok, mergeRecords(existing, rec));
-    }
-  }
-}
-
-export async function syncStoreFromCloud(_targetToken?: string): Promise<void> {
-  if (CLOUD_URLS.length === 0) return;
-  try {
-    const results = await Promise.allSettled(
-      CLOUD_URLS.map((u) => fetchCloudEndpoint(u))
-    );
-    for (const r of results) {
-      if (r.status === "fulfilled" && r.value) {
-        ingestCloudPayload(r.value);
+    if (entry.truncated && entry.raw_url) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4500);
+      const rawRes = await fetch(`${entry.raw_url}?_t=${Date.now()}`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (rawRes.ok) {
+        return (await rawRes.json()) as T;
       }
     }
+    if (typeof entry.content === "string" && entry.content.trim()) {
+      return JSON.parse(entry.content) as T;
+    }
+  } catch {}
+  return null;
+}
+
+export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
+  if (!GIST_ID) return;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(
+      `https://api.github.com/gists/${GIST_ID}?_t=${Date.now()}`,
+      {
+        method: "GET",
+        headers: getGistHeaders(),
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timer);
+
+    if (!res.ok) return;
+    const gist = (await res.json()) as GistResponse;
+    const files = gist.files || {};
+
+    // 1. Procesar lista de eliminados
+    if (files["_deleted.json"]) {
+      const delArr = await parseGistFileContent<string[]>(
+        files["_deleted.json"]
+      );
+      if (Array.isArray(delArr)) {
+        for (const delTok of delArr) {
+          deletedSet.add(delTok);
+          store.delete(delTok);
+        }
+      }
+    }
+
+    // 2. Si se solicitó un token específico, asegurarnos de hidratar ese archivo primero
+    if (targetToken && !deletedSet.has(targetToken)) {
+      const targetKey = getRecordFileKey(targetToken);
+      if (files[targetKey]) {
+        const rec = await parseGistFileContent<EntrevistaRecord>(
+          files[targetKey]
+        );
+        if (rec && rec.token && !deletedSet.has(rec.token)) {
+          const existing = store.get(rec.token);
+          store.set(rec.token, existing ? mergeRecords(existing, rec) : rec);
+        }
+      }
+    }
+
+    // 3. Hidratar todos los demás archivos rec_*.json
+    const targetFileKey = targetToken ? getRecordFileKey(targetToken) : "";
+    for (const [filename, fileEntry] of Object.entries(files)) {
+      if (!filename.startsWith("rec_") || !filename.endsWith(".json")) continue;
+      if (filename === targetFileKey) continue;
+
+      const rec = await parseGistFileContent<EntrevistaRecord>(fileEntry);
+      if (!rec || !rec.token || deletedSet.has(rec.token)) continue;
+
+      const existing = store.get(rec.token);
+      store.set(rec.token, existing ? mergeRecords(existing, rec) : rec);
+    }
+
     saveLocalTmp();
   } catch {}
 }
 
-export async function syncStoreToCloud(_changedToken?: string): Promise<void> {
+export async function syncStoreToCloud(changedToken?: string): Promise<void> {
   saveLocalTmp();
-  if (CLOUD_URLS.length === 0) return;
+  if (!GIST_ID || !GIST_TOKEN) return;
 
   try {
-    // 1. Primero leer ambos canales para fusionar y jamás pisar expedientes creados en otra instancia
-    const results = await Promise.allSettled(
-      CLOUD_URLS.map((u) => fetchCloudEndpoint(u))
-    );
-    let anyReadSuccess = false;
-    for (const r of results) {
-      if (r.status === "fulfilled" && r.value) {
-        anyReadSuccess = true;
-        ingestCloudPayload(r.value);
+    // 1. Primero sincronizar desde la nube el token afectado para fusionar y jamás pisar avances concurrentes
+    await syncStoreFromCloud(changedToken);
+
+    const filesPatch: Record<string, { content: string } | null> = {};
+
+    if (changedToken) {
+      if (changedToken === "demo") return;
+      const fileKey = getRecordFileKey(changedToken);
+      if (deletedSet.has(changedToken)) {
+        filesPatch[fileKey] = null;
+        filesPatch["_deleted.json"] = {
+          content: JSON.stringify(Array.from(deletedSet)),
+        };
+      } else {
+        const rec = store.get(changedToken);
+        if (rec) {
+          filesPatch[fileKey] = {
+            content: JSON.stringify(rec),
+          };
+        }
+      }
+    } else {
+      // Sincronización completa (ej. restauración de backup)
+      filesPatch["_deleted.json"] = {
+        content: JSON.stringify(Array.from(deletedSet)),
+      };
+      for (const [tok, rec] of store.entries()) {
+        if (tok === "demo" || deletedSet.has(tok)) continue;
+        filesPatch[getRecordFileKey(tok)] = {
+          content: JSON.stringify(rec),
+        };
       }
     }
 
-    // Si la lectura falló por microcorte y nuestra instancia está vacía, no sobrescribir la nube
-    if (!anyReadSuccess && store.size === 0 && deletedSet.size === 0) {
-      return;
-    }
+    if (Object.keys(filesPatch).length === 0) return;
 
-    const recordsObj: Record<string, EntrevistaRecord> = {};
-    for (const [tok, rec] of store.entries()) {
-      if (tok === "demo" || deletedSet.has(tok)) continue;
-      recordsObj[tok] = rec;
-    }
-
-    const payload: CloudStorePayload = {
-      version: 3,
-      deletedTokens: Array.from(deletedSet),
-      records: recordsObj,
-      updatedAt: Date.now(),
-    };
-
-    const bodyStr = JSON.stringify(payload);
-
-    await Promise.allSettled(
-      CLOUD_URLS.map(async (baseUrl) => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 5000);
-        await fetch(baseUrl, {
-          method: "PUT",
-          headers: BROWSER_HEADERS,
-          body: bodyStr,
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-      })
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5500);
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: "PATCH",
+      headers: getGistHeaders(),
+      body: JSON.stringify({ files: filesPatch }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
 
     saveLocalTmp();
   } catch {}
@@ -425,11 +594,11 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
     return record;
   }
 
-  if (
-    !record &&
-    (token.startsWith("jv_") || token.startsWith("tok_") || token.length >= 8)
-  ) {
+  // Solo auto-hidratar si es un SmartToken válido de Jerovia (jv_... o tok_...)
+  if (!record && (token.startsWith("jv_") || token.startsWith("tok_"))) {
     const decoded = decodeSmartToken(token);
+    if (!decoded && token.startsWith("jv_")) return undefined;
+
     const fullName = decoded?.candidatoNombre || "";
     const parts = fullName.trim().split(/\s+/);
     const nombre = parts.slice(0, Math.max(1, parts.length - 1)).join(" ");
@@ -453,13 +622,14 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
       ciudad: decoded?.ciudad,
       evaluadorAsignado: decoded?.evaluadorAsignado || "Lic. Michelle Romero",
       creadoPor: "admin",
-      estado: "en_progreso",
+      estado: "pendiente",
       pasoActual: 1,
       datos: initialDatos,
       camposPrellenados: decoded?.camposPrellenados || [],
       alertas: [],
-      creadoEn: new Date().toISOString(),
-      actualizadoEn: new Date().toISOString(),
+      creadoEn: "2026-10-18T00:00:00.000Z",
+      // Época antigua para que cualquier guardado real del postulante siempre tenga prioridad temporal
+      actualizadoEn: "2026-10-18T00:00:00.000Z",
     };
     store.set(token, record);
     saveLocalTmp();
@@ -479,14 +649,14 @@ export function actualizarEntrevista(
   }
   if (!record) return null;
 
-  const incomingFakeRecord: EntrevistaRecord = {
+  const incomingRecord: EntrevistaRecord = {
     ...record,
     ...patch,
     datos: (patch.datos || {}) as Partial<FormularioCompleto>,
     actualizadoEn: new Date().toISOString(),
   };
 
-  const merged = mergeRecords(record, incomingFakeRecord);
+  const merged = mergeRecords(record, incomingRecord);
   store.set(token, merged);
   saveLocalTmp();
   return merged;
