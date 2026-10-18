@@ -164,9 +164,21 @@ export function Paso8Vivienda({ defaultValues, onAutoSave, onNext, onBack }: Pro
           label="Cantidad de habitantes en la casa"
           type="number"
           min={1}
+          inputMode="numeric"
           {...register("cantidadPersonas")}
         />
       </div>
+
+      {watch("tenenciaVivienda") === "alquilada" && (
+        <Input
+          label="Costo de Alquiler Mensual en Gs. (Si es alquilada)"
+          placeholder="Ej: 1.800.000 Gs."
+          type="number"
+          min={0}
+          inputMode="numeric"
+          {...register("costoAlquiler", { valueAsNumber: true })}
+        />
+      )}
 
       <Input
         label="¿Quién vive en la casa junto a la persona entrevistada?"

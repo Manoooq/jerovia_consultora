@@ -141,12 +141,12 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Input label="Nombre y apellido de la madre" placeholder="Ingrese nombre y apellido" {...register("nombreMadre")} error={errors.nombreMadre?.message} />
-          <Input label="Edad en años" type="number" {...register("edadMadre")} />
+          <Input label="Edad en años" type="number" min={0} inputMode="numeric" {...register("edadMadre")} />
           <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionMadre")} error={errors.ocupacionMadre?.message} />
           <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaMadre")} />
-          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioMadre")} />
+          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." inputMode="numeric" {...register("salarioMadre")} />
           <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadMadre")} />
-          <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoMadre")} />
+          <Input label="Teléfono" type="tel" inputMode="tel" placeholder="Ingrese teléfono" {...register("telefonoMadre")} />
         </div>
       </div>
 
@@ -158,12 +158,12 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Input label="Nombre y apellido del padre" placeholder="Ingrese nombre y apellido" {...register("nombrePadre")} error={errors.nombrePadre?.message} />
-          <Input label="Edad en años" type="number" {...register("edadPadre")} />
+          <Input label="Edad en años" type="number" min={0} inputMode="numeric" {...register("edadPadre")} />
           <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPadre")} error={errors.ocupacionPadre?.message} />
           <Input label="Empresa o Institución" placeholder="Ingrese lugar de trabajo" {...register("empresaPadre")} />
-          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPadre")} />
+          <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." inputMode="numeric" {...register("salarioPadre")} />
           <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPadre")} />
-          <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPadre")} />
+          <Input label="Teléfono" type="tel" inputMode="tel" placeholder="Ingrese teléfono" {...register("telefonoPadre")} />
         </div>
       </div>
 
@@ -182,12 +182,12 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           {tieneParejaCasa && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-overlay0">
               <Input label="Nombre y Apellido" placeholder="Ingrese nombre y apellido" {...register("nombrePareja")} />
-              <Input label="Edad en años" type="number" {...register("edadPareja")} />
+              <Input label="Edad en años" type="number" min={0} inputMode="numeric" {...register("edadPareja")} />
               <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPareja")} />
               <Input label="Empresa o Institución" placeholder="Ingrese empresa" {...register("empresaPareja")} />
-              <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPareja")} />
+              <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." inputMode="numeric" {...register("salarioPareja")} />
               <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPareja")} />
-              <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPareja")} />
+              <Input label="Teléfono" type="tel" inputMode="tel" placeholder="Ingrese teléfono" {...register("telefonoPareja")} />
             </div>
           )}
         </div>
@@ -246,6 +246,9 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
                     <Input
                       label="Edad"
                       placeholder="Edad"
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
                       {...register(`listaHermanos.${idx}.edad`)}
                     />
                   </div>

@@ -212,6 +212,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
               <Input
                 label="Salario (Gs.)"
                 placeholder="Ingrese monto mensual en Gs."
+                inputMode="numeric"
                 {...register("salarioBruto")}
               />
             )}
@@ -259,6 +260,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             <Input
               label="Último Salario (Gs.)"
               placeholder="Monto mensual que percibía"
+              inputMode="numeric"
               {...register("salarioBruto")}
             />
             <Input
@@ -298,6 +300,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
           <Input
             label="Salario o ayuda económica recibida (Gs. - Opcional)"
             placeholder="Monto en Gs."
+            inputMode="numeric"
             {...register("salarioBruto")}
           />
         </div>
@@ -334,6 +337,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
           <Input
             label="Pretensión salarial o monto acordado con RRHH"
             placeholder="Ingrese monto en Gs."
+            inputMode="numeric"
             {...register("pretensionSalarial")}
             error={errors.pretensionSalarial?.message}
           />

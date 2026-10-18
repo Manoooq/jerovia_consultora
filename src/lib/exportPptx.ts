@@ -373,36 +373,38 @@ export async function generarPptxInforme(
         }) · Zona: ${v(d.zonaTatuada)}`
       : "No";
 
-  s1.addText(
-    [
-      `Aspectos positivos: ${v(d.aspectosPositivos)}`,
-      `Actitud a mejorar: ${v(d.aspectosMejorar)}`,
-      `Logros personales que espera cumplir: ${v(d.visionLargoPlazo)}`,
-      `¿Tiene algún familiar políticamente expuesto?: ${siNo(
-        d.familiaresPoliticos,
-        d.familiaresPoliticosDetalle
-      )}`,
-      `Movilidad: ${movTexto}`,
-      `Medio a sucursal: ${v(d.medioTransporteSucursal)} (${v(
-        d.tiempoViajeSucursal
-      )})`,
-      `Tatuajes: ${tatTexto}`,
-      `Red social que más usa: ${
-        d.redSocial
-          ? `${v(d.redSocialPlataforma, "Instagram")} - ${v(d.redSocial)}`
-          : "No utiliza"
-      }`,
-    ].join("\n"),
-    {
-      x: 6.95,
-      y: 3.45,
-      w: 5.6,
-      h: 3.35,
-      fontSize: 9.5,
-      color: COLOR_TEXT,
-      fontFace: "Arial",
-    }
-  );
+  const s1RightText = [
+    `Aspectos positivos: ${v(d.aspectosPositivos)}`,
+    `Actitud a mejorar: ${v(d.aspectosMejorar)}`,
+    `Logros personales que espera cumplir: ${v(d.visionLargoPlazo)}`,
+    `¿Tiene algún familiar políticamente expuesto?: ${siNo(
+      d.familiaresPoliticos,
+      d.familiaresPoliticosDetalle
+    )}`,
+    `Movilidad: ${movTexto}`,
+    `Medio a sucursal: ${v(d.medioTransporteSucursal)} (${v(
+      d.tiempoViajeSucursal
+    )})`,
+    `Tatuajes: ${tatTexto}`,
+    `Red social que más usa: ${
+      d.redSocial
+        ? `${v(d.redSocialPlataforma, "Instagram")} - ${v(d.redSocial)}`
+        : "No utiliza"
+    }`,
+  ].join("\n");
+
+  const s1RightFontSize =
+    s1RightText.length > 450 ? 8.2 : s1RightText.length > 320 ? 8.8 : 9.5;
+
+  s1.addText(s1RightText, {
+    x: 6.95,
+    y: 3.45,
+    w: 5.6,
+    h: 3.35,
+    fontSize: s1RightFontSize,
+    color: COLOR_TEXT,
+    fontFace: "Arial",
+  });
 
   // PÁGINA 2
   const s2 = pres.addSlide();
@@ -767,47 +769,49 @@ export async function generarPptxInforme(
       ? "Primera experiencia laboral"
       : v(d.situacionActual);
 
-  s4.addText(
-    [
-      `Condición ocupacional: ${condLabel}`,
-      `Lugar de empleo / Pasantía: ${v(d.empresaAnterior)}`,
-      `Cargo / Tareas desempeñadas: ${v(d.cargoAnterior)}`,
-      `Antigüedad actual: ${v(
-        d.antiguedad,
-        "-"
-      )}   |   Antigüedad anterior: ${v(d.antiguedadAnterior, "-")}`,
-      `Salario (Gs.): ${v(
-        d.salarioBruto,
-        "-"
-      )}   |   Aportes / Descuentos: ${v(d.aportesDescuentos, "-")}`,
-      `Motivo de salida o cambio: ${v(d.motivoSalida, "-")}`,
-      ``,
-      `Cargo al que postula: ${v(d.cargoPostula)}`,
-      `Pretensión salarial o monto acordado con RRHH: ${v(
-        d.pretensionSalarial
-      )}`,
-      `Por qué eligió este Banco para trabajar: ${v(
-        d.motivoEleccionEntidad
-      )}`,
-      `Objetivos profesionales si se incorpora: ${v(
-        d.objetivosProfesionales
-      )}`,
-      `Cómo sería su ambiente laboral ideal: ${v(d.ambienteLaboralIdeal)}`,
-      `Posee algún familiar y/o conocido en la entidad: ${siNo(
-        d.familiarEnEntidad,
-        d.familiarEnEntidadDetalle
-      )}`,
-    ].join("\n\n"),
-    {
-      x: 0.8,
-      y: 1.75,
-      w: 11.7,
-      h: 4.95,
-      fontSize: 10,
-      color: COLOR_TEXT,
-      fontFace: "Arial",
-    }
-  );
+  const s4Text = [
+    `Condición ocupacional: ${condLabel}`,
+    `Lugar de empleo / Pasantía: ${v(d.empresaAnterior)}`,
+    `Cargo / Tareas desempeñadas: ${v(d.cargoAnterior)}`,
+    `Antigüedad actual: ${v(
+      d.antiguedad,
+      "-"
+    )}   |   Antigüedad anterior: ${v(d.antiguedadAnterior, "-")}`,
+    `Salario (Gs.): ${v(
+      d.salarioBruto,
+      "-"
+    )}   |   Aportes / Descuentos: ${v(d.aportesDescuentos, "-")}`,
+    `Motivo de salida o cambio: ${v(d.motivoSalida, "-")}`,
+    ``,
+    `Cargo al que postula: ${v(d.cargoPostula)}`,
+    `Pretensión salarial o monto acordado con RRHH: ${v(
+      d.pretensionSalarial
+    )}`,
+    `Por qué eligió este Banco para trabajar: ${v(
+      d.motivoEleccionEntidad
+    )}`,
+    `Objetivos profesionales si se incorpora: ${v(
+      d.objetivosProfesionales
+    )}`,
+    `Cómo sería su ambiente laboral ideal: ${v(d.ambienteLaboralIdeal)}`,
+    `Posee algún familiar y/o conocido en la entidad: ${siNo(
+      d.familiarEnEntidad,
+      d.familiarEnEntidadDetalle
+    )}`,
+  ].join("\n\n");
+
+  const s4FontSize =
+    s4Text.length > 650 ? 8.4 : s4Text.length > 450 ? 9.0 : 10;
+
+  s4.addText(s4Text, {
+    x: 0.8,
+    y: 1.75,
+    w: 11.7,
+    h: 4.95,
+    fontSize: s4FontSize,
+    color: COLOR_TEXT,
+    fontFace: "Arial",
+  });
 
   // PÁGINA 5
   const s5 = pres.addSlide();
@@ -831,44 +835,46 @@ export async function generarPptxInforme(
     color: COLOR_OLIVE,
   });
 
-  s5.addText(
-    [
-      `Limpieza y orden de la vivienda: ${v(
-        d.limpiezaOrdenVivienda,
-        "Ordenada y limpia"
-      )}   |   ¿La zona es de fácil acceso?: ${siNo(
-        d.zonaFacilAcceso ?? true
-      )}`,
-      `Presencia de otras personas durante la entrevista: ${v(
-        d.quienesPresentes,
-        "Ninguno"
-      )}`,
-      `Vocabulario utilizado por la persona entrevistada: ${v(
-        d.vocabularioEntrevistado,
-        "Respetuoso y acorde a la situación"
-      )}`,
-      ``,
-      `Concepto / Observaciones de la visita:`,
-      v(d.observacionesEntrevista),
-      ``,
-      `Otras observaciones: ${v(d.otrasObservaciones, "Ninguna")}`,
-      `Entrevistador/a: ${v(
-        d.entrevistadorNombre,
-        v(d.consultorNombre, "Lic. Michelle Romero")
-      )}   |   Visita realizada el: ${v(d.fechaVisita)} ${
-        d.horaVisita ? `, ${v(d.horaVisita)}` : ""
-      }`,
-    ].join("\n"),
-    {
-      x: 0.8,
-      y: 1.7,
-      w: 11.7,
-      h: 2.95,
-      fontSize: 10,
-      color: COLOR_TEXT,
-      fontFace: "Arial",
-    }
-  );
+  const s5Text = [
+    `Limpieza y orden de la vivienda: ${v(
+      d.limpiezaOrdenVivienda,
+      "Ordenada y limpia"
+    )}   |   ¿La zona es de fácil acceso?: ${siNo(
+      d.zonaFacilAcceso ?? true
+    )}`,
+    `Presencia de otras personas durante la entrevista: ${v(
+      d.quienesPresentes,
+      "Ninguno"
+    )}   |   Dicción: ${v(d.diccion, "Fluida y coherente")}`,
+    `Vocabulario de la persona entrevistada: ${v(
+      d.vocabularioEntrevistado,
+      "Respetuoso y acorde a la situación"
+    )}   |   Estado de vivienda: ${v(d.estadoVivienda, "Bueno")}`,
+    ``,
+    `Concepto / Observaciones de la visita:`,
+    v(d.observacionesEntrevista),
+    ``,
+    `Otras observaciones: ${v(d.otrasObservaciones, "Ninguna")}`,
+    `Entrevistador/a: ${v(
+      d.entrevistadorNombre,
+      v(d.consultorNombre, "Lic. Michelle Romero")
+    )}   |   Visita realizada el: ${v(d.fechaVisita)} ${
+      d.horaVisita ? `, ${v(d.horaVisita)}` : ""
+    }`,
+  ].join("\n");
+
+  const s5FontSize =
+    s5Text.length > 480 ? 8.6 : s5Text.length > 340 ? 9.2 : 10;
+
+  s5.addText(s5Text, {
+    x: 0.8,
+    y: 1.7,
+    w: 11.7,
+    h: 2.95,
+    fontSize: s5FontSize,
+    color: COLOR_TEXT,
+    fontFace: "Arial",
+  });
 
   s5.addShape(pres.ShapeType.roundRect, {
     x: 3.66,

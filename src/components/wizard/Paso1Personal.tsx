@@ -236,6 +236,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
               label="Cantidad de hijos/as"
               type="number"
               min={1}
+              inputMode="numeric"
               {...register("cantidadHijos")}
             />
             <Input

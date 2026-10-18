@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paso9Schema, Paso9Data } from "@/lib/validations";
-import { Input, Textarea, Toggle } from "@/components/ui/FormFields";
+import { Input, Select, Textarea, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { SignaturePad } from "@/components/SignaturePad";
 import { FotoUploader } from "@/components/FotoUploader";
@@ -73,6 +73,8 @@ export function Paso9Observaciones({
       vocabularioEntrevistado:
         defaultValues.vocabularioEntrevistado ||
         "Respetuoso y acorde a la situación",
+      diccion: defaultValues.diccion || "fluida",
+      estadoVivienda: defaultValues.estadoVivienda || "bueno",
       zonaFacilAcceso: defaultValues.zonaFacilAcceso ?? true,
       observacionesEntrevista:
         defaultValues.observacionesEntrevista ||
@@ -236,6 +238,39 @@ export function Paso9Observaciones({
           label="Vocabulario utilizado por la persona entrevistada"
           placeholder="Respetuoso y acorde a la situación"
           {...register("vocabularioEntrevistado")}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Dicción y expresión del entrevistado/a"
+          options={[
+            { value: "fluida", label: "Fluida y elocuente" },
+            { value: "coherente", label: "Coherente y precisa" },
+            { value: "segura", label: "Segura y asertiva" },
+            { value: "timida", label: "Tímida o reservada" },
+            { value: "otro", label: "Otra observación" },
+          ]}
+          {...register("diccion")}
+        />
+        <Select
+          label="Estado físico y conservación de la vivienda"
+          options={[
+            {
+              value: "excelente",
+              label: "Excelente (Materiales nobles, óptimo mantenimiento)",
+            },
+            { value: "bueno", label: "Bueno (Habitable, estructura sólida)" },
+            {
+              value: "regular",
+              label: "Regular (Mantenimiento diferido o detalles menores)",
+            },
+            {
+              value: "deficiente",
+              label: "Deficiente (Hacinamiento o deterioro severo)",
+            },
+          ]}
+          {...register("estadoVivienda")}
         />
       </div>
 

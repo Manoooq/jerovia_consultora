@@ -109,6 +109,34 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
           checked={Boolean(watch("tieneDependientesEconomicos"))}
           onChange={(val) => setValue("tieneDependientesEconomicos", val)}
         />
+        {watch("tieneDependientesEconomicos") && (
+          <Input
+            label="¿Quiénes dependen económicamente de usted?"
+            placeholder="Indique parentesco o cantidad de dependientes"
+            {...register("dependientesEconomicosDetalle")}
+          />
+        )}
+      </div>
+
+      {/* Balance de Ingresos Familiares */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-4">
+        <span className="text-xs font-mono font-bold uppercase text-gold block">
+          INGRESOS FAMILIARES ESTIMADOS (REQUERIDO PARA INFORME CREDITICIO)
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Ingresos familiares mensuales estimados (Gs.)"
+            placeholder="Ej: 6.500.000 Gs."
+            inputMode="numeric"
+            {...register("ingresosFamiliares")}
+          />
+          <Input
+            label="Otros ingresos o actividades secundarias (Gs. - Opcional)"
+            placeholder="Ej: 1.500.000 Gs."
+            inputMode="numeric"
+            {...register("otrosIngresos")}
+          />
+        </div>
       </div>
 
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
@@ -147,6 +175,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
                 <Input
                   label="Monto del pago mensual (Gs.)"
                   placeholder="Ingrese monto mensual"
+                  inputMode="numeric"
                   {...register(`listaEgresos.${idx}.monto`)}
                 />
               </div>
@@ -220,6 +249,7 @@ export function Paso7Economico({ defaultValues, onNext, onBack }: Props) {
                     <Input
                       label="Valor de la cuota en Gs."
                       placeholder="Ingrese monto de la cuota"
+                      inputMode="numeric"
                       {...register(`listaPrestamos.${idx}.cuota`)}
                     />
                   </div>
