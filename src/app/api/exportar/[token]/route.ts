@@ -439,8 +439,8 @@ export async function GET(
           <div class="qa-item"><div class="qa-label">Actitud a mejorar</div><div class="qa-val">${v(d.aspectosMejorar)}</div></div>
           <div class="qa-item"><div class="qa-label">Logros personales que espera cumplir</div><div class="qa-val">${v(d.visionLargoPlazo)}</div></div>
           <div class="two-col">
-            <div class="qa-item"><div class="qa-label">¿Está políticamente expuesto él/ella o su familia?</div><div class="qa-val">${siNo(d.familiaresPoliticos, d.familiaresPoliticosDetalle)}</div></div>
-            <div class="qa-item"><div class="qa-label">Cuenta con movilidad propia</div><div class="qa-val">${siNo(d.movilidadPropia, d.tipoMovilidad)}</div></div>
+            <div class="qa-item"><div class="qa-label">¿Tiene algún familiar políticamente expuesto?</div><div class="qa-val">${siNo(d.familiaresPoliticos, d.familiaresPoliticosDetalle)}</div></div>
+            <div class="qa-item"><div class="qa-label">Movilidad (Propia o Familiar) y Características</div><div class="qa-val">${d.tenenciaMovilidad === "propia" ? "Movilidad Propia" : d.tenenciaMovilidad === "familiar" ? "Movilidad Familiar" : d.movilidadPropia ? "Sí" : "No"} ${d.tipoMovilidad ? "— " + v(d.tipoMovilidad) : ""}</div></div>
           </div>
           <div class="two-col">
             <div class="qa-item"><div class="qa-label">Con qué medio irá generalmente a la sucursal asignada</div><div class="qa-val">${v(d.medioTransporteSucursal, "Ómnibus")}</div></div>
@@ -525,7 +525,7 @@ export async function GET(
           </div>
 
           <div class="qa-item">
-            <div class="qa-label">Algún/os miembro/s de la familia tiene/n productos de ${entidadTexto}</div>
+            <div class="qa-label">¿Tienes algún familiar que tenga algún producto del Banco Continental?</div>
             <div class="qa-val">${siNo(d.familiaresProductosEntidad, d.familiarConProductosDetalle)}</div>
           </div>
         </div>

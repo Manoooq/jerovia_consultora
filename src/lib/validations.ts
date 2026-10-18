@@ -44,6 +44,7 @@ export const paso1Schema = z.object({
   cantidadHijos: safeNum(0),
   edadesHijos: safeStr(""),
   licenciaConducir: z.boolean().optional().default(false),
+  tenenciaMovilidad: safeStr("no"), // "no" | "propia" | "familiar"
   movilidadPropia: z.boolean().optional().default(false),
   tipoMovilidad: safeStr(""),
   medioTransporteSucursal: safeStr(""),
@@ -58,7 +59,7 @@ export const paso1Schema = z.object({
 });
 
 export const paso2Schema = z.object({
-  profesion: safeStr(""),
+  profesion: safeStr("Estudiante"), // "Estudiante" | "Aspirante a estudiar" | "Profesional / Graduado"
   carrera: safeStr(""),
   cursoActual: safeStr(""),
   aniosEstudio: safeNum(0),
@@ -78,7 +79,7 @@ export const paso2Schema = z.object({
 });
 
 export const paso3Schema = z.object({
-  situacionActual: safeStr("empleado"),
+  situacionActual: safeStr("empleado"), // "empleado" | "desempleado" | "pasantia" | "primera_experiencia"
   empresaAnterior: safeStr(""),
   motivoSalida: safeStr(""),
   cargoAnterior: safeStr(""),

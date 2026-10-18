@@ -9,7 +9,18 @@ import { GeoCapture } from "@/components/GeoCapture";
 import { FotoUploader } from "@/components/FotoUploader";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { useInterviewMode } from "@/components/InterviewModeContext";
-import { Home, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Home,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  BedDouble,
+  Sofa,
+  Bath,
+  Utensils,
+  Layers,
+  Hammer,
+} from "lucide-react";
 
 interface Props {
   defaultValues: Partial<Paso8Data>;
@@ -153,38 +164,71 @@ export function Paso8Vivienda({ defaultValues, onNext, onBack }: Props) {
         {...register("quienesVivenCasa")}
       />
 
+      {/* Dependencias con íconos visuales para cada ambiente */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-        <span className="text-xs font-mono font-bold uppercase text-gold block">
-          DEPENDENCIAS DE LA VIVIENDA Y PISOS
-        </span>
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Home className="h-4 w-4" />
+          <span>DEPENDENCIAS DE LA VIVIENDA Y PISOS</span>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Input label="Dormitorios" type="number" min={0} {...register("habitaciones")} />
-          <Input label="Salas" type="number" min={0} {...register("salaCantidad")} />
-          <Input label="Baños" type="number" min={0} {...register("banos")} />
-          <Input label="Cocinas" type="number" min={0} {...register("cocinaCantidad")} />
-          <Input label="¿De cuántos pisos es?" type="number" min={1} {...register("plantas")} />
+          <div className="p-2.5 rounded-xl bg-surface0 border border-overlay0 space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <BedDouble className="h-3.5 w-3.5" /> Dormitorios
+            </span>
+            <Input type="number" min={0} {...register("habitaciones")} />
+          </div>
+          <div className="p-2.5 rounded-xl bg-surface0 border border-overlay0 space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Sofa className="h-3.5 w-3.5" /> Salas
+            </span>
+            <Input type="number" min={0} {...register("salaCantidad")} />
+          </div>
+          <div className="p-2.5 rounded-xl bg-surface0 border border-overlay0 space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Bath className="h-3.5 w-3.5" /> Baños
+            </span>
+            <Input type="number" min={0} {...register("banos")} />
+          </div>
+          <div className="p-2.5 rounded-xl bg-surface0 border border-overlay0 space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Utensils className="h-3.5 w-3.5" /> Cocinas
+            </span>
+            <Input type="number" min={0} {...register("cocinaCantidad")} />
+          </div>
+          <div className="p-2.5 rounded-xl bg-surface0 border border-overlay0 space-y-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Layers className="h-3.5 w-3.5" /> Nº de Pisos
+            </span>
+            <Input type="number" min={1} {...register("plantas")} />
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="Material de las paredes"
-          placeholder="Indique material de paredes"
-          {...register("paredesDetalle")}
-        />
-        <Input
-          label="Material del techo"
-          placeholder="Indique material del techo"
-          {...register("techoDetalle")}
-        />
-        <Input
-          label="Material del piso"
-          placeholder="Indique material del piso"
-          {...register("pisosDetalle")}
-        />
+      {/* Materiales con ícono */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Hammer className="h-4 w-4" />
+          <span>MATERIALES DE CONSTRUCCIÓN</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Input
+            label="Material de las paredes"
+            placeholder="Indique material de paredes"
+            {...register("paredesDetalle")}
+          />
+          <Input
+            label="Material del techo"
+            placeholder="Indique material del techo"
+            {...register("techoDetalle")}
+          />
+          <Input
+            label="Material del piso"
+            placeholder="Indique material del piso"
+            {...register("pisosDetalle")}
+          />
+        </div>
       </div>
 
-      {/* REGLA: Las fotografías solo puede verlas y subirlas el Evaluador */}
       {isEvaluator && (
         <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
           <span className="text-xs font-mono font-bold uppercase text-gold block">

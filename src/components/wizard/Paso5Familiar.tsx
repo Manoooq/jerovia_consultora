@@ -6,7 +6,16 @@ import { paso5Schema, Paso5Data } from "@/lib/validations";
 import { Input, Select, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
-import { Users, Plus, Trash2, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  Users,
+  UserRound,
+  HeartHandshake,
+  CreditCard,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 
 interface Props {
   defaultValues: Partial<Paso5Data>;
@@ -97,31 +106,38 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         }}
       />
 
-      <Select
-        label="Relación de sus padres"
-        options={[
-          { value: "casados", label: "Casados" },
-          { value: "separados", label: "Separados" },
-          { value: "divorciados", label: "Divorciados" },
-          { value: "union_libre", label: "Unión libre" },
-          { value: "fallecidos", label: "Fallecidos" },
-          { value: "otro", label: "Otro" },
-        ]}
-        {...register("relacionPadres", {
-          onChange: (e) => {
-            const val = e.target.value;
-            if (val !== "separados" && val !== "divorciados") {
-              setValue("parejaPadreMadreViveCasa", false);
-            }
-          },
-        })}
-      />
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <HeartHandshake className="h-4 w-4" />
+          <span>ESTADO CIVIL DE LOS PADRES</span>
+        </div>
+        <Select
+          label="Relación de sus padres"
+          options={[
+            { value: "casados", label: "Casados" },
+            { value: "separados", label: "Separados" },
+            { value: "divorciados", label: "Divorciados" },
+            { value: "union_libre", label: "Unión libre" },
+            { value: "fallecidos", label: "Fallecidos" },
+            { value: "otro", label: "Otro" },
+          ]}
+          {...register("relacionPadres", {
+            onChange: (e) => {
+              const val = e.target.value;
+              if (val !== "separados" && val !== "divorciados") {
+                setValue("parejaPadreMadreViveCasa", false);
+              }
+            },
+          })}
+        />
+      </div>
 
       {/* Ficha de la Madre */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-        <span className="text-xs font-mono font-bold uppercase text-gold block">
-          DATOS DE LA MADRE
-        </span>
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <UserRound className="h-4 w-4" />
+          <span>DATOS DE LA MADRE</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Input label="Nombre y apellido de la madre" placeholder="Ingrese nombre y apellido" {...register("nombreMadre")} />
           <Input label="Edad en años" type="number" {...register("edadMadre")} />
@@ -135,9 +151,10 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
 
       {/* Ficha del Padre */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-        <span className="text-xs font-mono font-bold uppercase text-gold block">
-          DATOS DEL PADRE
-        </span>
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <UserRound className="h-4 w-4" />
+          <span>DATOS DEL PADRE</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Input label="Nombre y apellido del padre" placeholder="Ingrese nombre y apellido" {...register("nombrePadre")} />
           <Input label="Edad en años" type="number" {...register("edadPadre")} />
@@ -149,35 +166,38 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {/* REGLA DE MICHI: Solo aparece si la persona dice que sus padres están separados (o divorciados) */}
+      {/* Solo aparece si la persona dice que sus padres están separados o divorciados */}
       {padresEstanSeparados && (
-        <div className="space-y-3">
+        <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+            <HeartHandshake className="h-4 w-4" />
+            <span>PAREJA CONVIVIENTE DEL PADRE / MADRE</span>
+          </div>
           <Toggle
             label="¿Su padre o madre tiene pareja viviendo en la casa?"
             checked={Boolean(tieneParejaCasa)}
             onChange={(val) => setValue("parejaPadreMadreViveCasa", val)}
           />
           {tieneParejaCasa && (
-            <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-              <span className="text-xs font-mono font-bold uppercase text-gold block">
-                DATOS DE LA PAREJA DEL PADRE / MADRE
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input label="Nombre y Apellido" placeholder="Ingrese nombre y apellido" {...register("nombrePareja")} />
-                <Input label="Edad en años" type="number" {...register("edadPareja")} />
-                <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPareja")} />
-                <Input label="Empresa o Institución" placeholder="Ingrese empresa" {...register("empresaPareja")} />
-                <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPareja")} />
-                <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPareja")} />
-                <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPareja")} />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-overlay0">
+              <Input label="Nombre y Apellido" placeholder="Ingrese nombre y apellido" {...register("nombrePareja")} />
+              <Input label="Edad en años" type="number" {...register("edadPareja")} />
+              <Input label="Ocupación" placeholder="Ingrese ocupación" {...register("ocupacionPareja")} />
+              <Input label="Empresa o Institución" placeholder="Ingrese empresa" {...register("empresaPareja")} />
+              <Input label="Salario aproximado (Gs.)" placeholder="Ingrese monto en Gs." {...register("salarioPareja")} />
+              <Input label="Vive en (Ciudad)" placeholder="Ingrese ciudad" {...register("ciudadPareja")} />
+              <Input label="Teléfono" placeholder="Ingrese teléfono" {...register("telefonoPareja")} />
             </div>
           )}
         </div>
       )}
 
       {/* Hermanos */}
-      <div className="space-y-3">
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Users className="h-4 w-4" />
+          <span>HERMANOS / AS</span>
+        </div>
         <Toggle
           label="¿Tiene hermanos/as?"
           checked={Boolean(tieneHermanos)}
@@ -189,10 +209,10 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
           }}
         />
         {tieneHermanos && (
-          <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+          <div className="space-y-3 pt-2 border-t border-overlay0">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-mono font-bold uppercase text-gold">
-                HERMANOS/AS ({fields.length})
+                NÓMINA DE HERMANOS/AS ({fields.length})
               </span>
               <Button
                 type="button"
@@ -269,17 +289,21 @@ export function Paso5Familiar({ defaultValues, onNext, onBack }: Props) {
         )}
       </div>
 
-      {/* Productos de familiares */}
-      <div className="space-y-3">
+      {/* Última pregunta del 5to apartado exacta solicitada */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <CreditCard className="h-4 w-4" />
+          <span>PRODUCTOS BANCARIOS FAMILIARES</span>
+        </div>
         <Toggle
-          label="¿Algún/os miembro/s de la familia tiene/n productos de la entidad solicitante?"
+          label="¿Tienes algún familiar que tenga algún producto del Banco Continental?"
           checked={Boolean(famProductos)}
           onChange={(val) => setValue("familiaresProductosEntidad", val)}
         />
         {famProductos && (
           <Input
             label="Familiar con producto/s y tipo de producto"
-            placeholder="Indique parentesco y tipo de producto"
+            placeholder="Indique parentesco y tipo de producto (ej: Tarjeta de débito, cuenta...)"
             {...register("familiarConProductosDetalle")}
           />
         )}

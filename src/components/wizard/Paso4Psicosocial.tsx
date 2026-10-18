@@ -7,7 +7,16 @@ import { paso4Schema, Paso4Data } from "@/lib/validations";
 import { Input, Textarea, Toggle } from "@/components/ui/FormFields";
 import { Button } from "@/components/ui/Button";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
-import { Sparkles, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Smile,
+  TrendingUp,
+  Target,
+  Landmark,
+} from "lucide-react";
 
 interface Props {
   defaultValues: Partial<Paso4Data>;
@@ -106,7 +115,11 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
         }}
       />
 
-      <div className="space-y-1">
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Smile className="h-4 w-4" />
+          <span>FORTALEZAS PERSONALES</span>
+        </div>
         <Textarea
           label="Aspectos positivos como persona"
           rows={2}
@@ -128,7 +141,11 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
         </button>
       </div>
 
-      <div className="space-y-1">
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <TrendingUp className="h-4 w-4" />
+          <span>OPORTUNIDADES DE MEJORA</span>
+        </div>
         <Textarea
           label="Actitud a mejorar"
           rows={2}
@@ -150,7 +167,11 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
         </button>
       </div>
 
-      <div className="space-y-1">
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Target className="h-4 w-4" />
+          <span>METAS Y PROYECCIÓN</span>
+        </div>
         <Textarea
           label="Logros personales que espera cumplir"
           rows={2}
@@ -172,19 +193,26 @@ export function Paso4Psicosocial({ defaultValues, onNext, onBack }: Props) {
         </button>
       </div>
 
-      <Toggle
-        label="¿Está políticamente expuesto él/ella o su familia (PEP)?"
-        checked={Boolean(esPep)}
-        onChange={(val) => setValue("familiaresPoliticos", val)}
-      />
-
-      {esPep && (
-        <Input
-          label="Especifique el cargo público o vínculo político/sindical"
-          placeholder="Detalle parentesco e institución"
-          {...register("familiaresPoliticosDetalle")}
+      {/* Última pregunta del 4to apartado exacta solicitada */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Landmark className="h-4 w-4" />
+          <span>EXPOSICIÓN POLÍTICA</span>
+        </div>
+        <Toggle
+          label="¿Tiene algún familiar políticamente expuesto?"
+          checked={Boolean(esPep)}
+          onChange={(val) => setValue("familiaresPoliticos", val)}
         />
-      )}
+
+        {esPep && (
+          <Input
+            label="Especifique el parentesco y cargo público"
+            placeholder="Detalle parentesco e institución"
+            {...register("familiaresPoliticosDetalle")}
+          />
+        )}
+      </div>
 
       <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-overlay0">
         <Button type="button" variant="secondary" onClick={onBack} className="w-full sm:w-auto">

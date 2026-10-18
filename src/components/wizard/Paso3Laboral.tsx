@@ -15,6 +15,7 @@ import {
   Building2,
   Clock,
   GraduationCap,
+  Rocket,
   Sparkles,
   Loader2,
 } from "lucide-react";
@@ -29,7 +30,7 @@ const OPCIONES_OCUPACIONALES = [
   {
     id: "empleado",
     title: "Actualmente estoy trabajando",
-    subtitle: "Indicar dónde estás trabajando actualmente y tu cargo",
+    subtitle: "Indicar dónde estás trabajando y tu puesto actual",
     icon: Building2,
   },
   {
@@ -41,8 +42,14 @@ const OPCIONES_OCUPACIONALES = [
   {
     id: "pasantia",
     title: "Solo realicé pasantía",
-    subtitle: "Indicar los datos de la pasantía realizada",
+    subtitle: "Indicar dónde realizaste tu pasantía y tareas",
     icon: GraduationCap,
+  },
+  {
+    id: "primera_experiencia",
+    title: "Primera experiencia laboral",
+    subtitle: "Postulando a mi primer empleo formal",
+    icon: Rocket,
   },
 ];
 
@@ -90,7 +97,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
     const baseText =
       actual ||
       (campo === "motivoEleccionEntidad"
-        ? "Oportunidades de crecimiento laboral y desarrollo profesional"
+        ? "Por las oportunidades de crecimiento laboral y desarrollo profesional"
         : campo === "objetivosProfesionales"
         ? "Desempeñarme con responsabilidad y crecer dentro de la institución"
         : "Un ambiente organizado, respetuoso y con buena comunicación");
@@ -122,18 +129,18 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
         </div>
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 03 // CONDICIÓN OCUPACIONAL
+            MÓDULO 03 // EXPERIENCIA LABORAL
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Situación Laboral, Salario y Postulación
+            Condición Ocupacional y Postulación
           </h2>
         </div>
       </div>
 
       <AiStepAssistant
         stepNumber={3}
-        stepTitle="Condición Ocupacional"
-        placeholder="Dicte o escriba dónde trabaja o su última experiencia laboral y salario..."
+        stepTitle="Experiencia Laboral"
+        placeholder="Dicte o escriba su situación laboral actual y el cargo al que postula..."
         onApplyFields={(extracted) => {
           Object.entries(extracted).forEach(([k, v]) => {
             if (typeof v === "string" && k !== "_rawAiText") {
@@ -146,9 +153,9 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
       {!shouldHideField("situacionActual") && (
         <div className="space-y-2">
           <span className="text-xs font-bold text-text block">
-            Seleccione su condición ocupacional actual:
+            Seleccione su condición ocupacional:
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {OPCIONES_OCUPACIONALES.map((op) => {
               const Icon = op.icon;
               const active = situacion === op.id;
@@ -156,33 +163,36 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
                 <button
                   key={op.id}
                   type="button"
-                  onClick={() =>
-                    setValue("situacionActual", op.id, { shouldValidate: true })
-                  }
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                  onClick={() => {
+                    setValue("situacionActual", op.id, { shouldValidate: true });
+                    if (op.id === "primera_experiencia") {
+                      setValue("empresaAnterior", "Primera experiencia laboral");
+                      setValue("cargoAnterior", "-");
+                      setValue("antiguedad", "-");
+                      setValue("salarioBruto", "-");
+                    }
+                  }}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
                     active
                       ? "bg-[#536c45] text-white border-[#536c45] shadow-md"
                       : "bg-surface0 text-text border-overlay1 hover:border-gold"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <Icon
-                      className={`h-5 w-5 ${
-                        active ? "text-[#d5ddd1]" : "text-gold"
-                      }`}
-                    />
-                    <span
-                      className={`h-3 w-3 rounded-full border ${
-                        active ? "bg-white border-white" : "border-overlay2"
-                      }`}
-                    />
+                  <div
+                    className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      active
+                        ? "bg-white/15 text-white"
+                        : "bg-gold/15 text-gold border border-gold/30"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div>
                     <p className="text-xs sm:text-sm font-black leading-snug">
                       {op.title}
                     </p>
                     <p
-                      className={`text-[11px] mt-1 leading-snug ${
+                      className={`text-[11px] mt-0.5 leading-snug ${
                         active ? "text-[#e2e8de]" : "text-subtext1"
                       }`}
                     >
@@ -232,7 +242,6 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
             />
           </div>
 
-          {/* Un único campo de Salario como solicitó Michi */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {!shouldHideField("salarioBruto") && (
               <Input
@@ -319,9 +328,26 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
           </div>
           <Input
             label="Salario o ayuda económica recibida (Gs. - Opcional)"
-            placeholder="Monto en Gs. (o 0 si fue ad honorem)"
+            placeholder="Monto en Gs."
             {...register("salarioBruto")}
           />
+        </div>
+      )}
+
+      {/* 4. PRIMERA EXPERIENCIA LABORAL */}
+      {situacion === "primera_experiencia" && (
+        <div className="rounded-2xl border border-[#85987a]/60 bg-[#536c45]/10 p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[#536c45] text-white flex items-center justify-center shrink-0">
+            <Rocket className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs sm:text-sm font-black text-text">
+              Primera Experiencia Laboral Registrada
+            </p>
+            <p className="text-xs text-subtext1">
+              No necesita completar empleos anteriores. Complete a continuación los datos del puesto al que postula.
+            </p>
+          </div>
         </div>
       )}
 
@@ -346,7 +372,7 @@ export function Paso3Laboral({ defaultValues, onNext, onBack }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1">
           <Input
-            label="¿Por qué eligió esta institución para trabajar?"
+            label="¿Por qué eligió este Banco para trabajar?"
             placeholder="Escriba su motivación"
             {...register("motivoEleccionEntidad")}
           />

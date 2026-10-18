@@ -8,15 +8,51 @@ import { Button } from "@/components/ui/Button";
 import { FotoUploader } from "@/components/FotoUploader";
 import { AiStepAssistant } from "@/components/AiStepAssistant";
 import { useInterviewMode } from "@/components/InterviewModeContext";
-import { User, ArrowRight } from "lucide-react";
+import {
+  User,
+  ArrowRight,
+  Car,
+  CarFront,
+  Bus,
+  Baby,
+  Sparkles,
+  Share2,
+  Clock,
+  CreditCard,
+} from "lucide-react";
 
 interface Props {
   defaultValues: Partial<Paso1Data>;
   onNext: (data: Paso1Data) => void;
 }
 
+const OPCIONES_MOVILIDAD = [
+  {
+    id: "propia",
+    title: "Movilidad Propia",
+    subtitle: "Automóvil o motocicleta propia",
+    icon: Car,
+  },
+  {
+    id: "familiar",
+    title: "Movilidad Familiar",
+    subtitle: "Vehículo compartido de la familia",
+    icon: CarFront,
+  },
+  {
+    id: "no",
+    title: "Sin movilidad vehicular",
+    subtitle: "Uso de transporte público u otro",
+    icon: Bus,
+  },
+];
+
 export function Paso1Personal({ defaultValues, onNext }: Props) {
   const { isEvaluator, shouldHideField } = useInterviewMode();
+
+  const initialTenencia =
+    defaultValues.tenenciaMovilidad ||
+    (defaultValues.movilidadPropia ? "propia" : "no");
 
   const {
     register,
@@ -39,7 +75,8 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
       cantidadHijos: defaultValues.cantidadHijos ?? 0,
       edadesHijos: defaultValues.edadesHijos || "",
       licenciaConducir: defaultValues.licenciaConducir ?? false,
-      movilidadPropia: defaultValues.movilidadPropia ?? false,
+      tenenciaMovilidad: initialTenencia,
+      movilidadPropia: initialTenencia === "propia" || initialTenencia === "familiar",
       tipoMovilidad: defaultValues.tipoMovilidad || "",
       medioTransporteSucursal: defaultValues.medioTransporteSucursal || "",
       tiempoViajeSucursal: defaultValues.tiempoViajeSucursal || "",
@@ -52,7 +89,9 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
   });
 
   const tieneHijos = watch("hijos");
-  const movilidad = watch("movilidadPropia");
+  const tenenciaMovilidad = watch("tenenciaMovilidad") || "no";
+  const tieneVehiculo =
+    tenenciaMovilidad === "propia" || tenenciaMovilidad === "familiar";
   const tatuajes = watch("tieneTatuajes");
   const fotoActual = watch("fotoCandidato");
 
@@ -67,7 +106,7 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
             MÓDULO 01 // DATOS PERSONALES
           </span>
           <h2 className="text-lg sm:text-xl font-black text-text">
-            Identificación, Traslado y Redes
+            Identificación, Movilidad y Redes
           </h2>
         </div>
       </div>
@@ -85,7 +124,6 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         }}
       />
 
-      {/* La fotografía solo puede verla y subirla el Evaluador */}
       {isEvaluator && (
         <div className="rounded-2xl border border-gold/40 bg-surface1/60 p-4 space-y-2">
           <span className="text-xs font-mono font-bold uppercase text-gold block">
@@ -180,14 +218,19 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         )}
       </div>
 
-      <div className="space-y-3">
+      {/* Hijos con ícono ilustrativo */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Baby className="h-4 w-4" />
+          <span>HIJOS / DEPENDIENTES</span>
+        </div>
         <Toggle
           label="¿Tiene hijos/as?"
           checked={Boolean(tieneHijos)}
           onChange={(val) => setValue("hijos", val)}
         />
         {tieneHijos && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-3 border-l-2 border-gold">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-overlay0">
             <Input
               label="Cantidad de hijos/as"
               type="number"
@@ -203,45 +246,118 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Toggle
-          label="¿Cuenta con movilidad propia?"
-          checked={Boolean(movilidad)}
-          onChange={(val) => setValue("movilidadPropia", val)}
-        />
-        <Toggle
-          label="¿Posee licencia de conducir vigente?"
-          checked={Boolean(watch("licenciaConducir"))}
-          onChange={(val) => setValue("licenciaConducir", val)}
-        />
+      {/* MOVILIDAD CON EL AUTITO: Propia, Familiar o Sin vehículo */}
+      <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-4">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Car className="h-4 w-4" />
+          <span>MOVILIDAD Y VEHÍCULO (PROPIA O FAMILIAR)</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {OPCIONES_MOVILIDAD.map((op) => {
+            const Icon = op.icon;
+            const active = tenenciaMovilidad === op.id;
+            return (
+              <button
+                key={op.id}
+                type="button"
+                onClick={() => {
+                  setValue("tenenciaMovilidad", op.id, { shouldValidate: true });
+                  setValue(
+                    "movilidadPropia",
+                    op.id === "propia" || op.id === "familiar"
+                  );
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
+                  active
+                    ? "bg-[#536c45] text-white border-[#536c45] shadow-md"
+                    : "bg-surface0 text-text border-overlay1 hover:border-gold"
+                }`}
+              >
+                <div
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    active
+                      ? "bg-white/15 text-white"
+                      : "bg-gold/15 text-gold border border-gold/30"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-black leading-snug">
+                    {op.title}
+                  </p>
+                  <p
+                    className={`text-[11px] mt-0.5 leading-snug ${
+                      active ? "text-[#e2e8de]" : "text-subtext1"
+                    }`}
+                  >
+                    {op.subtitle}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* En ambas situaciones (Propia o Familiar) pide las características del auto y licencia */}
+        {tieneVehiculo && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-overlay0">
+            <Input
+              label={`Características del vehículo (${
+                tenenciaMovilidad === "propia" ? "Movilidad Propia" : "Movilidad Familiar"
+              })`}
+              placeholder="Indique tipo (auto/moto), marca, modelo y año"
+              {...register("tipoMovilidad")}
+            />
+            <div className="flex flex-col justify-end">
+              <Toggle
+                label="¿Posee licencia de conducir vigente?"
+                checked={Boolean(watch("licenciaConducir"))}
+                onChange={(val) => setValue("licenciaConducir", val)}
+              />
+            </div>
+          </div>
+        )}
+
+        {!tieneVehiculo && (
+          <Toggle
+            label="¿Posee licencia de conducir vigente?"
+            checked={Boolean(watch("licenciaConducir"))}
+            onChange={(val) => setValue("licenciaConducir", val)}
+          />
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-overlay0">
+          <div className="space-y-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Bus className="h-3.5 w-3.5" /> Traslado a la sucursal
+            </span>
+            <Input
+              label="¿Con qué medio irá generalmente a la sucursal asignada?"
+              placeholder="Ómnibus, vehículo propio, vehículo familiar..."
+              {...register("medioTransporteSucursal")}
+            />
+          </div>
+          <div className="space-y-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-gold">
+              <Clock className="h-3.5 w-3.5" /> Tiempo estimado
+            </span>
+            <Input
+              label="¿Cuánto tiempo le toma ir de su casa a la sucursal asignada?"
+              placeholder="Indique tiempo en minutos u horas"
+              {...register("tiempoViajeSucursal")}
+            />
+          </div>
+        </div>
       </div>
 
-      {movilidad && (
-        <Input
-          label="Tipo y características de su movilidad propia"
-          placeholder="Indique tipo de vehículo y modelo"
-          {...register("tipoMovilidad")}
-        />
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="¿Con qué medio irá generalmente a la sucursal asignada?"
-          placeholder="Indique medio de transporte habitual"
-          {...register("medioTransporteSucursal")}
-        />
-        <Input
-          label="¿Cuánto tiempo le toma ir de su casa a la sucursal asignada?"
-          placeholder="Indique tiempo estimado de viaje"
-          {...register("tiempoViajeSucursal")}
-        />
-      </div>
-
-      {/* Bloque completo de preguntas sobre Tatuajes */}
+      {/* Tatuajes con ícono */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-        <span className="text-xs font-mono font-bold uppercase text-gold block">
-          TATUAJES
-        </span>
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Sparkles className="h-4 w-4" />
+          <span>TATUAJES</span>
+        </div>
         <Toggle
           label="¿Tiene tatuajes?"
           checked={tatuajes !== "no"}
@@ -272,11 +388,12 @@ export function Paso1Personal({ defaultValues, onNext }: Props) {
         )}
       </div>
 
-      {/* ¿Red social que más uses? */}
+      {/* ¿Red social que más uses? con ícono */}
       <div className="rounded-2xl border border-overlay1 bg-surface1/60 p-4 space-y-3">
-        <span className="text-xs font-mono font-bold uppercase text-gold block">
-          ¿RED SOCIAL QUE MÁS USES?
-        </span>
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+          <Share2 className="h-4 w-4" />
+          <span>¿RED SOCIAL QUE MÁS USES?</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="¿Red social que más uses?"
