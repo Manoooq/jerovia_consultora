@@ -8,6 +8,7 @@ import {
   convertirATerceraPersona,
   corregirOrtografiaTexto,
 } from "@/lib/textProcessor";
+import { formatDateToPy } from "@/lib/utils";
 
 function escapeHtml(val: unknown): string {
   const str = String(val ?? "");
@@ -441,7 +442,7 @@ export async function GET(
           <h1 class="hero-name">${nombreMostrar}</h1>
           <div class="hero-grid">
             <div class="hero-item"><span>Número de cédula</span><strong>${v(d.cedula)}</strong></div>
-            <div class="hero-item"><span>Fecha de nacimiento</span><strong>${v(d.fechaNacimiento)}</strong></div>
+            <div class="hero-item"><span>Fecha de nacimiento</span><strong>${formatDateToPy(d.fechaNacimiento) || v(d.fechaNacimiento)}</strong></div>
             <div class="hero-item"><span>Número de teléfono</span><strong>${v(d.telefono)}</strong></div>
             <div class="hero-item"><span>Estado civil</span><strong>${v(d.estadoCivil)}</strong></div>
             <div class="hero-item"><span>Tiene hijos/as</span><strong>${siNo(d.hijos, d.cantidadHijos)}</strong></div>
@@ -675,7 +676,7 @@ export async function GET(
           <div class="qa-item"><div class="qa-label">Otras observaciones</div><div class="qa-val">${v(d.otrasObservaciones, "Ninguna")}</div></div>
           <div class="two-col">
             <div class="qa-item"><div class="qa-label">Entrevistador/a</div><div class="qa-val">${v(d.entrevistadorNombre, v(d.consultorNombre, "Michelle Romero"))}</div></div>
-            <div class="qa-item"><div class="qa-label">La visita fue realizada el</div><div class="qa-val">${v(d.fechaVisita)} ${d.horaVisita ? ", " + v(d.horaVisita) : ""}</div></div>
+            <div class="qa-item"><div class="qa-label">La visita fue realizada el</div><div class="qa-val">${formatDateToPy(d.fechaVisita) || v(d.fechaVisita)} ${d.horaVisita ? ", " + v(d.horaVisita) : ""}</div></div>
           </div>
         </div>
       </div>

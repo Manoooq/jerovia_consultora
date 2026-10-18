@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Trash2, Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, Trash2, Upload, Loader2, CheckCircle2, RefreshCw } from "lucide-react";
 
 interface FotoUploaderProps {
   fotos: string[];
   onChange: (fotos: string[]) => void;
   maxFotos?: number;
+  label?: string;
 }
 
 function compressImageFile(file: File): Promise<string> {
@@ -52,6 +53,7 @@ export function FotoUploader({
   fotos = [],
   onChange,
   maxFotos = 4,
+  label,
 }: FotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -62,6 +64,13 @@ export function FotoUploader({
 
     setProcessing(true);
     try {
+      // Si maxFotos === 1 (ej. foto del postulante), reemplaza directamente la foto existente
+      if (maxFotos === 1) {
+        const dataUrl = await compressImageFile(fileList[0]);
+        onChange([dataUrl]);
+        return;
+      }
+
       const remaining = Math.max(0, maxFotos - fotos.length);
       const selected = Array.from(fileList).slice(0, remaining);
       const compressedList: string[] = [];
@@ -114,12 +123,18 @@ export function FotoUploader({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
-                alt={`Fotografía ${idx + 1}`}
+                alt={label ? `${label} ${idx + 1}` : `Fotografía ${idx + 1}`}
                 className="max-w-full max-h-[240px] w-auto h-auto object-contain rounded-lg block mx-auto"
               />
-              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[10px] font-mono font-bold flex items-center gap-1">
+              <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/75 text-white text-[10px] font-mono font-bold flex items-center gap-1 shadow-sm">
                 <CheckCircle2 className="h-3 w-3 text-[#a3e635]" />
-                <span>Foto completa #{idx + 1}</span>
+                <span>
+                  {label
+                    ? maxFotos === 1
+                      ? label
+                      : `${label} #${idx + 1}`
+                    : `Foto #${idx + 1}`}
+                </span>
               </div>
               <button
                 type="button"
@@ -132,6 +147,28 @@ export function FotoUploader({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Si maxFotos === 1 y ya hay foto cargada, mostrar botón explícito para cambiarla con un solo toque */}
+      {maxFotos === 1 && fotos.length === 1 && (
+        <button
+          type="button"
+          disabled={processing}
+          onClick={() => inputRef.current?.click()}
+          className="w-full min-h-[42px] px-3.5 py-2 rounded-xl border border-gold/60 bg-surface1 hover:border-gold hover:bg-gold/10 text-xs font-bold text-text flex items-center justify-center gap-2 cursor-pointer transition-colors"
+        >
+          {processing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-gold" />
+              <span>Cargando nueva foto...</span>
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-3.5 w-3.5 text-gold" />
+              <span>Cambiar / Reemplazar {label || "fotografía"}</span>
+            </>
+          )}
+        </button>
       )}
 
       {fotos.length < maxFotos && (
@@ -153,7 +190,7 @@ export function FotoUploader({
                 <Upload className="h-4 w-4" />
               </div>
               <span>
-                Seleccionar o Tomar Fotografía ({fotos.length}/{maxFotos})
+                Seleccionar {label || "Fotografía"} ({fotos.length}/{maxFotos})
               </span>
               <span className="text-[11px] font-normal text-subtext1">
                 Se ajusta automáticamente a proporción completa en el informe PDF y PowerPoint (.PPTX)

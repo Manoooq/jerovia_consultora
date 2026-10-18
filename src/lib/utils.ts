@@ -13,13 +13,30 @@ export function formatCurrency(amount: number): string {
   }).format(Number.isFinite(amount) ? amount : 0);
 }
 
-export function formatDate(date: string): string {
-  if (!date) return "";
-  const clean = date.slice(0, 10);
+/**
+ * Convierte cualquier fecha (YYYY-MM-DD, ISO o DD/MM/YYYY) al formato oficial día/mes/año (DD/MM/YYYY)
+ */
+export function formatDateToPy(val: unknown): string {
+  if (!val) return "";
+  const str = String(val).trim();
+  if (!str) return "";
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    return str;
+  }
+  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(str)) {
+    return str.replace(/-/g, "/");
+  }
+  const clean = str.slice(0, 10);
   const parts = clean.split("-");
-  if (parts.length !== 3) return date;
-  const [year, month, day] = parts;
-  return `${day}/${month}/${year}`;
+  if (parts.length === 3 && parts[0].length === 4) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return str;
+}
+
+export function formatDate(date: string): string {
+  return formatDateToPy(date);
 }
 
 /**

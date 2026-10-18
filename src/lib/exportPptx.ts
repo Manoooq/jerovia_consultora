@@ -1,6 +1,7 @@
 import pptxgen from "pptxgenjs";
 import { EntrevistaRecord } from "./store";
 import { convertirATerceraPersona } from "./textProcessor";
+import { formatDateToPy } from "./utils";
 
 function v(val: unknown, fallback = "No especificado"): string {
   if (val !== undefined && val !== null) {
@@ -259,9 +260,9 @@ export async function generarPptxInforme(
 
   s1.addText(
     [
-      `Número de cédula: ${v(d.cedula)}   |   Fecha de nacimiento: ${v(
-        d.fechaNacimiento
-      )}   |   Teléfono: ${v(d.telefono)}`,
+      `Número de cédula: ${v(d.cedula)}   |   Fecha de nacimiento: ${
+        formatDateToPy(d.fechaNacimiento) || v(d.fechaNacimiento)
+      }   |   Teléfono: ${v(d.telefono)}`,
       `Estado civil: ${v(d.estadoCivil)}   |   Tiene hijos/as: ${siNo(
         d.hijos,
         d.cantidadHijos
@@ -858,7 +859,9 @@ export async function generarPptxInforme(
     `Entrevistador/a: ${v(
       d.entrevistadorNombre,
       v(d.consultorNombre, "Lic. Michelle Romero")
-    )}   |   Visita realizada el: ${v(d.fechaVisita)} ${
+    )}   |   Visita realizada el: ${
+      formatDateToPy(d.fechaVisita) || v(d.fechaVisita)
+    } ${
       d.horaVisita ? `, ${v(d.horaVisita)}` : ""
     }`,
   ].join("\n");

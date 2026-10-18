@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paso9Schema, Paso9Data } from "@/lib/validations";
@@ -17,6 +17,7 @@ import {
   Scale,
   Camera,
   Loader2,
+  ArrowUpDown,
 } from "lucide-react";
 
 interface Props {
@@ -58,6 +59,17 @@ export function Paso9Observaciones({
       : []
   );
 
+  const fotoCandidatoRef = useRef(fotoCandidato);
+  const fotosViviendaRef = useRef(fotosVivienda);
+
+  useEffect(() => {
+    fotoCandidatoRef.current = fotoCandidato;
+  }, [fotoCandidato]);
+
+  useEffect(() => {
+    fotosViviendaRef.current = fotosVivienda;
+  }, [fotosVivienda]);
+
   const {
     register,
     handleSubmit,
@@ -94,17 +106,52 @@ export function Paso9Observaciones({
   const firmaActual = watch("firmaEvaluador");
 
   async function handleFotoCandidatoChange(arr: string[]) {
-    const nueva = arr[0] || "";
+    const nueva = arr[arr.length - 1] || arr[0] || "";
     setFotoCandidato(nueva);
+    fotoCandidatoRef.current = nueva;
     if (onAutoSave) {
-      await onAutoSave({ ...watch(), fotoCandidato: nueva, fotosVivienda });
+      await onAutoSave({
+        ...watch(),
+        fotoCandidato: nueva,
+        fotosVivienda: fotosViviendaRef.current,
+      });
     }
   }
 
   async function handleFotosViviendaChange(nuevas: string[]) {
     setFotosVivienda(nuevas);
+    fotosViviendaRef.current = nuevas;
     if (onAutoSave) {
-      await onAutoSave({ ...watch(), fotoCandidato, fotosVivienda: nuevas });
+      await onAutoSave({
+        ...watch(),
+        fotoCandidato: fotoCandidatoRef.current,
+        fotosVivienda: nuevas,
+      });
+    }
+  }
+
+  function handleSwapPhotos() {
+    // Intercambia la Foto del Postulante con la Foto de la Vivienda de inmediato
+    const currentCandidate = fotoCandidatoRef.current;
+    const currentHouse = [...fotosViviendaRef.current];
+    const firstHouse = currentHouse[0] || "";
+
+    const nextCandidate = firstHouse;
+    const nextHouse = currentCandidate
+      ? [currentCandidate, ...currentHouse.slice(1)]
+      : currentHouse.slice(1);
+
+    setFotoCandidato(nextCandidate);
+    setFotosVivienda(nextHouse);
+    fotoCandidatoRef.current = nextCandidate;
+    fotosViviendaRef.current = nextHouse;
+
+    if (onAutoSave) {
+      void onAutoSave({
+        ...watch(),
+        fotoCandidato: nextCandidate,
+        fotosVivienda: nextHouse,
+      });
     }
   }
 
@@ -193,9 +240,21 @@ export function Paso9Observaciones({
       </div>
 
       <div className="rounded-2xl border border-gold/50 bg-surface1/70 p-4 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
-          <Camera className="h-4 w-4" />
-          <span>REGISTRO FOTOGRÁFICO PARA EL INFORME (PDF Y PPTX)</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-overlay0 pb-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-gold">
+            <Camera className="h-4 w-4" />
+            <span>REGISTRO FOTOGRÁFICO PARA EL INFORME (PDF Y PPTX)</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSwapPhotos}
+            className="min-h-[36px] px-3 py-1.5 rounded-xl border border-gold/60 bg-surface0 hover:border-gold hover:bg-gold/10 text-xs font-bold text-text inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+            title="Intercambiar la foto del postulante con la foto de la vivienda"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 text-gold" />
+            <span>Invertir fotos (Postulante ⇄ Vivienda)</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -204,6 +263,7 @@ export function Paso9Observaciones({
               1. Foto del Postulante (Sale en Pág. 1)
             </span>
             <FotoUploader
+              label="Foto del Postulante"
               fotos={fotoCandidato ? [fotoCandidato] : []}
               onChange={handleFotoCandidatoChange}
               maxFotos={1}
@@ -215,6 +275,7 @@ export function Paso9Observaciones({
               2. Fotos de la Vivienda y Ubicación (Salen en Pág. 3)
             </span>
             <FotoUploader
+              label="Foto de la Vivienda"
               fotos={fotosVivienda}
               onChange={handleFotosViviendaChange}
               maxFotos={4}
