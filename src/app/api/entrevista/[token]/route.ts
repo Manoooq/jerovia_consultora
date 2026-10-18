@@ -90,10 +90,23 @@ export async function PATCH(
   const requestedPaso =
     typeof body?.pasoActual === "number" ? body.pasoActual : actual.pasoActual;
   const requestedEstado =
-    (body?.estado as "pendiente" | "en_progreso" | "completado") ||
+    (body?.estado as "pendiente" | "en_progreso" | "revision" | "completado") ||
     actual.estado;
 
-  const forceEstado = Boolean(isAuthenticatedStaff && body?._forceEstado);
+  const forceEstado = Boolean(
+    isAuthenticatedStaff &&
+      (body?._forceEstado || typeof body?.enPapelera === "boolean")
+  );
+
+  const ultimaActividadCandidato = body?.candidateActive
+    ? new Date().toISOString()
+    : (body?.ultimaActividadCandidato as string | undefined) ||
+      actual.ultimaActividadCandidato;
+
+  const enPapelera =
+    typeof body?.enPapelera === "boolean"
+      ? body.enPapelera
+      : actual.enPapelera;
 
   const updated = actualizarEntrevista(token, {
     candidatoNombre:
@@ -120,6 +133,8 @@ export async function PATCH(
     estado: requestedEstado,
     datos: mergedDatos,
     alertas,
+    ultimaActividadCandidato,
+    enPapelera,
     _forceEstado: forceEstado,
   });
 

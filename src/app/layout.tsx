@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   keywords: ["consultora", "visita social", "entrevista", "informe social", "Paraguay"],
 };
 
-const themeScript = `
+const themeAndZoomScript = `
   (function() {
     try {
       var saved = localStorage.getItem('jerovia-theme');
@@ -22,6 +22,20 @@ const themeScript = `
         document.documentElement.classList.remove('dark');
       }
     } catch (e) {}
+
+    function normalizeDesktopZoom() {
+      try {
+        if (window.screen && window.screen.width >= 1024 && window.devicePixelRatio > 0 && window.devicePixelRatio < 0.85) {
+          var factor = (1 / window.devicePixelRatio).toFixed(3);
+          document.documentElement.style.zoom = factor;
+        } else {
+          document.documentElement.style.zoom = '';
+        }
+      } catch (e) {}
+    }
+
+    normalizeDesktopZoom();
+    window.addEventListener('resize', normalizeDesktopZoom);
   })();
 `;
 
@@ -29,10 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeAndZoomScript }} />
       </head>
       <body className={`${inter.variable} ${jetbrains.variable} font-sans bg-base text-text antialiased min-h-screen`}>
-        {/* Enlace de accesibilidad para lectores de pantalla y teclado (WCAG 2.4.1) */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-gold focus:text-black focus:font-bold focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-4 focus:ring-black"

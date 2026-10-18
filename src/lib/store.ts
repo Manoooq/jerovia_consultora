@@ -15,7 +15,7 @@ export interface EntrevistaRecord {
   ciudad?: string;
   evaluadorAsignado?: string;
   creadoPor?: string;
-  estado: "pendiente" | "en_progreso" | "completado";
+  estado: "pendiente" | "en_progreso" | "revision" | "completado";
   pasoActual: number;
   datos: Partial<FormularioCompleto>;
   camposPrellenados?: string[];
@@ -23,6 +23,8 @@ export interface EntrevistaRecord {
   alertas: string[];
   creadoEn: string;
   actualizadoEn: string;
+  ultimaActividadCandidato?: string;
+  enPapelera?: boolean;
   _forceEstado?: boolean;
 }
 
@@ -190,10 +192,11 @@ export function mergeRecords(
   const estadoRank: Record<string, number> = {
     pendiente: 0,
     en_progreso: 1,
-    completado: 2,
+    revision: 2,
+    completado: 3,
   };
 
-  let bestEstado: "pendiente" | "en_progreso" | "completado";
+  let bestEstado: "pendiente" | "en_progreso" | "revision" | "completado";
   let bestPaso: number;
 
   if (incoming._forceEstado) {
@@ -210,10 +213,10 @@ export function mergeRecords(
     bestPaso = Math.max(
       existing.pasoActual || 1,
       incoming.pasoActual || 1,
-      bestEstado === "completado" ? 9 : 1
+      bestEstado === "completado" ? 9 : bestEstado === "revision" ? 8 : 1
     );
 
-    // Si tiene más de 15 campos llenos, al menos está en_progreso (nunca pendiente)
+    // Si tiene más de 10 campos llenos, al menos está en_progreso (nunca pendiente)
     if (bestEstado === "pendiente" && countFilledFields(mergedDatos) > 10) {
       bestEstado = "en_progreso";
     }
@@ -227,6 +230,17 @@ export function mergeRecords(
   const latestTime = incomingIsNewer
     ? incoming.actualizadoEn || existing.actualizadoEn
     : existing.actualizadoEn || incoming.actualizadoEn;
+
+  const latestActividad =
+    new Date(incoming.ultimaActividadCandidato || 0).getTime() >=
+    new Date(existing.ultimaActividadCandidato || 0).getTime()
+      ? incoming.ultimaActividadCandidato || existing.ultimaActividadCandidato
+      : existing.ultimaActividadCandidato || incoming.ultimaActividadCandidato;
+
+  const resolvedEnPapelera =
+    incoming.enPapelera !== undefined
+      ? incoming.enPapelera
+      : existing.enPapelera ?? false;
 
   const result: EntrevistaRecord = {
     ...existing,
@@ -261,6 +275,8 @@ export function mergeRecords(
       ? incoming.camposPrellenados
       : existing.camposPrellenados,
     actualizadoEn: latestTime || new Date().toISOString(),
+    ultimaActividadCandidato: latestActividad,
+    enPapelera: resolvedEnPapelera,
   };
 
   delete result._forceEstado;

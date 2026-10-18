@@ -50,7 +50,6 @@ function mergeClientServerDatos(
   const localCount = countNonEmpty(localDatos as Record<string, unknown>);
   const serverCount = countNonEmpty(serverDatos as Record<string, unknown>);
 
-  // El conjunto con más datos actúa como prioritario en caso de colisión con defaults
   const base = serverCount >= localCount ? localDatos : serverDatos;
   const top = serverCount >= localCount ? serverDatos : localDatos;
 
@@ -155,12 +154,14 @@ function EntrevistaWizardContent() {
     async (
       nextDatos: Partial<FormularioCompleto>,
       nextPaso: number,
-      estado: "en_progreso" | "completado" = "en_progreso"
+      estado: "pendiente" | "en_progreso" | "revision" | "completado" = "en_progreso",
+      extraFlags?: { candidateActive?: boolean; _forceEstado?: boolean }
     ) => {
       const payloadStr = JSON.stringify({
         pasoActual: nextPaso,
         estado,
         datos: nextDatos,
+        ...extraFlags,
       });
 
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -245,13 +246,13 @@ function EntrevistaWizardContent() {
             {}) as Partial<FormularioCompleto>;
           const localDatos = localDraft?.datos || {};
 
-          // Si es el evaluador abriendo el link desde su PC, priorizar siempre los datos del servidor
           const mergedDatos = evalRole
             ? mergeClientServerDatos(localDatos, serverDatos)
             : mergeClientServerDatos(serverDatos, localDatos);
 
-          const isAlreadyCompleted =
+          const isCandidateFinished =
             serverRecord.estado === "completado" ||
+            serverRecord.estado === "revision" ||
             (!evalRole && Boolean(localDraft?.completado));
 
           const maxAllowed = evalRole ? 9 : 8;
@@ -259,8 +260,12 @@ function EntrevistaWizardContent() {
             maxAllowed,
             serverRecord.pasoActual || 1
           );
+
+          // Si es el evaluador y el postulante ya terminó (estado 'revision' o 'completado'), abrir directo en el Paso 9
           const bestPaso = evalRole
-            ? isAlreadyCompleted
+            ? serverRecord.estado === "completado" ||
+              serverRecord.estado === "revision" ||
+              serverPaso >= 8
               ? 9
               : serverPaso
             : Math.min(maxAllowed, Math.max(localDraft?.paso || 1, serverPaso));
@@ -271,7 +276,7 @@ function EntrevistaWizardContent() {
               localDraft?.maxPaso || 1,
               bestPaso,
               serverPaso,
-              isAlreadyCompleted ? maxAllowed : 1
+              isCandidateFinished ? maxAllowed : 1
             )
           );
 
@@ -279,7 +284,7 @@ function EntrevistaWizardContent() {
             mergedDatos,
             bestPaso,
             bestMaxPaso,
-            isAlreadyCompleted
+            isCandidateFinished
           );
 
           datosRef.current = mergedDatos;
@@ -288,20 +293,24 @@ function EntrevistaWizardContent() {
           setMaxPasoAlcanzado(bestMaxPaso);
           setDataVersion((v) => v + 1);
 
-          if (isAlreadyCompleted && !evalRole && token !== "demo") {
+          if (isCandidateFinished && !evalRole && token !== "demo") {
             setCompletado(true);
           }
 
-          // Solo si el navegador del candidato tenía más respuestas que el servidor, sincronizar al servidor
-          if (
+          // Si es el postulante abriendo un formulario activo, registrar pulso en vivo ("Rellenando ahora")
+          if (!evalRole && !isCandidateFinished && token !== "demo") {
+            void syncWithServer(mergedDatos, bestPaso, "en_progreso", {
+              candidateActive: true,
+            });
+          } else if (
             !evalRole &&
             countNonEmpty(mergedDatos as Record<string, unknown>) >
               countNonEmpty(serverDatos as Record<string, unknown>)
           ) {
             void syncWithServer(
               mergedDatos,
-              isAlreadyCompleted ? 9 : bestPaso,
-              isAlreadyCompleted ? "completado" : "en_progreso"
+              isCandidateFinished ? 8 : bestPaso,
+              isCandidateFinished ? "revision" : "en_progreso"
             );
           }
         } else if (localDraft && mounted) {
@@ -340,6 +349,27 @@ function EntrevistaWizardContent() {
     };
   }, [token, storageKey, saveLocalDraft, syncWithServer]);
 
+  // Pulso en vivo (Heartbeat) cada 25 segundos mientras el postulante tiene abierto el formulario
+  useEffect(() => {
+    if (loading || completado || isEvaluator || token === "demo") return;
+
+    const sendHeartbeat = () => {
+      if (document.hidden) return;
+      void fetch(`/api/entrevista/${encodeURIComponent(token)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pasoActual: Math.max(paso, maxPasoAlcanzado),
+          estado: "en_progreso",
+          candidateActive: true,
+        }),
+      }).catch(() => {});
+    };
+
+    const intervalId = setInterval(sendHeartbeat, 25_000);
+    return () => clearInterval(intervalId);
+  }, [loading, completado, isEvaluator, token, paso, maxPasoAlcanzado]);
+
   function handleNextStep(stepData: Partial<FormularioCompleto>) {
     const merged = mergeClientServerDatos(datosRef.current, stepData);
     datosRef.current = merged;
@@ -350,11 +380,12 @@ function EntrevistaWizardContent() {
       .trim();
     if (fullNombre) setCandidatoNombre(fullNombre);
 
+    // Cuando el postulante termina el Paso 8, pasa a 'revision' ("Listo para el Evaluador")
     if (!isEvaluator && paso === 8) {
       setDatos(merged);
       setCompletado(true);
-      saveLocalDraft(merged, 9, 9, true);
-      void syncWithServer(merged, 9, "completado");
+      saveLocalDraft(merged, 8, 8, true);
+      void syncWithServer(merged, 8, "revision", { candidateActive: false });
       return;
     }
 
@@ -367,7 +398,9 @@ function EntrevistaWizardContent() {
     setDataVersion((v) => v + 1);
 
     saveLocalDraft(merged, nextPaso, nextMax, false);
-    void syncWithServer(merged, nextMax, "en_progreso");
+    void syncWithServer(merged, nextMax, "en_progreso", {
+      candidateActive: !isEvaluator,
+    });
   }
 
   function handleBackStep() {
@@ -388,10 +421,12 @@ function EntrevistaWizardContent() {
     await syncWithServer(
       merged,
       Math.max(paso, maxPasoAlcanzado),
-      completado ? "completado" : "en_progreso"
+      completado ? "completado" : "en_progreso",
+      { candidateActive: !isEvaluator }
     );
   }
 
+  // Cuando el Evaluador completa y guarda el Paso 9, pasa a 'completado' ("Finalizado")
   async function handleCompleteEvaluator(
     step9Data: Partial<FormularioCompleto>
   ) {
@@ -403,7 +438,7 @@ function EntrevistaWizardContent() {
     setDatos(merged);
     setCompletado(true);
     saveLocalDraft(merged, 9, 9, true);
-    await syncWithServer(merged, 9, "completado");
+    await syncWithServer(merged, 9, "completado", { _forceEstado: true });
   }
 
   if (loading) {
@@ -414,7 +449,7 @@ function EntrevistaWizardContent() {
       >
         <div className="py-16 text-center space-y-3">
           <div className="h-10 w-10 rounded-full border-3 border-gold border-t-transparent animate-spin mx-auto" />
-          <p className="text-xs font-mono font-bold uppercase tracking-widest text-subtext1">
+          <p className="text-xs sm:text-sm font-mono font-bold uppercase tracking-widest text-subtext1">
             Sincronizando expediente...
           </p>
         </div>
@@ -437,21 +472,25 @@ function EntrevistaWizardContent() {
 
           <div className="space-y-2">
             <span className="text-xs font-mono font-bold uppercase tracking-widest text-gold">
-              FORMULARIO FINALIZADO Y CERRADO
+              {isEvaluator
+                ? "EXPEDIENTE FINALIZADO Y HOMOLOGADO"
+                : "FORMULARIO ENVIADO AL EVALUADOR"}
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-text">
               ¡Muchas gracias{candidatoNombre ? `, ${candidatoNombre}` : ""}!
             </h2>
-            <p className="text-xs sm:text-sm text-subtext1 max-w-md mx-auto leading-relaxed">
-              Sus datos ya fueron enviados y registrados de forma definitiva en el sistema de Jerovia Consultora.
+            <p className="text-sm sm:text-base text-subtext1 max-w-md mx-auto leading-relaxed">
+              {isEvaluator
+                ? "El dictamen pericial ha sido archivado como finalizado y está listo para exportar."
+                : "Sus respuestas fueron enviadas correctamente al equipo evaluador de Jerovia Consultora."}
             </p>
           </div>
 
           {!isEvaluator && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface1 border border-overlay1 text-xs font-bold text-subtext1">
-              <Lock className="h-3.5 w-3.5 text-gold" />
+            <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface1 border border-overlay1 text-xs sm:text-sm font-bold text-subtext1">
+              <Lock className="h-4 w-4 text-gold" />
               <span>
-                El cuestionario se encuentra cerrado y ya no admite modificaciones.
+                El cuestionario se encuentra cerrado y ya fue remitido para revisión del evaluador.
               </span>
             </div>
           )}
@@ -463,7 +502,7 @@ function EntrevistaWizardContent() {
                   href={`/api/exportar/${encodeURIComponent(token)}?formato=pdf&v=${dataVersion}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="min-h-[44px] px-5 rounded-xl bg-gold text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
+                  className="min-h-[46px] px-5 rounded-xl bg-gold text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm"
                 >
                   <FileText className="h-4 w-4" />
                   <span>Abrir Informe en 5 Páginas (PDF)</span>
@@ -471,20 +510,20 @@ function EntrevistaWizardContent() {
 
                 <a
                   href={`/api/exportar/${encodeURIComponent(token)}?formato=pptx&v=${dataVersion}`}
-                  className="min-h-[44px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs inline-flex items-center gap-2"
+                  className="min-h-[46px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs sm:text-sm inline-flex items-center gap-2"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-gold" />
                   <span>Descargar PowerPoint (.PPTX)</span>
                 </a>
               </div>
 
-              <div className="pt-4 border-t border-overlay0 flex items-center justify-center gap-6 text-xs font-bold">
+              <div className="pt-4 border-t border-overlay0 flex items-center justify-center gap-6 text-xs sm:text-sm font-bold">
                 <button
                   type="button"
                   onClick={() => setCompletado(false)}
                   className="text-subtext1 hover:text-gold inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <ArrowLeft className="h-4 w-4" />
                   <span>Volver a editar expediente (Modo Evaluador)</span>
                 </button>
                 <Link href="/dashboard" className="text-gold hover:underline">
