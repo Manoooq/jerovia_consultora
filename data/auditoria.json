@@ -1,13 +1,63 @@
 [
   {
-    "id": "aud_01",
-    "timestamp": "2026-10-01T08:30:00.000Z",
+    "id": "aud_170f413f",
+    "timestamp": "2026-10-18T21:47:50.357Z",
     "userId": "usr_admin_01",
     "userName": "Lic. Michelle Romero",
     "userRole": "admin",
     "action": "LOGIN",
-    "detail": "Inicio de sesión seguro verificado desde terminal central.",
-    "ip": "190.52.148.12"
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_f490bf07",
+    "timestamp": "2026-10-18T21:44:21.054Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGOUT",
+    "detail": "Cierre de sesión (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_6b1abc3c",
+    "timestamp": "2026-10-18T18:57:40.235Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_eaa27ef6",
+    "timestamp": "2026-10-18T18:41:27.290Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_9477c302",
+    "timestamp": "2026-10-18T18:39:51.193Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGOUT",
+    "detail": "Cierre de sesión (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_03",
+    "timestamp": "2026-10-01T11:45:00.000Z",
+    "userId": "usr_eval_01",
+    "userName": "Lic. Carlos Benítez",
+    "userRole": "evaluador",
+    "action": "UPDATE_VISITA",
+    "detail": "Carga de relevamiento habitacional y coordenadas GPS en Luque.",
+    "ip": "181.124.62.90"
   },
   {
     "id": "aud_02",
@@ -20,13 +70,13 @@
     "ip": "190.52.148.12"
   },
   {
-    "id": "aud_03",
-    "timestamp": "2026-10-01T11:45:00.000Z",
-    "userId": "usr_eval_01",
-    "userName": "Lic. Carlos Benítez",
-    "userRole": "evaluador",
-    "action": "UPDATE_VISITA",
-    "detail": "Carga de relevamiento habitacional y coordenadas GPS en Luque.",
-    "ip": "181.124.62.90"
+    "id": "aud_01",
+    "timestamp": "2026-10-01T08:30:00.000Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión seguro verificado desde terminal central.",
+    "ip": "190.52.148.12"
   }
 ]
