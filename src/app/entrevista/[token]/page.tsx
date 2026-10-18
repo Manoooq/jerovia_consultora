@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { QuestionnaireShell } from "@/components/QuestionnaireShell";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -31,12 +32,19 @@ interface StoredDraft {
   updatedAt: number;
 }
 
-export default function EntrevistaWizardPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
-  const { token } = use(params);
+function EntrevistaWizardContent() {
+  const params = useParams<{ token: string }>();
+  const rawToken = Array.isArray(params?.token)
+    ? params.token[0]
+    : params?.token || "demo";
+  const token = (() => {
+    try {
+      return decodeURIComponent(rawToken);
+    } catch {
+      return rawToken;
+    }
+  })();
+
   const storageKey = `jerovia_draft_v5_${token}`;
 
   const [loading, setLoading] = useState(true);
@@ -56,7 +64,6 @@ export default function EntrevistaWizardPage({
 
   const totalSteps: 8 | 9 = isEvaluator ? 9 : 8;
 
-  // Siempre desplazar al tope al cambiar de pestaña
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (document.activeElement instanceof HTMLElement) {
@@ -108,7 +115,7 @@ export default function EntrevistaWizardPage({
       estado: "en_progreso" | "completado" = "en_progreso"
     ) => {
       try {
-        await fetch(`/api/entrevista/${token}`, {
+        await fetch(`/api/entrevista/${encodeURIComponent(token)}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -128,7 +135,10 @@ export default function EntrevistaWizardPage({
     async function init() {
       let localDraft: StoredDraft | null = null;
       try {
-        const raw = localStorage.getItem(storageKey);
+        const raw =
+          localStorage.getItem(storageKey) ||
+          localStorage.getItem(`jerovia_draft_v4_${token}`) ||
+          localStorage.getItem(`jerovia_draft_v3_${token}`);
         if (raw) {
           localDraft = JSON.parse(raw) as StoredDraft;
         }
@@ -137,14 +147,14 @@ export default function EntrevistaWizardPage({
       try {
         const [meRes, entRes] = await Promise.all([
           fetch("/api/auth/me").catch(() => null),
-          fetch(`/api/entrevista/${token}`, { cache: "no-store" }).catch(
-            () => null
-          ),
+          fetch(`/api/entrevista/${encodeURIComponent(token)}`, {
+            cache: "no-store",
+          }).catch(() => null),
         ]);
 
         let evalRole = false;
         if (meRes && meRes.ok) {
-          const meData = await meRes.json();
+          const meData = await meRes.json().catch(() => null);
           if (meData?.authenticated) {
             evalRole = true;
           }
@@ -186,7 +196,6 @@ export default function EntrevistaWizardPage({
             serverRecord.estado === "completado" ||
             Boolean(localDraft?.completado);
 
-          // REGLA: Si el postulante ya finalizó el formulario y NO es evaluador, bloquear edición inmediatamente
           if (isAlreadyCompleted && !evalRole && token !== "demo") {
             setCompletado(true);
             syncWithServer(mergedDatos, 9, "completado");
@@ -233,8 +242,8 @@ export default function EntrevistaWizardPage({
           if (localDraft.completado && token !== "demo") {
             setCompletado(true);
           } else {
-            setPaso(localDraft.paso);
-            setMaxPasoAlcanzado(localDraft.maxPaso);
+            setPaso(localDraft.paso || 1);
+            setMaxPasoAlcanzado(localDraft.maxPaso || 1);
           }
         }
       } finally {
@@ -256,7 +265,6 @@ export default function EntrevistaWizardPage({
       .trim();
     if (fullNombre) setCandidatoNombre(fullNombre);
 
-    // Si es un postulante (!isEvaluator) y termina el Paso 8, se marca completado y queda bloqueado para edición
     if (!isEvaluator && paso === 8) {
       setDatos(merged);
       setCompletado(true);
@@ -286,7 +294,11 @@ export default function EntrevistaWizardPage({
     const merged = { ...datos, ...partial };
     setDatos(merged);
     saveLocalDraft(merged, paso, maxPasoAlcanzado, completado);
-    await syncWithServer(merged, paso, completado ? "completado" : "en_progreso");
+    await syncWithServer(
+      merged,
+      paso,
+      completado ? "completado" : "en_progreso"
+    );
   }
 
   async function handleCompleteEvaluator(
@@ -343,16 +355,17 @@ export default function EntrevistaWizardPage({
           {!isEvaluator && (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface1 border border-overlay1 text-xs font-bold text-subtext1">
               <Lock className="h-3.5 w-3.5 text-gold" />
-              <span>El cuestionario se encuentra cerrado y ya no admite modificaciones.</span>
+              <span>
+                El cuestionario se encuentra cerrado y ya no admite modificaciones.
+              </span>
             </div>
           )}
 
-          {/* Solo el Evaluador puede ver los botones de descarga y volver a editar */}
           {isEvaluator && (
             <>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <a
-                  href={`/api/exportar/${token}?formato=pdf&t=${Date.now()}`}
+                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pdf&t=${Date.now()}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="min-h-[44px] px-5 rounded-xl bg-gold text-white font-bold text-xs inline-flex items-center gap-2 shadow-sm"
@@ -362,7 +375,7 @@ export default function EntrevistaWizardPage({
                 </a>
 
                 <a
-                  href={`/api/exportar/${token}?formato=pptx&t=${Date.now()}`}
+                  href={`/api/exportar/${encodeURIComponent(token)}?formato=pptx&t=${Date.now()}`}
                   className="min-h-[44px] px-5 rounded-xl border border-overlay1 bg-surface1 hover:border-gold text-text font-bold text-xs inline-flex items-center gap-2"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-gold" />
@@ -477,5 +490,13 @@ export default function EntrevistaWizardPage({
         </div>
       </QuestionnaireShell>
     </InterviewModeProvider>
+  );
+}
+
+export default function EntrevistaWizardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-base" />}>
+      <EntrevistaWizardContent />
+    </Suspense>
   );
 }

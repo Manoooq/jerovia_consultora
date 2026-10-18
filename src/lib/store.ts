@@ -363,8 +363,15 @@ export function encodeSmartToken(meta: {
   p?: string[];
 }): string {
   try {
-    const json = JSON.stringify(meta);
-    const b64 = Buffer.from(json, "utf-8").toString("base64url");
+    // Codificar solo cabecera compacta en la URL para que el QR sea liviano y escaneable al instante
+    const compact = {
+      e: (meta.e || "").slice(0, 40),
+      n: (meta.n || "").slice(0, 45),
+      c: (meta.c || "").slice(0, 20),
+    };
+    const b64 = Buffer.from(JSON.stringify(compact), "utf-8").toString(
+      "base64url"
+    );
     const rand = crypto.randomUUID().slice(0, 6);
     return `jv_${b64}_${rand}`;
   } catch {

@@ -18,9 +18,6 @@ interface QrCodeBoxProps {
   subtitle?: string;
 }
 
-/**
- * Dibuja el emblema original de Jerovia (3 personas + lupa central + check) en el Canvas
- */
 function drawOriginalJeroviaEmblem(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -34,7 +31,6 @@ function drawOriginalJeroviaEmblem(
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
 
-  // Silueta superior
   ctx.beginPath();
   ctx.arc(0, -18, 5.5, 0, Math.PI * 2);
   ctx.fill();
@@ -42,7 +38,6 @@ function drawOriginalJeroviaEmblem(
   ctx.arc(0, -4, 11, Math.PI, 0, false);
   ctx.fill();
 
-  // Silueta izquierda
   ctx.beginPath();
   ctx.arc(-20, -6, 6, 0, Math.PI * 2);
   ctx.fill();
@@ -50,7 +45,6 @@ function drawOriginalJeroviaEmblem(
   ctx.arc(-20, 10, 12, Math.PI, 0, false);
   ctx.fill();
 
-  // Silueta derecha
   ctx.beginPath();
   ctx.arc(20, -6, 6, 0, Math.PI * 2);
   ctx.fill();
@@ -58,20 +52,17 @@ function drawOriginalJeroviaEmblem(
   ctx.arc(20, 10, 12, Math.PI, 0, false);
   ctx.fill();
 
-  // Fondo blanco del aro de la lupa
   ctx.beginPath();
   ctx.arc(0, 4, 15, 0, Math.PI * 2);
-  ctx.fillStyle = "#f4f6f2";
+  ctx.fillStyle = "#536c45";
   ctx.fill();
 
-  // Aro de la lupa
   ctx.beginPath();
   ctx.arc(0, 4, 13.5, 0, Math.PI * 2);
   ctx.lineWidth = 4.2;
   ctx.strokeStyle = color;
   ctx.stroke();
 
-  // Persona dentro de la lupa
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(0, 0, 4.6, 0, Math.PI * 2);
@@ -80,7 +71,6 @@ function drawOriginalJeroviaEmblem(
   ctx.arc(0, 12, 9.5, Math.PI, 0, false);
   ctx.fill();
 
-  // Mango de la lupa
   ctx.beginPath();
   ctx.moveTo(10, 14);
   ctx.lineTo(23, 27);
@@ -88,16 +78,14 @@ function drawOriginalJeroviaEmblem(
   ctx.lineCap = "round";
   ctx.stroke();
 
-  // Círculo de check abajo a la izquierda
   ctx.beginPath();
   ctx.arc(-15, 16, 8.5, 0, Math.PI * 2);
-  ctx.fillStyle = "#536c45";
+  ctx.fillStyle = "#85987a";
   ctx.fill();
   ctx.lineWidth = 2;
   ctx.strokeStyle = "#f4f6f2";
   ctx.stroke();
 
-  // Trazo del check
   ctx.beginPath();
   ctx.moveTo(-19, 16);
   ctx.lineTo(-16, 19);
@@ -132,8 +120,8 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
   const [ready, setReady] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // QR 100% en color Verde Oliva (#485536) sobre fondo crema salvia (#f4f6f2)
-  const qrRawUrl = `https://api.qrserver.com/v1/create-qr-code/?size=520x520&ecc=H&margin=2&color=485536&bgcolor=f4f6f2&data=${encodeURIComponent(
+  // QR 100% despejado en Verde Oliva Oscuro (#2b3720) sobre fondo blanco para lectura instantánea en cualquier cámara
+  const qrRawUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&ecc=M&margin=2&color=2b3720&bgcolor=ffffff&data=${encodeURIComponent(
     url
   )}`;
 
@@ -147,11 +135,11 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
     img.crossOrigin = "anonymous";
     img.onload = () => {
       const W = 560;
-      const H = 680;
+      const H = 700;
       canvas.width = W;
       canvas.height = H;
 
-      // 1. Fondo general de la tarjeta en Verde Oliva Profundo (#485536 -> #536c45)
+      // 1. Fondo general de la tarjeta en Verde Oliva (#536c45 -> #38492f)
       const bgGrad = ctx.createLinearGradient(0, 0, W, H);
       bgGrad.addColorStop(0, "#536c45");
       bgGrad.addColorStop(1, "#38492f");
@@ -159,81 +147,43 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
       ctx.fillStyle = bgGrad;
       ctx.fill();
 
-      // Borde interior fino en Salvia (#85987a)
       roundRectPath(ctx, 12, 12, W - 24, H - 24, 28);
       ctx.lineWidth = 2;
       ctx.strokeStyle = "rgba(213, 221, 209, 0.45)";
       ctx.stroke();
 
-      // 2. Cabecera con el Logo Original de Jerovia Consultora (Tipografía Serif + Personas y Lupa)
+      // 2. Cabecera con el Logo Original de Jerovia Consultora (sin tapar los puntos del QR)
       ctx.fillStyle = "#f4f6f2";
-      ctx.font = "bold 36px Georgia, 'Times New Roman', serif";
+      ctx.font = "bold 38px Georgia, 'Times New Roman', serif";
       ctx.textAlign = "left";
-      ctx.fillText("Jerovia", 135, 62);
-      ctx.fillText("Consultora", 135, 100);
+      ctx.fillText("Jerovia", 130, 62);
+      ctx.fillText("Consultora", 130, 102);
 
-      // Emblema original a la derecha de "Jerovia"
-      drawOriginalJeroviaEmblem(ctx, 325, 54, 0.85, "#f4f6f2");
+      drawOriginalJeroviaEmblem(ctx, 326, 54, 0.9, "#f4f6f2");
 
-      // 3. Contenedor redondeado crema salvia para el QR Verde Oliva
-      roundRectPath(ctx, 50, 126, 460, 440, 28);
-      ctx.fillStyle = "#f4f6f2";
+      // 3. Marco blanco con bordes redondeados y QR 100% libre de obstrucciones
+      roundRectPath(ctx, 55, 130, 450, 450, 28);
+      ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.lineWidth = 4;
       ctx.strokeStyle = "#85987a";
       ctx.stroke();
 
-      // Dibujar el QR en Verde Oliva
-      ctx.save();
-      roundRectPath(ctx, 70, 146, 420, 400, 18);
-      ctx.clip();
-      ctx.drawImage(img, 70, 141, 420, 410);
-      ctx.restore();
+      ctx.drawImage(img, 80, 155, 400, 400);
 
-      // Esquinas decorativas redondeadas en Verde Oliva
-      ctx.strokeStyle = "#536c45";
-      ctx.lineWidth = 5;
-      const corners = [
-        [66, 142, 1, 1],
-        [494, 142, -1, 1],
-        [66, 550, 1, -1],
-        [494, 550, -1, -1],
-      ];
-      corners.forEach(([cx, cy, dx, dy]) => {
-        ctx.beginPath();
-        ctx.moveTo(cx, cy + dy * 24);
-        ctx.lineTo(cx, cy);
-        ctx.lineTo(cx + dx * 24, cy);
-        ctx.stroke();
-      });
-
-      // 4. Medallón central con el Logo Original de Jerovia Consultora (sin "J" suelta)
-      roundRectPath(ctx, 212, 294, 136, 104, 22);
-      ctx.fillStyle = "#f4f6f2";
-      ctx.fill();
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "#536c45";
-      ctx.stroke();
-
-      drawOriginalJeroviaEmblem(ctx, 280, 327, 0.72, "#485536");
-      ctx.fillStyle = "#1a2216";
-      ctx.font = "bold 15px Georgia, serif";
-      ctx.textAlign = "center";
-      ctx.fillText("Jerovia", 280, 372);
-      ctx.fillStyle = "#536c45";
-      ctx.font = "bold 11px Georgia, serif";
-      ctx.fillText("Consultora", 280, 386);
-
-      // 5. Pie de la tarjeta con el nombre del postulante
+      // 4. Pie de la tarjeta con el nombre del postulante
       ctx.fillStyle = "#f4f6f2";
       ctx.font = "bold 20px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "center";
-      const displayTitle = (title || "Cuestionario Socioambiental").slice(0, 34);
-      ctx.fillText(displayTitle, W / 2, 608);
+      const displayTitle = (title || "Cuestionario Socioambiental").slice(
+        0,
+        34
+      );
+      ctx.fillText(displayTitle, W / 2, 624);
 
       ctx.fillStyle = "#d5ddd1";
       ctx.font = "600 13px monospace";
-      ctx.fillText("ESCANEE PARA COMPLETAR SUS DATOS", W / 2, 638);
+      ctx.fillText("ESCANEE EL QR PARA COMPLETAR SUS DATOS", W / 2, 654);
 
       setReady(true);
     };
@@ -268,7 +218,6 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
         title || "postulante"
       }, le saluda Jerovia Consultora. Escanee este código QR o ingrese al enlace para completar sus datos: ${url}`;
 
-      // 1. En celulares (iPhone / Android): Abre el menú nativo enviando LA IMAGEN QR PERSONALIZADA + el enlace
       if (
         typeof navigator.canShare === "function" &&
         navigator.canShare({ files: [file] })
@@ -283,14 +232,13 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
         } catch {}
       }
 
-      // 2. En PC: Copia la imagen del QR personalizado al portapapeles para pegarla (Ctrl+V) en WhatsApp Web y la descarga
       try {
         if (typeof ClipboardItem !== "undefined") {
           await navigator.clipboard.write([
             new ClipboardItem({ "image/png": blob }),
           ]);
           setShareMsg(
-            "¡Imagen del QR Verde Oliva copiada! Solo presione Pegar (Ctrl+V) en el chat de WhatsApp."
+            "¡Imagen del QR Verde Oliva copiada! Solo presione Pegar (Ctrl+V) en WhatsApp."
           );
           setTimeout(() => setShareMsg(null), 5000);
         }
@@ -304,15 +252,13 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
 
   return (
     <div className="rounded-3xl border border-[#85987a]/60 bg-gradient-to-br from-[#f4f6f2] to-[#e4ece0] dark:from-[#161d14] dark:to-[#1f291c] p-4 sm:p-5 flex flex-col md:flex-row items-center gap-5 shadow-md">
-      {/* Tarjeta QR Verde Oliva renderizada con el Logo Original de Jerovia */}
       <div className="shrink-0 flex flex-col items-center">
         <canvas
           ref={canvasRef}
-          className="w-[210px] h-[255px] rounded-2xl shadow-lg border border-[#536c45]/40 bg-[#536c45]"
+          className="w-[210px] h-[262px] rounded-2xl shadow-lg border border-[#536c45]/40 bg-[#536c45]"
         />
       </div>
 
-      {/* Controles y Envío Directo de la Tarjeta QR */}
       <div className="space-y-3 text-center md:text-left flex-1 min-w-0">
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
           <Logo size="sm" />
@@ -329,7 +275,7 @@ export function QrCodeBox({ url, title, subtitle }: QrCodeBoxProps) {
 
         <p className="text-xs text-subtext1 leading-relaxed">
           {subtitle ||
-            "Al presionar 'Enviar QR Personalizado', se envía o copia directamente esta tarjeta QR en Verde Oliva con el logo original de Jerovia."}
+            "Al presionar 'Enviar QR Personalizado', se envía o copia esta tarjeta QR en Verde Oliva con el logo original de Jerovia y lectura instantánea."}
         </p>
 
         {shareMsg && (
