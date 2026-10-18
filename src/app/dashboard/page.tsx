@@ -110,22 +110,121 @@ function DashboardContent() {
   const [passNueva, setPassNueva] = useState("");
   const [passConfirm, setPassConfirm] = useState("");
 
+  function mergeDashboardLists(
+    currentList: EntrevistaRecord[],
+    serverList: EntrevistaRecord[]
+  ): EntrevistaRecord[] {
+    let deletedLocal: string[] = [];
+    try {
+      deletedLocal = JSON.parse(
+        localStorage.getItem("jerovia_deleted_tokens_v3") || "[]"
+      );
+    } catch {}
+    const delSet = new Set(deletedLocal);
+
+    const map = new Map<string, EntrevistaRecord>();
+    for (const item of currentList) {
+      if (item && item.token && !delSet.has(item.token)) {
+        map.set(item.token, item);
+      }
+    }
+
+    const estadoRank: Record<string, number> = {
+      pendiente: 0,
+      en_progreso: 1,
+      completado: 2,
+    };
+
+    for (const srv of serverList) {
+      if (!srv || !srv.token || delSet.has(srv.token)) continue;
+      const loc = map.get(srv.token);
+      if (!loc) {
+        map.set(srv.token, srv);
+      } else {
+        const bestEstado =
+          (estadoRank[srv.estado] || 0) >= (estadoRank[loc.estado] || 0)
+            ? srv.estado
+            : loc.estado;
+        const bestPaso = Math.max(loc.pasoActual || 1, srv.pasoActual || 1);
+        const mergedDatos = { ...(loc.datos || {}), ...(srv.datos || {}) };
+        for (const [k, v] of Object.entries(loc.datos || {})) {
+          if (
+            v !== undefined &&
+            v !== null &&
+            v !== "" &&
+            ((srv.datos as Record<string, unknown>)?.[k] === undefined ||
+              (srv.datos as Record<string, unknown>)?.[k] === "")
+          ) {
+            (mergedDatos as Record<string, unknown>)[k] = v;
+          }
+        }
+        map.set(srv.token, {
+          ...loc,
+          ...srv,
+          estado: bestEstado,
+          pasoActual: bestPaso,
+          datos: mergedDatos,
+        });
+      }
+    }
+
+    const mergedArr = Array.from(map.values()).sort(
+      (a, b) =>
+        new Date(b.actualizadoEn).getTime() -
+        new Date(a.actualizadoEn).getTime()
+    );
+
+    try {
+      localStorage.setItem(
+        "jerovia_dashboard_cache_v3",
+        JSON.stringify(mergedArr)
+      );
+    } catch {}
+
+    // Si algún registro de nuestra caché no estaba en el servidor temporal, curar al servidor en segundo plano
+    const srvTokens = new Set(serverList.map((s) => s.token));
+    for (const item of mergedArr) {
+      if (!srvTokens.has(item.token)) {
+        fetch(`/api/entrevista/${encodeURIComponent(item.token)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(item),
+        }).catch(() => {});
+      }
+    }
+
+    return mergedArr;
+  }
+
   async function loadInitial() {
+    setLoading(true);
+    try {
+      const cachedRaw = localStorage.getItem("jerovia_dashboard_cache_v3");
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw) as EntrevistaRecord[];
+        if (Array.isArray(cached) && cached.length > 0) {
+          setEntrevistas(cached);
+        }
+      }
+    } catch {}
+
     try {
       const [meRes, entRes] = await Promise.all([
-        fetch("/api/auth/me"),
-        fetch("/api/entrevista"),
+        fetch("/api/auth/me", { cache: "no-store" }),
+        fetch(`/api/entrevista?_t=${Date.now()}`, { cache: "no-store" }),
       ]);
       if (meRes.ok) {
         const meData = await meRes.json();
-        setCurrentUser(meData.user);
+        setCurrentUser(meData.user || null);
       }
       if (entRes.ok) {
-        const data = await entRes.json();
-        setEntrevistas(data);
+        const serverData = await entRes.json();
+        if (Array.isArray(serverData)) {
+          setEntrevistas((prev) => mergeDashboardLists(prev, serverData));
+        }
       }
-    } catch (err) {
-      console.error("Error al cargar dashboard:", err);
+    } catch (e) {
+      console.error("Error cargando datos:", e);
     } finally {
       setLoading(false);
     }
@@ -136,14 +235,18 @@ function DashboardContent() {
     const refreshLive = async () => {
       if (document.hidden) return;
       try {
-        const res = await fetch("/api/entrevista", { cache: "no-store" });
+        const res = await fetch(`/api/entrevista?_t=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
-          setEntrevistas(data);
+          if (Array.isArray(data)) {
+            setEntrevistas((prev) => mergeDashboardLists(prev, data));
+          }
         }
       } catch {}
     };
-    const intervalId = setInterval(refreshLive, 4000);
+    const intervalId = setInterval(refreshLive, 4500);
     return () => clearInterval(intervalId);
   }, []);
 

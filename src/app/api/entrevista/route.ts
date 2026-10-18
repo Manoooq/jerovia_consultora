@@ -10,8 +10,15 @@ import {
   syncStoreToCloud,
 } from "@/lib/store";
 import { registrarEventoAuditoria } from "@/lib/audit";
-import { enforceRateLimit, getClientIp, parseSafeJson } from "@/lib/apiSecurity";
+import {
+  enforceRateLimit,
+  getClientIp,
+  parseSafeJson,
+} from "@/lib/apiSecurity";
 import type { FormularioCompleto } from "@/lib/validations";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   const session = await getSession();
@@ -21,10 +28,16 @@ export async function GET() {
 
   await syncStoreFromCloud();
 
-  if (session.role === "admin") {
-    return NextResponse.json(listarEntrevistas());
-  }
-  return NextResponse.json(listarEntrevistasPorEvaluador(session.name));
+  const data =
+    session.role === "admin"
+      ? listarEntrevistas()
+      : listarEntrevistasPorEvaluador(session.name);
+
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -34,7 +47,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json(
-      { error: "Solo los administradores pueden habilitar nuevos expedientes." },
+      {
+        error: "Solo los administradores pueden habilitar nuevos expedientes.",
+      },
       { status: 403 }
     );
   }
@@ -57,7 +72,10 @@ export async function POST(req: NextRequest) {
 
   if (!entidad || !candidato) {
     return NextResponse.json(
-      { error: "El nombre del postulante y la entidad solicitante son obligatorios." },
+      {
+        error:
+          "El nombre del postulante y la entidad solicitante son obligatorios.",
+      },
       { status: 400 }
     );
   }

@@ -11,6 +11,9 @@ import { getSession } from "@/lib/auth";
 import { registrarEventoAuditoria } from "@/lib/audit";
 import { getClientIp, parseSafeJson } from "@/lib/apiSecurity";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -26,7 +29,11 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(entrevista);
+  return NextResponse.json(entrevista, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    },
+  });
 }
 
 export async function PATCH(
@@ -102,7 +109,11 @@ export async function PATCH(
 
   await syncStoreToCloud(token);
 
-  return NextResponse.json(updated);
+  return NextResponse.json(updated, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    },
+  });
 }
 
 export async function DELETE(
@@ -124,7 +135,7 @@ export async function DELETE(
       userName: session.name,
       userRole: session.role,
       action: "DELETE_VISITA",
-      detail: `Eliminación del expediente (${token}).`,
+      detail: `Eliminación permanente del expediente (${token}).`,
       ip: getClientIp(req),
     });
   }

@@ -32,6 +32,15 @@ interface StoredDraft {
   updatedAt: number;
 }
 
+function countNonEmpty(obj?: Record<string, unknown>): number {
+  if (!obj) return 0;
+  return Object.entries(obj).filter(([, v]) => {
+    if (v === undefined || v === null || v === "") return false;
+    if (Array.isArray(v)) return v.length > 0;
+    return true;
+  }).length;
+}
+
 function EntrevistaWizardContent() {
   const params = useParams<{ token: string }>();
   const rawToken = Array.isArray(params?.token)
@@ -48,6 +57,7 @@ function EntrevistaWizardContent() {
   const storageKey = `jerovia_draft_v5_${token}`;
 
   const [loading, setLoading] = useState(true);
+  const [dataVersion, setDataVersion] = useState(1);
   const [isEvaluator, setIsEvaluator] = useState(false);
   const [prefilledList, setPrefilledList] = useState<string[]>([]);
   const [paso, setPaso] = useState(1);
@@ -146,10 +156,11 @@ function EntrevistaWizardContent() {
 
       try {
         const [meRes, entRes] = await Promise.all([
-          fetch("/api/auth/me").catch(() => null),
-          fetch(`/api/entrevista/${encodeURIComponent(token)}`, {
-            cache: "no-store",
-          }).catch(() => null),
+          fetch("/api/auth/me", { cache: "no-store" }).catch(() => null),
+          fetch(
+            `/api/entrevista/${encodeURIComponent(token)}?_t=${Date.now()}`,
+            { cache: "no-store" }
+          ).catch(() => null),
         ]);
 
         let evalRole = false;
@@ -181,26 +192,34 @@ function EntrevistaWizardContent() {
             {}) as Partial<FormularioCompleto>;
           const localDatos = localDraft?.datos || {};
 
+          // Fusión estricta: jamás perder un campo no vacío ni del servidor ni del navegador
           const mergedDatos: Partial<FormularioCompleto> = {
             ...serverDatos,
           };
-          Object.entries(localDatos).forEach(([k, val]) => {
-            if (val !== undefined && val !== "" && val !== null) {
+          for (const [k, val] of Object.entries(localDatos)) {
+            const isLocalFilled =
+              val !== undefined &&
+              val !== null &&
+              val !== "" &&
+              (!Array.isArray(val) || val.length > 0);
+            if (isLocalFilled) {
               (mergedDatos as Record<string, unknown>)[k] = val;
             }
-          });
-
-          setDatos(mergedDatos);
+          }
+          for (const [k, val] of Object.entries(serverDatos)) {
+            const isServerFilled =
+              val !== undefined &&
+              val !== null &&
+              val !== "" &&
+              (!Array.isArray(val) || val.length > 0);
+            if (isServerFilled) {
+              (mergedDatos as Record<string, unknown>)[k] = val;
+            }
+          }
 
           const isAlreadyCompleted =
             serverRecord.estado === "completado" ||
             Boolean(localDraft?.completado);
-
-          if (isAlreadyCompleted && !evalRole && token !== "demo") {
-            setCompletado(true);
-            syncWithServer(mergedDatos, 9, "completado");
-            return;
-          }
 
           const maxAllowed = evalRole ? 9 : 8;
           const bestPaso = Math.min(
@@ -209,15 +228,34 @@ function EntrevistaWizardContent() {
           );
           const bestMaxPaso = Math.min(
             maxAllowed,
-            Math.max(localDraft?.maxPaso || 1, bestPaso)
+            Math.max(
+              localDraft?.maxPaso || 1,
+              bestPaso,
+              isAlreadyCompleted ? maxAllowed : 1
+            )
           );
 
+          // GUARDAR INMEDIATAMENTE EN LOCALSTORAGE para que al cerrar y abrir jamás vuelva a salir vacío
+          saveLocalDraft(
+            mergedDatos,
+            bestPaso,
+            bestMaxPaso,
+            isAlreadyCompleted
+          );
+
+          setDatos(mergedDatos);
           setPaso(bestPaso);
           setMaxPasoAlcanzado(bestMaxPaso);
+          setDataVersion((v) => v + 1);
 
+          if (isAlreadyCompleted && !evalRole && token !== "demo") {
+            setCompletado(true);
+          }
+
+          // Si nuestro navegador tenía más campos que el servidor, curar el servidor automáticamente
           if (
-            localDraft &&
-            Object.keys(localDatos).length > Object.keys(serverDatos).length
+            countNonEmpty(mergedDatos as Record<string, unknown>) >
+            countNonEmpty(serverDatos as Record<string, unknown>)
           ) {
             syncWithServer(
               mergedDatos,
@@ -227,6 +265,7 @@ function EntrevistaWizardContent() {
           }
         } else if (localDraft && mounted) {
           setDatos(localDraft.datos);
+          setDataVersion((v) => v + 1);
           if (localDraft.completado && !evalRole && token !== "demo") {
             setCompletado(true);
           } else {
@@ -239,6 +278,7 @@ function EntrevistaWizardContent() {
       } catch {
         if (localDraft && mounted) {
           setDatos(localDraft.datos);
+          setDataVersion((v) => v + 1);
           if (localDraft.completado && token !== "demo") {
             setCompletado(true);
           } else {
@@ -255,7 +295,7 @@ function EntrevistaWizardContent() {
     return () => {
       mounted = false;
     };
-  }, [token, storageKey, syncWithServer]);
+  }, [token, storageKey, saveLocalDraft, syncWithServer]);
 
   function handleNextStep(stepData: Partial<FormularioCompleto>) {
     const merged = { ...datos, ...stepData };
@@ -279,6 +319,7 @@ function EntrevistaWizardContent() {
     setDatos(merged);
     setPaso(nextPaso);
     setMaxPasoAlcanzado(nextMax);
+    setDataVersion((v) => v + 1);
 
     saveLocalDraft(merged, nextPaso, nextMax, false);
     syncWithServer(merged, nextPaso, "en_progreso");
@@ -287,6 +328,7 @@ function EntrevistaWizardContent() {
   function handleBackStep() {
     const prevPaso = Math.max(1, paso - 1);
     setPaso(prevPaso);
+    setDataVersion((v) => v + 1);
     saveLocalDraft(datos, prevPaso, maxPasoAlcanzado, false);
   }
 
@@ -421,15 +463,21 @@ function EntrevistaWizardContent() {
             totalSteps={totalSteps}
             onStepSelect={(targetStep) => {
               setPaso(targetStep);
+              setDataVersion((v) => v + 1);
               saveLocalDraft(datos, targetStep, maxPasoAlcanzado, false);
             }}
           />
 
           {paso === 1 && (
-            <Paso1Personal defaultValues={datos} onNext={handleNextStep} />
+            <Paso1Personal
+              key={`p1-${dataVersion}`}
+              defaultValues={datos}
+              onNext={handleNextStep}
+            />
           )}
           {paso === 2 && (
             <Paso2Academico
+              key={`p2-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -437,6 +485,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 3 && (
             <Paso3Laboral
+              key={`p3-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -444,6 +493,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 4 && (
             <Paso4Psicosocial
+              key={`p4-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -451,6 +501,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 5 && (
             <Paso5Familiar
+              key={`p5-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -458,6 +509,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 6 && (
             <Paso6Salud
+              key={`p6-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -465,6 +517,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 7 && (
             <Paso7Economico
+              key={`p7-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -472,6 +525,7 @@ function EntrevistaWizardContent() {
           )}
           {paso === 8 && (
             <Paso8Vivienda
+              key={`p8-${dataVersion}`}
               defaultValues={datos}
               onNext={handleNextStep}
               onBack={handleBackStep}
@@ -479,6 +533,7 @@ function EntrevistaWizardContent() {
           )}
           {isEvaluator && paso === 9 && (
             <Paso9Observaciones
+              key={`p9-${dataVersion}`}
               defaultValues={datos}
               allData={datos as Record<string, unknown>}
               token={token}

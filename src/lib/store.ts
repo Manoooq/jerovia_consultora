@@ -24,26 +24,40 @@ export interface EntrevistaRecord {
   actualizadoEn: string;
 }
 
-interface CloudIndexPayload {
+interface CloudStorePayload {
   version: number;
-  shards: Record<string, string>;
   deletedTokens: string[];
-  summaries: Record<string, EntrevistaRecord>;
+  records: Record<string, EntrevistaRecord>;
+  shards?: Record<string, string>;
+  summaries?: Record<string, EntrevistaRecord>;
   updatedAt: number;
 }
 
-const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data_v2");
+const TMP_DATA_DIR = path.join(os.tmpdir(), "jerovia_data_v3");
 const TMP_FILE = path.join(TMP_DATA_DIR, "entrevistas.json");
 const TMP_DELETED_FILE = path.join(TMP_DATA_DIR, "deleted.json");
 
-const INDEX_CLOUD_URL =
+const PRIMARY_CLOUD_URL =
   process.env.JEROVIA_CLOUD_STORE_URL ||
   (cloudConfig as { jsonBlobUrl?: string }).jsonBlobUrl ||
   "";
 
+const BACKUP_CLOUD_URL =
+  (cloudConfig as { backupBlobUrl?: string }).backupBlobUrl || "";
+
+const CLOUD_URLS = [PRIMARY_CLOUD_URL, BACKUP_CLOUD_URL].filter(Boolean);
+
+const BROWSER_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  Accept: "application/json",
+  "Cache-Control": "no-cache, no-store, must-revalidate",
+  Pragma: "no-cache",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+};
+
 const store = new Map<string, EntrevistaRecord>();
 const deletedSet = new Set<string>();
-const shardUrls = new Map<string, string>();
 
 function loadLocalTmp() {
   try {
@@ -60,7 +74,6 @@ function loadLocalTmp() {
       list.forEach((r) => {
         if (r && r.token && !deletedSet.has(r.token)) {
           store.set(r.token, r);
-          if (r.shardUrl) shardUrls.set(r.token, r.shardUrl);
         }
       });
     }
@@ -84,7 +97,26 @@ function saveLocalTmp() {
 
 loadLocalTmp();
 
-function mergeRecords(
+export function countFilledFields(datos?: Partial<FormularioCompleto>): number {
+  if (!datos || typeof datos !== "object") return 0;
+  let count = 0;
+  for (const [k, val] of Object.entries(datos)) {
+    if (k.startsWith("_")) continue;
+    if (val === undefined || val === null || val === "") continue;
+    if (Array.isArray(val)) {
+      if (val.length > 0) count += val.length;
+      continue;
+    }
+    count++;
+  }
+  return count;
+}
+
+/**
+ * Fusiona dos registros del mismo expediente garantizando que NUNCA un dato vacío
+ * pise un dato ya completado por el postulante o el evaluador.
+ */
+export function mergeRecords(
   existing: EntrevistaRecord,
   incoming: EntrevistaRecord
 ): EntrevistaRecord {
@@ -113,11 +145,22 @@ function mergeRecords(
 
   const estadoRank = { pendiente: 0, en_progreso: 1, completado: 2 };
   const bestEstado =
-    estadoRank[incoming.estado] >= estadoRank[existing.estado]
+    estadoRank[incoming.estado || "pendiente"] >=
+    estadoRank[existing.estado || "pendiente"]
       ? incoming.estado
       : existing.estado;
 
-  const bestPaso = Math.max(existing.pasoActual || 1, incoming.pasoActual || 1);
+  const bestPaso = Math.max(
+    existing.pasoActual || 1,
+    incoming.pasoActual || 1,
+    bestEstado === "completado" ? 9 : 1
+  );
+
+  const fullNombre = [mergedDatos.nombre, mergedDatos.apellido]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
   const latestTime =
     new Date(incoming.actualizadoEn || 0).getTime() >=
     new Date(existing.actualizadoEn || 0).getTime()
@@ -127,226 +170,146 @@ function mergeRecords(
   return {
     ...existing,
     ...incoming,
-    candidatoNombre: incoming.candidatoNombre || existing.candidatoNombre,
-    cedula: incoming.cedula || existing.cedula || (mergedDatos.cedula as string),
+    candidatoNombre:
+      incoming.candidatoNombre ||
+      existing.candidatoNombre ||
+      fullNombre ||
+      undefined,
+    cedula:
+      incoming.cedula || existing.cedula || (mergedDatos.cedula as string),
     telefono:
-      incoming.telefono || existing.telefono || (mergedDatos.telefono as string),
-    ciudad: incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
-    shardUrl: incoming.shardUrl || existing.shardUrl,
+      incoming.telefono ||
+      existing.telefono ||
+      (mergedDatos.telefono as string),
+    ciudad:
+      incoming.ciudad || existing.ciudad || (mergedDatos.ciudad as string),
     estado: bestEstado,
     pasoActual: bestPaso,
     datos: mergedDatos,
     camposPrellenados: incoming.camposPrellenados?.length
       ? incoming.camposPrellenados
       : existing.camposPrellenados,
-    actualizadoEn: latestTime,
+    actualizadoEn: latestTime || new Date().toISOString(),
   };
 }
 
-async function saveRecordShardToCloud(
-  record: EntrevistaRecord
-): Promise<string | undefined> {
-  let shardUrl = record.shardUrl || shardUrls.get(record.token);
+async function fetchCloudEndpoint(
+  baseUrl: string
+): Promise<Partial<CloudStorePayload> | null> {
+  if (!baseUrl) return null;
   try {
-    if (shardUrl) {
-      const res = await fetch(shardUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(record),
-      });
-      if (res.ok) return shardUrl;
-    }
-
-    const createRes = await fetch("https://jsonblob.com/api/jsonBlob", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(record),
-    });
-    const loc =
-      createRes.headers.get("location") ||
-      createRes.headers.get("Location") ||
-      "";
-    if (loc) {
-      shardUrl = loc.startsWith("http")
-        ? loc.replace("http://", "https://")
-        : `https://jsonblob.com${loc}`;
-      shardUrls.set(record.token, shardUrl);
-      record.shardUrl = shardUrl;
-      return shardUrl;
-    }
-  } catch {}
-  return shardUrl;
-}
-
-function toLightSummary(record: EntrevistaRecord): EntrevistaRecord {
-  const lightDatos: Record<string, unknown> = { ...record.datos };
-  delete lightDatos.fotoCandidato;
-  delete lightDatos.fotosVivienda;
-  delete lightDatos.firmaEvaluador;
-  return {
-    ...record,
-    datos: lightDatos as Partial<FormularioCompleto>,
-  };
-}
-
-export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
-  if (!INDEX_CLOUD_URL) return;
-  try {
-    const res = await fetch(INDEX_CLOUD_URL, {
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    const bustUrl = `${baseUrl}${sep}_t=${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 7)}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4500);
+    const res = await fetch(bustUrl, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Cache-Control": "no-cache, no-store",
-      },
+      headers: BROWSER_HEADERS,
       cache: "no-store",
+      signal: controller.signal,
     });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    return (await res.json()) as Partial<CloudStorePayload>;
+  } catch {
+    return null;
+  }
+}
 
-    if (!res.ok) return;
-    const indexData = (await res.json()) as Partial<CloudIndexPayload>;
+function ingestCloudPayload(payload: Partial<CloudStorePayload> | null) {
+  if (!payload || typeof payload !== "object") return;
 
-    if (Array.isArray(indexData.deletedTokens)) {
-      for (const delTok of indexData.deletedTokens) {
-        deletedSet.add(delTok);
-        store.delete(delTok);
-        shardUrls.delete(delTok);
+  if (Array.isArray(payload.deletedTokens)) {
+    for (const delTok of payload.deletedTokens) {
+      deletedSet.add(delTok);
+      store.delete(delTok);
+    }
+  }
+
+  const incomingMap: Record<string, EntrevistaRecord> = {
+    ...(payload.summaries || {}),
+    ...(payload.records || {}),
+  };
+
+  for (const [tok, rec] of Object.entries(incomingMap)) {
+    if (!tok || deletedSet.has(tok) || !rec || typeof rec !== "object") continue;
+    const existing = store.get(tok);
+    if (!existing) {
+      store.set(tok, rec);
+    } else {
+      store.set(tok, mergeRecords(existing, rec));
+    }
+  }
+}
+
+export async function syncStoreFromCloud(_targetToken?: string): Promise<void> {
+  if (CLOUD_URLS.length === 0) return;
+  try {
+    const results = await Promise.allSettled(
+      CLOUD_URLS.map((u) => fetchCloudEndpoint(u))
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) {
+        ingestCloudPayload(r.value);
       }
     }
-
-    if (indexData.shards && typeof indexData.shards === "object") {
-      for (const [tok, url] of Object.entries(indexData.shards)) {
-        if (!deletedSet.has(tok) && url) {
-          shardUrls.set(tok, url);
-        }
-      }
-    }
-
-    if (indexData.summaries && typeof indexData.summaries === "object") {
-      for (const [tok, sumRecord] of Object.entries(indexData.summaries)) {
-        if (deletedSet.has(tok) || !sumRecord) continue;
-        const loc = store.get(tok);
-        if (!loc) {
-          store.set(tok, sumRecord);
-        } else {
-          store.set(tok, mergeRecords(loc, sumRecord));
-        }
-      }
-    }
-
-    if (targetToken && !deletedSet.has(targetToken)) {
-      const sUrl =
-        shardUrls.get(targetToken) || store.get(targetToken)?.shardUrl;
-      if (sUrl) {
-        const shardRes = await fetch(sUrl, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Cache-Control": "no-cache, no-store",
-          },
-          cache: "no-store",
-        }).catch(() => null);
-        if (shardRes && shardRes.ok) {
-          const fullRecord = (await shardRes.json()) as EntrevistaRecord;
-          if (fullRecord && fullRecord.token) {
-            const existing = store.get(targetToken);
-            store.set(
-              targetToken,
-              existing ? mergeRecords(existing, fullRecord) : fullRecord
-            );
-          }
-        }
-      }
-    }
-
     saveLocalTmp();
   } catch {}
 }
 
-export async function syncStoreToCloud(changedToken?: string): Promise<void> {
+export async function syncStoreToCloud(_changedToken?: string): Promise<void> {
   saveLocalTmp();
-  if (!INDEX_CLOUD_URL) return;
+  if (CLOUD_URLS.length === 0) return;
 
   try {
-    if (changedToken && !deletedSet.has(changedToken)) {
-      const rec = store.get(changedToken);
-      if (rec && rec.token !== "demo") {
-        await saveRecordShardToCloud(rec);
+    // 1. Primero leer ambos canales para fusionar y jamás pisar expedientes creados en otra instancia
+    const results = await Promise.allSettled(
+      CLOUD_URLS.map((u) => fetchCloudEndpoint(u))
+    );
+    let anyReadSuccess = false;
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) {
+        anyReadSuccess = true;
+        ingestCloudPayload(r.value);
       }
     }
 
-    const getRes = await fetch(INDEX_CLOUD_URL, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Cache-Control": "no-cache, no-store",
-      },
-      cache: "no-store",
-    }).catch(() => null);
-
-    if (getRes && getRes.ok) {
-      const remoteIndex = (await getRes
-        .json()
-        .catch(() => null)) as Partial<CloudIndexPayload> | null;
-      if (remoteIndex) {
-        if (Array.isArray(remoteIndex.deletedTokens)) {
-          for (const dt of remoteIndex.deletedTokens) {
-            deletedSet.add(dt);
-            store.delete(dt);
-            shardUrls.delete(dt);
-          }
-        }
-        if (remoteIndex.shards) {
-          for (const [t, u] of Object.entries(remoteIndex.shards)) {
-            if (!deletedSet.has(t) && u && !shardUrls.has(t)) {
-              shardUrls.set(t, u);
-            }
-          }
-        }
-        if (remoteIndex.summaries) {
-          for (const [t, sr] of Object.entries(remoteIndex.summaries)) {
-            if (deletedSet.has(t) || !sr) continue;
-            const localRec = store.get(t);
-            if (!localRec) {
-              store.set(t, sr);
-            } else {
-              store.set(t, mergeRecords(localRec, sr));
-            }
-          }
-        }
-      }
+    // Si la lectura falló por microcorte y nuestra instancia está vacía, no sobrescribir la nube
+    if (!anyReadSuccess && store.size === 0 && deletedSet.size === 0) {
+      return;
     }
 
-    const summariesObj: Record<string, EntrevistaRecord> = {};
-    const shardsObj: Record<string, string> = {};
-
+    const recordsObj: Record<string, EntrevistaRecord> = {};
     for (const [tok, rec] of store.entries()) {
       if (tok === "demo" || deletedSet.has(tok)) continue;
-      summariesObj[tok] = toLightSummary(rec);
-      const sUrl = rec.shardUrl || shardUrls.get(tok);
-      if (sUrl) shardsObj[tok] = sUrl;
+      recordsObj[tok] = rec;
     }
 
-    const payload: CloudIndexPayload = {
-      version: 2,
-      shards: shardsObj,
+    const payload: CloudStorePayload = {
+      version: 3,
       deletedTokens: Array.from(deletedSet),
-      summaries: summariesObj,
+      records: recordsObj,
       updatedAt: Date.now(),
     };
 
-    await fetch(INDEX_CLOUD_URL, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const bodyStr = JSON.stringify(payload);
+
+    await Promise.allSettled(
+      CLOUD_URLS.map(async (baseUrl) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        await fetch(baseUrl, {
+          method: "PUT",
+          headers: BROWSER_HEADERS,
+          body: bodyStr,
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+      })
+    );
 
     saveLocalTmp();
   } catch {}
@@ -363,7 +326,6 @@ export function encodeSmartToken(meta: {
   p?: string[];
 }): string {
   try {
-    // Codificar solo cabecera compacta en la URL para que el QR sea liviano y escaneable al instante
     const compact = {
       e: (meta.e || "").slice(0, 40),
       n: (meta.n || "").slice(0, 45),
@@ -468,6 +430,19 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
     (token.startsWith("jv_") || token.startsWith("tok_") || token.length >= 8)
   ) {
     const decoded = decodeSmartToken(token);
+    const fullName = decoded?.candidatoNombre || "";
+    const parts = fullName.trim().split(/\s+/);
+    const nombre = parts.slice(0, Math.max(1, parts.length - 1)).join(" ");
+    const apellido = parts.length > 1 ? parts.slice(-1).join(" ") : "";
+
+    const initialDatos: Partial<FormularioCompleto> = {
+      ...(decoded?.datos || {}),
+    };
+    if (nombre && !initialDatos.nombre) initialDatos.nombre = nombre;
+    if (apellido && !initialDatos.apellido) initialDatos.apellido = apellido;
+    if (decoded?.cedula && !initialDatos.cedula)
+      initialDatos.cedula = decoded.cedula;
+
     record = {
       id: `ent_${token.slice(-8)}`,
       token,
@@ -480,9 +455,7 @@ export function obtenerEntrevista(token: string): EntrevistaRecord | undefined {
       creadoPor: "admin",
       estado: "en_progreso",
       pasoActual: 1,
-      datos: {
-        ...(decoded?.datos || {}),
-      },
+      datos: initialDatos,
       camposPrellenados: decoded?.camposPrellenados || [],
       alertas: [],
       creadoEn: new Date().toISOString(),
@@ -506,52 +479,21 @@ export function actualizarEntrevista(
   }
   if (!record) return null;
 
-  const mergedDatos: Partial<FormularioCompleto> = {
-    ...record.datos,
-    ...(patch.datos || {}),
-  };
-
-  for (const [k, val] of Object.entries(record.datos || {})) {
-    const nextVal = (patch.datos as Record<string, unknown> | undefined)?.[k];
-    const isNextEmpty =
-      nextVal === undefined ||
-      nextVal === null ||
-      nextVal === "" ||
-      (Array.isArray(nextVal) && nextVal.length === 0);
-    const isOldFilled =
-      val !== undefined &&
-      val !== null &&
-      val !== "" &&
-      (!Array.isArray(val) || val.length > 0);
-    if (isNextEmpty && isOldFilled) {
-      (mergedDatos as Record<string, unknown>)[k] = val;
-    }
-  }
-
-  const updated: EntrevistaRecord = {
+  const incomingFakeRecord: EntrevistaRecord = {
     ...record,
     ...patch,
-    datos: mergedDatos,
-    pasoActual: Math.max(record.pasoActual || 1, patch.pasoActual || 1),
-    estado:
-      record.estado === "completado"
-        ? "completado"
-        : patch.estado || record.estado,
-    camposPrellenados:
-      patch.camposPrellenados !== undefined
-        ? patch.camposPrellenados
-        : record.camposPrellenados,
+    datos: (patch.datos || {}) as Partial<FormularioCompleto>,
     actualizadoEn: new Date().toISOString(),
   };
 
-  store.set(token, updated);
+  const merged = mergeRecords(record, incomingFakeRecord);
+  store.set(token, merged);
   saveLocalTmp();
-  return updated;
+  return merged;
 }
 
 export function eliminarEntrevista(token: string): boolean {
   deletedSet.add(token);
-  shardUrls.delete(token);
   store.delete(token);
   saveLocalTmp();
   return true;
