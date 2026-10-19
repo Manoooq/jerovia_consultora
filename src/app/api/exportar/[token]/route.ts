@@ -75,8 +75,11 @@ export async function GET(
     return NextResponse.redirect(loginUrl);
   }
 
-  await syncStoreFromCloud(token);
-  const entrevista = obtenerEntrevista(token);
+  let entrevista = obtenerEntrevista(token);
+  if (!entrevista) {
+    await syncStoreFromCloud(token);
+    entrevista = obtenerEntrevista(token);
+  }
   if (!entrevista) {
     return NextResponse.json(
       { error: "Expediente no encontrado." },

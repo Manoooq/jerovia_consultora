@@ -20,9 +20,12 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  await syncStoreFromCloud(token);
+  let entrevista = obtenerEntrevista(token);
+  if (!entrevista) {
+    await syncStoreFromCloud(token);
+    entrevista = obtenerEntrevista(token);
+  }
 
-  const entrevista = obtenerEntrevista(token);
   if (!entrevista) {
     return NextResponse.json(
       { error: "Expediente no encontrado." },
@@ -48,9 +51,11 @@ export async function PATCH(
   >(req, 10_000_000);
   if (errorResponse) return errorResponse;
 
-  await syncStoreFromCloud(token);
-
-  const actual = obtenerEntrevista(token);
+  let actual = obtenerEntrevista(token);
+  if (!actual) {
+    await syncStoreFromCloud(token);
+    actual = obtenerEntrevista(token);
+  }
   if (!actual) {
     return NextResponse.json(
       { error: "No se pudo inicializar el expediente." },

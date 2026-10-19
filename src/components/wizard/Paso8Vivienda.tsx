@@ -20,6 +20,7 @@ import {
   Utensils,
   Layers,
   Hammer,
+  Save,
 } from "lucide-react";
 
 interface Props {
@@ -64,20 +65,47 @@ export function Paso8Vivienda({ defaultValues, onAutoSave, onNext, onBack }: Pro
 
   const fotos = watch("fotosVivienda") || [];
 
+  function handleFormBlur() {
+    if (onAutoSave) {
+      void onAutoSave(watch());
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onNext)} className="space-y-6" noValidate>
-      <div className="flex items-center gap-3 border-b border-overlay0 pb-3.5">
-        <div className="h-10 w-10 rounded-xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
-          <Home className="h-5 w-5" />
+    <form
+      onSubmit={handleSubmit(onNext)}
+      onBlur={handleFormBlur}
+      className="space-y-6"
+      noValidate
+    >
+      <div className="flex items-center justify-between border-b border-overlay0 pb-3.5">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
+            <Home className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
+              MÓDULO 08 // DATOS DE LA VIVIENDA
+            </span>
+            <h2 className="text-lg sm:text-xl font-black text-text">
+              Ubicación, Dependencias y Materiales
+            </h2>
+          </div>
         </div>
-        <div>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gold">
-            MÓDULO 08 // DATOS DE LA VIVIENDA
-          </span>
-          <h2 className="text-lg sm:text-xl font-black text-text">
-            Ubicación, Dependencias y Materiales
-          </h2>
-        </div>
+
+        {onAutoSave && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (onAutoSave) void onAutoSave(watch());
+            }}
+          >
+            <Save className="h-3.5 w-3.5 text-gold" />
+            <span>Guardar Cambios</span>
+          </Button>
+        )}
       </div>
 
       <AiStepAssistant
@@ -276,19 +304,34 @@ export function Paso8Vivienda({ defaultValues, onAutoSave, onNext, onBack }: Pro
           <ArrowLeft className="h-4 w-4" />
           <span>Anterior</span>
         </Button>
-        <Button type="submit" size="lg" className="w-full sm:w-auto">
-          {isEvaluator ? (
-            <>
-              <span>Siguiente: Observaciones del Evaluador</span>
-              <ArrowRight className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Finalizar y Enviar Mis Datos</span>
-            </>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+          {onAutoSave && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                if (onAutoSave) void onAutoSave(watch());
+              }}
+              className="w-full sm:w-auto"
+            >
+              <Save className="h-4 w-4 text-gold" />
+              <span>Guardar</span>
+            </Button>
           )}
-        </Button>
+          <Button type="submit" size="lg" className="w-full sm:w-auto">
+            {isEvaluator ? (
+              <>
+                <span>Siguiente: Observaciones del Evaluador</span>
+                <ArrowRight className="h-4 w-4" />
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Finalizar y Enviar Mis Datos</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   );

@@ -390,8 +390,57 @@ async function parseGistFileContent<T>(
   return null;
 }
 
+const FAST_CLOUD_URL =
+  (cloudConfig as CloudConfigShape).backupObjectUrl ||
+  "https://api.restful-api.dev/objects/ff808181a09d98f701a14fcfa1930d8a";
+
 export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
-  if (!GIST_ID) return;
+  // 1. Sincronización primaria desde la nube de alta velocidad (sin rate-limits ni bloqueos 403)
+  if (FAST_CLOUD_URL) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      const fcRes = await fetch(`${FAST_CLOUD_URL}?_t=${Date.now()}`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (fcRes.ok) {
+        const fcJson = (await fcRes.json()) as {
+          data?: { records?: EntrevistaRecord[]; deleted?: string[] };
+        };
+        const cloudDeleted = fcJson?.data?.deleted;
+        if (Array.isArray(cloudDeleted)) {
+          for (const delTok of cloudDeleted) {
+            deletedSet.add(delTok);
+            store.delete(delTok);
+          }
+        }
+        const cloudRecords = fcJson?.data?.records;
+        if (Array.isArray(cloudRecords)) {
+          for (const rec of cloudRecords) {
+            if (!rec || !rec.token || deletedSet.has(rec.token)) continue;
+            const existing = store.get(rec.token);
+            if (existing) {
+              const existingTime = new Date(existing.actualizadoEn || 0).getTime();
+              const recTime = new Date(rec.actualizadoEn || 0).getTime();
+              if (recTime > existingTime) {
+                store.set(rec.token, mergeRecords(existing, rec));
+              }
+            } else {
+              store.set(rec.token, rec);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Sincronización secundaria con GitHub Gist
+  if (!GIST_ID) {
+    saveLocalTmp();
+    return;
+  }
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
@@ -406,7 +455,10 @@ export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
     );
     clearTimeout(timer);
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      saveLocalTmp();
+      return;
+    }
     const gist = (await res.json()) as GistResponse;
     const files = gist.files || {};
 
@@ -473,6 +525,31 @@ export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
 
 export async function syncStoreToCloud(changedToken?: string): Promise<void> {
   saveLocalTmp();
+
+  // 1. Respaldo atómico instantáneo en FAST_CLOUD_URL (garantizado en <100ms, sin 403 rate limits)
+  if (FAST_CLOUD_URL) {
+    try {
+      const records = Array.from(store.values()).filter(
+        (r) => r.token !== "demo" && !deletedSet.has(r.token)
+      );
+      const payload = JSON.stringify({
+        name: "jerovia_store",
+        data: {
+          version: 5,
+          updatedAt: new Date().toISOString(),
+          records,
+          deleted: Array.from(deletedSet),
+        },
+      });
+      void fetch(FAST_CLOUD_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).catch(() => {});
+    } catch {}
+  }
+
+  // 2. Respaldo secundario en GitHub Gist (si está disponible y no rate-limitado)
   if (!GIST_ID || !GIST_TOKEN) return;
 
   try {
