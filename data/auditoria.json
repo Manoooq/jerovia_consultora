@@ -1,5 +1,195 @@
 [
   {
+    "id": "aud_dd59bfd5",
+    "timestamp": "2026-10-18T23:40:01.697Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "DELETE_VISITA",
+    "detail": "Eliminación permanente del expediente (jv_eyJlIjoiQmFuY28gQ29udGluZW50YWwiLCJuIjoiR3VzdGEgRmVybWluIiwiYyI6IjEzMzk2ODQifQ_98daa8).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_5e890bb0",
+    "timestamp": "2026-10-18T23:34:36.342Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "CREATE_VISITA",
+    "detail": "Habilitación de expediente para Gusta Fermin (Banco Continental).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_387f09ce",
+    "timestamp": "2026-10-18T23:33:34.685Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_49d3085f",
+    "timestamp": "2026-10-18T23:31:23.203Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_36c57331",
+    "timestamp": "2026-10-18T23:08:34.445Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_a67cbe12",
+    "timestamp": "2026-10-18T23:07:40.597Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_8e9b7c2c",
+    "timestamp": "2026-10-18T23:05:12.889Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Mayra Celina Ortiz Lugo.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_c0eb2903",
+    "timestamp": "2026-10-18T23:05:10.339Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Valeria Lujan Urbieta Dure.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_c5c2ed76",
+    "timestamp": "2026-10-18T23:05:07.956Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Ingrid Larissa Giménez Wottrich.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_7c53a319",
+    "timestamp": "2026-10-18T23:05:05.587Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_38aede0d",
+    "timestamp": "2026-10-18T23:05:03.349Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Óscar Daniel Rojas Servín.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_43647985",
+    "timestamp": "2026-10-18T23:05:01.104Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_3357a82e",
+    "timestamp": "2026-10-18T23:04:59.023Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Maria Paz Duarte Martinez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_4472183f",
+    "timestamp": "2026-10-18T23:04:56.840Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Enzo Giuliano Romero Báez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_fdda8e2e",
+    "timestamp": "2026-10-18T23:04:54.804Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Luana Stefania Mendez Riveros.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_416cccb5",
+    "timestamp": "2026-10-18T23:04:52.493Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PPTX) del expediente Brian Gustavo Riveros Amarilla.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_91d6b4d2",
+    "timestamp": "2026-10-18T23:03:44.114Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Ingrid Larissa Giménez Wottrich.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_494e6fab",
+    "timestamp": "2026-10-18T23:00:35.254Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Valeria Lujan Urbieta Dure.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_0283b13e",
+    "timestamp": "2026-10-18T22:15:25.607Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
     "id": "aud_891da11c",
     "timestamp": "2026-10-18T21:57:51.719Z",
     "userId": "usr_admin_01",

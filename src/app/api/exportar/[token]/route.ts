@@ -9,6 +9,7 @@ import {
   corregirOrtografiaTexto,
 } from "@/lib/textProcessor";
 import { formatDateToPy } from "@/lib/utils";
+import { FIRMA_IVONE_DATA_URL } from "@/lib/defaultSignature";
 
 function escapeHtml(val: unknown): string {
   const str = String(val ?? "");
@@ -223,12 +224,11 @@ export async function GET(
           .join("")}</div>`
       : "";
 
-  const firmaSvgOrImg = isSafeImageSrc(d.firmaEvaluador)
-    ? `<img src="${d.firmaEvaluador}" alt="Firma" style="height: 68px; width: auto; margin: 0 auto; display: block;" />`
-    : `<svg width="210" height="72" viewBox="0 0 240 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto; display: block;">
-        <path d="M28 54C52 38 68 14 78 16C86 18 62 58 68 60C74 62 94 34 102 36C108 38 96 54 106 54C118 54 148 20 160 22C170 24 134 66 122 68C112 70 142 46 182 44C204 43 220 41 226 40" stroke="#2c3a58" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M18 48C78 44 156 42 230 42" stroke="#536c45" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.75"/>
-      </svg>`;
+  const firmaSrc = isSafeImageSrc(d.firmaEvaluador)
+    ? (d.firmaEvaluador as string)
+    : FIRMA_IVONE_DATA_URL;
+
+  const firmaSvgOrImg = `<img src="${firmaSrc}" alt="Firma de la Evaluadora" style="height: 68px; width: auto; margin: 0 auto; display: block;" />`;
 
   const jeroviaOriginalLogoSvg = `<svg viewBox="0 0 350 118" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: auto;">
     <g transform="translate(212, 4)">

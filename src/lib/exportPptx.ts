@@ -2,6 +2,7 @@ import pptxgen from "pptxgenjs";
 import { EntrevistaRecord } from "./store";
 import { convertirATerceraPersona } from "./textProcessor";
 import { formatDateToPy } from "./utils";
+import { FIRMA_IVONE_DATA_URL } from "./defaultSignature";
 
 function v(val: unknown, fallback = "No especificado"): string {
   if (val !== undefined && val !== null) {
@@ -888,11 +889,15 @@ export async function generarPptxInforme(
     line: { color: COLOR_DARK_OLIVE, width: 1.5 },
   });
 
-  if (isValidDataUrl(d.firmaEvaluador)) {
+  const firmaData = isValidDataUrl(d.firmaEvaluador)
+    ? (d.firmaEvaluador as string)
+    : FIRMA_IVONE_DATA_URL;
+
+  if (isValidDataUrl(firmaData)) {
     try {
-      const fittedSig = fitImageInBox(d.firmaEvaluador, 5.1, 5.06, 3.1, 0.98);
+      const fittedSig = fitImageInBox(firmaData, 5.1, 5.06, 3.1, 0.98);
       s5.addImage({
-        data: d.firmaEvaluador,
+        data: firmaData,
         ...fittedSig,
       });
     } catch {}

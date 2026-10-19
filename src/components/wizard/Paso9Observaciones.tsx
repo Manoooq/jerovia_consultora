@@ -19,6 +19,7 @@ import {
   Loader2,
   ArrowUpDown,
 } from "lucide-react";
+import { FIRMA_IVONE_DATA_URL } from "@/lib/defaultSignature";
 
 interface Props {
   defaultValues: Partial<Paso9Data> & {
@@ -99,7 +100,7 @@ export function Paso9Observaciones({
       horaVisita: defaultValues.horaVisita || "19:00",
       consultorNombre:
         defaultValues.consultorNombre || "Lic. Michelle Romero",
-      firmaEvaluador: defaultValues.firmaEvaluador || "",
+      firmaEvaluador: defaultValues.firmaEvaluador || FIRMA_IVONE_DATA_URL,
     },
   });
 
