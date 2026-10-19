@@ -171,29 +171,29 @@ export async function GET(
   const egresosArray = Array.isArray(d.listaEgresos) ? d.listaEgresos : [];
   const egresosHtml =
     egresosArray.length > 0
-      ? egresosArray
+      ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">${egresosArray
           .map(
             (eg, idx) =>
-              `<div class="sub-card"><strong>${idx + 1}. Empresa:</strong> ${v(
+              `<div class="sub-card" style="margin-bottom: 0;"><strong>${idx + 1}. Empresa:</strong> ${v(
                 eg.empresa
-              )} — <strong>Monto del pago mensual:</strong> Gs. ${v(eg.monto)}</div>`
+              )} — <strong>Monto:</strong> Gs. ${v(eg.monto)}</div>`
           )
-          .join("")
+          .join("")}</div>`
       : `<div class="qa-val">${v(d.egresosMensuales, "Sin egresos detallados")}</div>`;
 
   const prestamosArray = Array.isArray(d.listaPrestamos) ? d.listaPrestamos : [];
   const prestamosHtml =
     d.prestamos && prestamosArray.length > 0
-      ? prestamosArray
+      ? `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">${prestamosArray
           .map(
             (pr, idx) =>
-              `<div class="sub-card"><strong>${
+              `<div class="sub-card" style="margin-bottom: 0;"><strong>${
                 idx + 1
-              }. Nombre del Banco/Entidad:</strong> ${v(
+              }. Banco/Entidad:</strong> ${v(
                 pr.entidad
-              )} — <strong>Valor de la cuota en Gs:</strong> ${v(pr.cuota)}</div>`
+              )} — <strong>Cuota:</strong> Gs. ${v(pr.cuota)}</div>`
           )
-          .join("")
+          .join("")}</div>`
       : `<div class="qa-val">${siNo(d.prestamos, d.prestamosDetalle)}</div>`;
 
   const fotoCandidatoHtml = isSafeImageSrc(d.fotoCandidato)
@@ -228,7 +228,7 @@ export async function GET(
     ? (d.firmaEvaluador as string)
     : FIRMA_IVONE_DATA_URL;
 
-  const firmaSvgOrImg = `<img src="${firmaSrc}" alt="Firma de la Evaluadora" style="height: 68px; width: auto; margin: 0 auto; display: block;" />`;
+  const firmaSvgOrImg = `<img src="${firmaSrc}" alt="Firma de la Evaluadora" style="height: 60px; max-width: 170px; object-fit: contain; margin: 0 auto; display: block;" />`;
 
   const jeroviaOriginalLogoSvg = `<svg viewBox="0 0 350 118" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: auto;">
     <g transform="translate(212, 4)">
@@ -407,9 +407,9 @@ export async function GET(
     .photo-grid-multi { grid-template-columns: repeat(2, 1fr); }
     .photo-frame { border: 1.5px solid #85987a; border-radius: 8px; overflow: hidden; text-align: center; background: #f4f7f2; display: flex; flex-direction: column; }
     .photo-img-wrap { width: 100%; display: flex; align-items: center; justify-content: center; background: #eef3eb; padding: 4px; }
-    .photo-grid-1 .photo-img-wrap { height: 215px; }
-    .photo-grid-2 .photo-img-wrap { height: 185px; }
-    .photo-grid-multi .photo-img-wrap { height: 120px; }
+    .photo-grid-1 .photo-img-wrap { height: 135px; }
+    .photo-grid-2 .photo-img-wrap { height: 135px; }
+    .photo-grid-multi .photo-img-wrap { height: 105px; }
     .photo-frame img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px; }
     .photo-frame span { display: block; font-size: 7pt; font-weight: 700; color: #485536; padding: 3px 4px; border-top: 1px solid #d5ddd1; background: #f8faf7; }
     .signature-area { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -419,7 +419,18 @@ export async function GET(
     @media print {
       body { background: #ffffff; padding: 0; }
       .no-print { display: none !important; }
-      .a4-page { margin: 0; border: none; border-radius: 0; box-shadow: none; width: 210mm; height: 297mm; }
+      .a4-page {
+        margin: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        width: 210mm;
+        height: 297mm;
+        max-height: 297mm;
+        overflow: hidden;
+        page-break-after: always;
+        break-after: page;
+      }
     }
   </style>
 </head>
@@ -684,7 +695,7 @@ export async function GET(
       <div class="signature-area">
         <div class="signature-box">
           ${firmaSvgOrImg}
-          <div class="signature-line">${v(d.consultorNombre, "Lic. Michelle Romero")}</div>
+          <div class="signature-line">${v(d.consultorNombre, "Lic. Ivonne Rodas")}</div>
           <div style="font-size: 8.5pt; font-weight: 700; color: #536c45; text-transform: uppercase; margin-top: 2px;">
             Jerovia Consultora · Verificación Socioambiental
           </div>

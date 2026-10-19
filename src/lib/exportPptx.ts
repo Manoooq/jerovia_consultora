@@ -859,7 +859,7 @@ export async function generarPptxInforme(
     `Otras observaciones: ${v(d.otrasObservaciones, "Ninguna")}`,
     `Entrevistador/a: ${v(
       d.entrevistadorNombre,
-      v(d.consultorNombre, "Lic. Michelle Romero")
+      v(d.consultorNombre, "Lic. Ivonne Rodas")
     )}   |   Visita realizada el: ${
       formatDateToPy(d.fechaVisita) || v(d.fechaVisita)
     } ${
@@ -911,7 +911,7 @@ export async function generarPptxInforme(
     line: { color: COLOR_DARK_OLIVE, width: 1.2 },
   });
 
-  s5.addText(v(d.consultorNombre, "Lic. Michelle Romero"), {
+  s5.addText(v(d.consultorNombre, "Lic. Ivonne Rodas"), {
     x: 3.86,
     y: 6.18,
     w: 5.6,

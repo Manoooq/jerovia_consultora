@@ -94,12 +94,12 @@ export function Paso9Observaciones({
         "La persona entrevistada se muestra respetuosa y colaboradora. Vivienda ordenada y limpia.",
       otrasObservaciones: defaultValues.otrasObservaciones || "Ninguna",
       entrevistadorNombre:
-        defaultValues.entrevistadorNombre || "Lic. Michelle Romero",
+        defaultValues.entrevistadorNombre || "Lic. Ivonne Rodas",
       fechaVisita:
         defaultValues.fechaVisita || new Date().toISOString().slice(0, 10),
       horaVisita: defaultValues.horaVisita || "19:00",
       consultorNombre:
-        defaultValues.consultorNombre || "Lic. Michelle Romero",
+        defaultValues.consultorNombre || "Lic. Ivonne Rodas",
       firmaEvaluador: defaultValues.firmaEvaluador || FIRMA_IVONE_DATA_URL,
     },
   });
