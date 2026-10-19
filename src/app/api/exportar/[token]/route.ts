@@ -595,6 +595,10 @@ export async function GET(
             <div class="qa-item"><div class="qa-label">Trayecto y Propiedad de la vivienda</div><div class="qa-val">${v(d.tipoCamino)} · Propiedad: ${v(d.tenenciaVivienda)}</div></div>
           </div>
           <div class="two-col">
+            <div class="qa-item"><div class="qa-label">Nombre de la Calle / Dirección</div><div class="qa-val">${v(d.direccion, "No especificada")}</div></div>
+            <div class="qa-item"><div class="qa-label">Coordenadas Geográficas (GPS)</div><div class="qa-val">${v(d.coordenadas, "No registradas")}</div></div>
+          </div>
+          <div class="two-col">
             <div class="qa-item"><div class="qa-label">Cantidad de habitantes en la casa</div><div class="qa-val">${v(d.cantidadPersonas, "1")}</div></div>
             <div class="qa-item"><div class="qa-label">Quién vive en la casa junto a la persona entrevistada</div><div class="qa-val">${v(d.quienesVivenCasa, v(d.estructuraFamiliar))}</div></div>
           </div>

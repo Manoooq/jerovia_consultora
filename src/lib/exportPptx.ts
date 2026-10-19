@@ -580,7 +580,7 @@ export async function generarPptxInforme(
   s3.addText(
     [
       `Ciudad: ${v(d.ciudad)}   |   Barrio: ${v(d.barrio)}`,
-      `Dirección: ${v(d.direccion)}   |   GPS: ${v(d.coordenadas, "N/A")}`,
+      `Nombre de la Calle / Dirección: ${v(d.direccion, "No especificada")}   |   Coordenadas GPS: ${v(d.coordenadas, "No registradas")}`,
       `Trayecto: ${v(d.tipoCamino)}   |   Propiedad: ${v(d.tenenciaVivienda)}`,
       `Habitantes en la casa: ${v(d.cantidadPersonas, "1")} personas`,
       `Quién vive con el entrevistado/a: ${v(d.quienesVivenCasa)}`,
