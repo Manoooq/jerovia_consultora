@@ -162,8 +162,8 @@ export function Paso9Observaciones({
       if (onAutoSave) {
         await onAutoSave({
           ...watch(),
-          fotoCandidato,
-          fotosVivienda,
+          fotoCandidato: fotoCandidatoRef.current,
+          fotosVivienda: fotosViviendaRef.current,
         });
       }
       const url = `/api/exportar/${token}?formato=${formato}&t=${Date.now()}`;
@@ -206,8 +206,8 @@ export function Paso9Observaciones({
       onSubmit={handleSubmit((formData) =>
         onComplete({
           ...formData,
-          fotoCandidato,
-          fotosVivienda,
+          fotoCandidato: fotoCandidatoRef.current,
+          fotosVivienda: fotosViviendaRef.current,
         })
       )}
       className="space-y-6"

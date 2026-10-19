@@ -153,6 +153,16 @@ export function mergeRecords(
   };
 
   for (const [k, incVal] of Object.entries(incoming.datos || {})) {
+    // Si incoming trae fotosVivienda o fotoCandidato explícitamente, SIEMPRE respetar la decisión del usuario (reemplazo, inversión o eliminación)
+    if (k === "fotosVivienda" && Array.isArray(incVal)) {
+      mergedDatos[k] = incVal;
+      continue;
+    }
+    if (k === "fotoCandidato" && typeof incVal === "string") {
+      mergedDatos[k] = incVal;
+      continue;
+    }
+
     const existVal = mergedDatos[k];
     const incFilled = isFilledValue(incVal);
     const existFilled = isFilledValue(existVal);
@@ -422,7 +432,16 @@ export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
         );
         if (rec && rec.token && !deletedSet.has(rec.token)) {
           const existing = store.get(rec.token);
-          store.set(rec.token, existing ? mergeRecords(existing, rec) : rec);
+          if (existing) {
+            const existingTime = new Date(existing.actualizadoEn || 0).getTime();
+            const recTime = new Date(rec.actualizadoEn || 0).getTime();
+            // Solo sobrescribir si la versión en la nube es más reciente
+            if (recTime > existingTime) {
+              store.set(rec.token, mergeRecords(existing, rec));
+            }
+          } else {
+            store.set(rec.token, rec);
+          }
         }
       }
     }
@@ -437,7 +456,15 @@ export async function syncStoreFromCloud(targetToken?: string): Promise<void> {
       if (!rec || !rec.token || deletedSet.has(rec.token)) continue;
 
       const existing = store.get(rec.token);
-      store.set(rec.token, existing ? mergeRecords(existing, rec) : rec);
+      if (existing) {
+        const existingTime = new Date(existing.actualizadoEn || 0).getTime();
+        const recTime = new Date(rec.actualizadoEn || 0).getTime();
+        if (recTime > existingTime) {
+          store.set(rec.token, mergeRecords(existing, rec));
+        }
+      } else {
+        store.set(rec.token, rec);
+      }
     }
 
     saveLocalTmp();
@@ -449,9 +476,7 @@ export async function syncStoreToCloud(changedToken?: string): Promise<void> {
   if (!GIST_ID || !GIST_TOKEN) return;
 
   try {
-    // 1. Primero sincronizar desde la nube el token afectado para fusionar y jamás pisar avances concurrentes
-    await syncStoreFromCloud(changedToken);
-
+    // Si se guarda un changedToken local recién modificado, no sobreescribirlo con datos viejos de la nube
     const filesPatch: Record<string, { content: string } | null> = {};
 
     if (changedToken) {

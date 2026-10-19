@@ -1,5 +1,205 @@
 [
   {
+    "id": "aud_2a410e64",
+    "timestamp": "2026-10-19T01:23:28.165Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Valeria Lujan Urbieta Dure.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_86c2bf22",
+    "timestamp": "2026-10-19T01:23:02.667Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_5c4f6d97",
+    "timestamp": "2026-10-19T01:21:08.874Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Maria Paz Duarte Martinez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_505e448c",
+    "timestamp": "2026-10-19T01:15:31.238Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_881f5647",
+    "timestamp": "2026-10-19T01:14:48.233Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "CREATE_VISITA",
+    "detail": "Habilitación de expediente para Valentina Velazquez (Banco Continental).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_5e5bca30",
+    "timestamp": "2026-10-19T01:14:30.947Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Brian Gustavo Riveros Amarilla.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_0819ea93",
+    "timestamp": "2026-10-19T01:08:52.333Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_a6964c08",
+    "timestamp": "2026-10-19T01:08:05.810Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_1fe0fa2e",
+    "timestamp": "2026-10-19T01:07:27.083Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_4327583f",
+    "timestamp": "2026-10-19T01:07:09.370Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_f01cfbdd",
+    "timestamp": "2026-10-19T01:02:26.751Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_61849600",
+    "timestamp": "2026-10-19T01:01:16.774Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_0fe2116b",
+    "timestamp": "2026-10-19T01:01:09.453Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_357ac5f6",
+    "timestamp": "2026-10-19T00:51:18.214Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_4115d6a3",
+    "timestamp": "2026-10-19T00:51:06.765Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_56865bd5",
+    "timestamp": "2026-10-19T00:50:50.371Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Yanina Belén Duarte Vargas.",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_839b2872",
+    "timestamp": "2026-10-19T00:33:19.221Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "LOGIN",
+    "detail": "Inicio de sesión exitoso (@admin).",
+    "ip": "181.91.85.242"
+  },
+  {
+    "id": "aud_75e771b7",
+    "timestamp": "2026-10-19T00:25:56.049Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_6ee7e63d",
+    "timestamp": "2026-10-19T00:25:40.048Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Óscar Daniel Rojas Servín.",
+    "ip": "186.158.200.92"
+  },
+  {
+    "id": "aud_edcd119f",
+    "timestamp": "2026-10-19T00:15:58.020Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Ingrid Larissa Giménez Wottrich.",
+    "ip": "186.158.200.92"
+  },
+  {
     "id": "aud_dd59bfd5",
     "timestamp": "2026-10-18T23:40:01.697Z",
     "userId": "usr_admin_01",

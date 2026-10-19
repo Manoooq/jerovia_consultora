@@ -142,18 +142,18 @@ export const paso4Schema = z.object({
 });
 
 export const paso5Schema = z.object({
-  relacionPadres: reqStr("Seleccione la relación de sus padres", 2),
+  relacionPadres: safeStr("casados"),
   estructuraFamiliar: safeStr(""),
-  nombreMadre: reqStr("Ingrese el nombre y apellido de su madre", 2),
+  nombreMadre: safeStr(""),
   edadMadre: safeNum(0),
-  ocupacionMadre: reqStr("Indique la ocupación de su madre", 2),
+  ocupacionMadre: safeStr(""),
   empresaMadre: safeStr(""),
   salarioMadre: safeStr(""),
   ciudadMadre: safeStr(""),
   telefonoMadre: safeStr(""),
-  nombrePadre: reqStr("Ingrese el nombre y apellido de su padre", 2),
+  nombrePadre: safeStr(""),
   edadPadre: safeNum(0),
-  ocupacionPadre: reqStr("Indique la ocupación de su padre", 2),
+  ocupacionPadre: safeStr(""),
   empresaPadre: safeStr(""),
   salarioPadre: safeStr(""),
   ciudadPadre: safeStr(""),
