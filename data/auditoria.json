@@ -1,5 +1,15 @@
 [
   {
+    "id": "aud_d4254272",
+    "timestamp": "2026-10-19T01:28:18.701Z",
+    "userId": "usr_admin_01",
+    "userName": "Lic. Michelle Romero",
+    "userRole": "admin",
+    "action": "EXPORT_PPTX",
+    "detail": "Descarga de informe (PDF) del expediente Gerónimo Matias Ortellado Ybañez.",
+    "ip": "186.158.200.92"
+  },
+  {
     "id": "aud_2a410e64",
     "timestamp": "2026-10-19T01:23:28.165Z",
     "userId": "usr_admin_01",

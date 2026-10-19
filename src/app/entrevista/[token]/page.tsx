@@ -64,6 +64,16 @@ function mergeClientServerDatos(
       merged[k] = val;
     }
   }
+
+  // REGLA CRÍTICA: Respetar siempre las fotos editadas localmente por el usuario
+  // (incluso si las borró y están vacías []), impidiendo que se resuciten fotos viejas
+  if (Array.isArray(localDatos.fotosVivienda)) {
+    merged.fotosVivienda = localDatos.fotosVivienda;
+  }
+  if (typeof localDatos.fotoCandidato === "string") {
+    merged.fotoCandidato = localDatos.fotoCandidato;
+  }
+
   return merged as Partial<FormularioCompleto>;
 }
 
@@ -177,10 +187,17 @@ function EntrevistaWizardContent() {
           if (res.ok) {
             const serverUpdated = await res.json().catch(() => null);
             if (serverUpdated?.datos) {
-              const merged = mergeClientServerDatos(
-                nextDatos,
-                serverUpdated.datos
-              );
+              // Mantener de forma estricta e instantánea las fotos y campos editados localmente en nextDatos
+              const merged: Partial<FormularioCompleto> = {
+                ...serverUpdated.datos,
+                ...nextDatos,
+              };
+              if (Array.isArray(nextDatos.fotosVivienda)) {
+                merged.fotosVivienda = nextDatos.fotosVivienda;
+              }
+              if (typeof nextDatos.fotoCandidato === "string") {
+                merged.fotoCandidato = nextDatos.fotoCandidato;
+              }
               datosRef.current = merged;
               setDatos(merged);
             }
