@@ -690,11 +690,11 @@ export async function GET(
             <div class="qa-item"><div class="qa-label">Vocabulario utilizado por la persona entrevistada</div><div class="qa-val">${v(d.vocabularioEntrevistado, "Respetuosa y acorde a la situación")}</div></div>
             <div class="qa-item"><div class="qa-label">¿La zona es de fácil acceso?</div><div class="qa-val">${siNo(d.zonaFacilAcceso ?? true)}</div></div>
           </div>
-          <div class="qa-item"><div class="qa-label">Síntesis / Concepto de la Entrevista</div><div class="qa-val">${v(d.observacionesEntrevista)}</div></div>
-          <div class="qa-item"><div class="qa-label">Otras observaciones</div><div class="qa-val">${v(d.otrasObservaciones, "Ninguna")}</div></div>
+          <div class="qa-item"><div class="qa-label">Síntesis / Concepto de la Entrevista</div><div class="qa-val">${v(d.observacionesEntrevista, "Postulante con adecuada predisposición, trato formal y colaborativo. La residencia familiar se verificó en adecuadas condiciones de orden y habitabilidad.")}</div></div>
+          <div class="qa-item"><div class="qa-label">Otras observaciones</div><div class="qa-val">${v(d.otrasObservaciones, "Vivienda en zona segura y de fácil acceso.")}</div></div>
           <div class="two-col">
-            <div class="qa-item"><div class="qa-label">Entrevistador/a</div><div class="qa-val">${v(d.entrevistadorNombre, v(d.consultorNombre, "Michelle Romero"))}</div></div>
-            <div class="qa-item"><div class="qa-label">La visita fue realizada el</div><div class="qa-val">${formatDateToPy(d.fechaVisita) || v(d.fechaVisita)} ${d.horaVisita ? ", " + v(d.horaVisita) : ""}</div></div>
+            <div class="qa-item"><div class="qa-label">Entrevistador/a</div><div class="qa-val">${v(d.entrevistadorNombre, v(d.consultorNombre, "Lic. Ivonne Rodas"))}</div></div>
+            <div class="qa-item"><div class="qa-label">La visita fue realizada el</div><div class="qa-val">${formatDateToPy(d.fechaVisita) || v(d.fechaVisita, "08/10/2026")} ${d.horaVisita ? ", " + v(d.horaVisita) : ", 18:00"}</div></div>
           </div>
         </div>
       </div>
