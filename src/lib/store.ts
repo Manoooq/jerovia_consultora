@@ -153,13 +153,25 @@ export function mergeRecords(
   };
 
   for (const [k, incVal] of Object.entries(incoming.datos || {})) {
-    // Si incoming trae fotosVivienda o fotoCandidato explícitamente, SIEMPRE respetar la decisión del usuario (reemplazo, inversión o eliminación)
-    if (k === "fotosVivienda" && Array.isArray(incVal)) {
-      mergedDatos[k] = incVal;
+    // Manejo blindado de fotografías: NUNCA degradar una foto real existente con un valor vacío o nulo
+    if (k === "fotoCandidato") {
+      if (typeof incVal === "string" && incVal.length > 50) {
+        mergedDatos[k] = incVal;
+      } else if (!mergedDatos[k]) {
+        mergedDatos[k] = incVal || "";
+      }
       continue;
     }
-    if (k === "fotoCandidato" && typeof incVal === "string") {
-      mergedDatos[k] = incVal;
+    if (k === "fotosVivienda") {
+      if (Array.isArray(incVal) && incVal.length > 0) {
+        mergedDatos[k] = incVal;
+      } else if (
+        !mergedDatos[k] ||
+        !Array.isArray(mergedDatos[k]) ||
+        (mergedDatos[k] as unknown[]).length === 0
+      ) {
+        mergedDatos[k] = Array.isArray(incVal) ? incVal : [];
+      }
       continue;
     }
 
