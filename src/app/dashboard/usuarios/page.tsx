@@ -349,7 +349,10 @@ export default function UsuariosPage() {
               )}
               {feedback.text}
             </span>
-            <button onClick={() => setFeedback(null)}>
+            <button
+              onClick={() => setFeedback(null)}
+              aria-label="Cerrar notificación"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -504,6 +507,7 @@ export default function UsuariosPage() {
                   <button
                     onClick={() => setCreateOpen(false)}
                     className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -613,6 +617,7 @@ export default function UsuariosPage() {
                   <button
                     onClick={() => setEditUser(null)}
                     className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -692,6 +697,7 @@ export default function UsuariosPage() {
                   <button
                     onClick={() => setPwdUser(null)}
                     className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
                   >
                     <X className="h-5 w-5" />
                   </button>
