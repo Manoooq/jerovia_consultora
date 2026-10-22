@@ -349,8 +349,12 @@ export default function UsuariosPage() {
               )}
               {feedback.text}
             </span>
-            <button onClick={() => setFeedback(null)}>
-              <X className="h-4 w-4" />
+            <button
+              onClick={() => setFeedback(null)}
+              aria-label="Cerrar notificación"
+              className="text-red hover:text-red/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red/50 rounded-md p-1 transition-colors"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         )}
@@ -503,9 +507,10 @@ export default function UsuariosPage() {
                   </h2>
                   <button
                     onClick={() => setCreateOpen(false)}
-                    className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
+                    className="text-subtext0 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-md p-1 transition-colors"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -612,9 +617,10 @@ export default function UsuariosPage() {
                   </h2>
                   <button
                     onClick={() => setEditUser(null)}
-                    className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
+                    className="text-subtext0 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-md p-1 transition-colors"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -691,9 +697,10 @@ export default function UsuariosPage() {
                   </h2>
                   <button
                     onClick={() => setPwdUser(null)}
-                    className="text-subtext0 hover:text-text"
+                    aria-label="Cerrar modal"
+                    className="text-subtext0 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-md p-1 transition-colors"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>
 
