@@ -139,6 +139,7 @@ export function FotoUploader({
               <button
                 type="button"
                 onClick={() => removeFoto(idx)}
+                aria-label={`Eliminar fotografía ${idx + 1}`}
                 className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90"
                 title="Eliminar fotografía"
               >

@@ -361,6 +361,7 @@ export function QrModal({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Cerrar tarjeta QR"
               className="text-subtext1 hover:text-text cursor-pointer"
             >
               <X className="h-4 w-4" />

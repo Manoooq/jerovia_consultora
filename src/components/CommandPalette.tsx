@@ -228,6 +228,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
+                  aria-label="Cerrar buscador"
                   className="text-subtext1 hover:text-text p-1 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
