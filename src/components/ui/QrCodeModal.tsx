@@ -361,7 +361,8 @@ export function QrModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-subtext1 hover:text-text cursor-pointer"
+              aria-label="Cerrar modal"
+              className="text-subtext1 hover:text-text cursor-pointer rounded-lg focus-visible:ring-2"
             >
               <X className="h-4 w-4" />
             </button>
