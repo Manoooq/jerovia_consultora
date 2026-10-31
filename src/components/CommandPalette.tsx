@@ -228,7 +228,8 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="text-subtext1 hover:text-text p-1 cursor-pointer"
+                  aria-label="Cerrar buscador"
+                  className="text-subtext1 hover:text-text p-1 cursor-pointer rounded-lg focus-visible:ring-2"
                 >
                   <X className="h-4 w-4" />
                 </button>
