@@ -1,0 +1,3 @@
+## 2024-05-19 - Accessible Names for Icon-Only Controls
+**Learning:** Found a pattern of icon-only buttons (like `X` for close or `Trash2` for delete) in various components (e.g., `CommandPalette`, `QrCodeModal`, `FotoUploader`) lacking explicit `aria-label` attributes. While they often had a `title`, screen readers rely on explicit aria-labels or visually hidden text for guaranteed accessible naming on icon-only buttons.
+**Action:** Always ensure that buttons containing only icons include an explicit `aria-label` attribute in Spanish (e.g., `aria-label="Cerrar"` or `aria-label="Eliminar fotografía"`) to provide a clear, localized name for assistive technologies.
