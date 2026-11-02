@@ -169,7 +169,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
             setQuery("");
             setSelectedIndex(0);
           }}
-          className="h-9 w-9 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-white/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
           title="Comandos y ayuda rápida (Ctrl+K)"
           aria-label="Abrir buscador de comandos"
         >
@@ -183,7 +183,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
             setQuery("");
             setSelectedIndex(0);
           }}
-          className="min-h-[38px] flex items-center gap-2 rounded-xl border border-overlay1 bg-surface1 px-3 py-1.5 text-xs font-bold text-text hover:border-gold transition-all cursor-pointer"
+          className="min-h-[38px] flex items-center gap-2 rounded-xl border border-overlay1 bg-surface1 px-3 py-1.5 text-xs font-bold text-text hover:border-gold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
           title="Comandos rápidos (Ctrl+K)"
         >
           <Search className="h-3.5 w-3.5 text-gold" />
@@ -217,6 +217,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                 <input
                   type="text"
                   autoFocus
+                  aria-label="Buscar comandos"
                   placeholder="Ir a sección, probar cuestionario o cambiar tema..."
                   value={query}
                   onChange={(e) => {
@@ -228,7 +229,8 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="text-subtext1 hover:text-text p-1 cursor-pointer"
+                  className="text-subtext1 hover:text-text p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-sm"
+                  aria-label="Cerrar buscador"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -246,7 +248,7 @@ export function CommandPalette({ variant = "default" }: CommandPaletteProps) {
                         setIsOpen(false);
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-colors text-xs cursor-pointer ${
+                      className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between transition-colors text-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
                         isSelected
                           ? "bg-gold/15 text-text font-bold border border-gold/40"
                           : "text-subtext1 hover:bg-surface1"
