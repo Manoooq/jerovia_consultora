@@ -833,9 +833,10 @@ function DashboardContent() {
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setFeedbackMsg(null)}
                 aria-label="Cerrar notificación"
-                className="cursor-pointer"
+                className="cursor-pointer text-subtext0 hover:text-text p-1"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1077,8 +1078,9 @@ function DashboardContent() {
                 />
                 {search && (
                   <button
+                    type="button"
                     onClick={() => setSearch("")}
-                    className="text-subtext0 hover:text-text cursor-pointer"
+                    className="text-subtext0 hover:text-text cursor-pointer p-1"
                     aria-label="Limpiar búsqueda"
                   >
                     <X className="h-4 w-4" />
@@ -1320,6 +1322,7 @@ function DashboardContent() {
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setEditModal(null)}
                   className="text-subtext0 hover:text-text p-1 cursor-pointer"
                   aria-label="Cerrar modal"
@@ -1416,6 +1419,7 @@ function DashboardContent() {
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setPasswordModalOpen(false)}
                   className="text-subtext0 hover:text-text p-1 cursor-pointer"
                   aria-label="Cerrar modal"
