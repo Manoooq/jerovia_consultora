@@ -361,9 +361,10 @@ export function QrModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-subtext1 hover:text-text cursor-pointer"
+              className="text-subtext1 hover:text-text cursor-pointer rounded-md focus-visible:ring-2 focus-visible:outline-none"
+              aria-label="Cerrar modal"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
           <QrCodeBox url={url} title={title} />

@@ -139,10 +139,11 @@ export function FotoUploader({
               <button
                 type="button"
                 onClick={() => removeFoto(idx)}
-                className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90"
+                className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-red text-white flex items-center justify-center shadow-md cursor-pointer hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 title="Eliminar fotografía"
+                aria-label="Eliminar fotografía"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
           ))}
